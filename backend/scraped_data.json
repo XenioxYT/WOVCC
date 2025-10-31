@@ -1,0 +1,289 @@
+{
+    "last_updated": "2025-10-31T23:23:35.453697",
+    "teams": [
+        {
+            "id": "22375",
+            "name": "1ST XI",
+            "url": "https://wov.play-cricket.com/Teams/22375"
+        },
+        {
+            "id": "22376",
+            "name": "2ND XI",
+            "url": "https://wov.play-cricket.com/Teams/22376"
+        },
+        {
+            "id": "89129",
+            "name": "3RD XI",
+            "url": "https://wov.play-cricket.com/Teams/89129"
+        },
+        {
+            "id": "320988",
+            "name": "VIXENS HARDBALL 1",
+            "url": "https://wov.play-cricket.com/Teams/320988"
+        },
+        {
+            "id": "375220",
+            "name": "VIXENS HARDBALL 2",
+            "url": "https://wov.play-cricket.com/Teams/375220"
+        },
+        {
+            "id": "400030",
+            "name": "VIXENS INDOOR HARDBALL",
+            "url": "https://wov.play-cricket.com/Teams/400030"
+        },
+        {
+            "id": "282728",
+            "name": "VIXENS SOFTBALL 1",
+            "url": "https://wov.play-cricket.com/Teams/282728"
+        },
+        {
+            "id": "297744",
+            "name": "VIXENS SOFTBALL 2",
+            "url": "https://wov.play-cricket.com/Teams/297744"
+        },
+        {
+            "id": "382468",
+            "name": "VIXENS SOFTBALL 3",
+            "url": "https://wov.play-cricket.com/Teams/382468"
+        },
+        {
+            "id": "279167",
+            "name": "TWENTY20",
+            "url": "https://wov.play-cricket.com/Teams/279167"
+        },
+        {
+            "id": "395661",
+            "name": "FRIENDLY XI",
+            "url": "https://wov.play-cricket.com/Teams/395661"
+        },
+        {
+            "id": "195590",
+            "name": "UNDER 19",
+            "url": "https://wov.play-cricket.com/Teams/195590"
+        },
+        {
+            "id": "195790",
+            "name": "UNDER 18",
+            "url": "https://wov.play-cricket.com/Teams/195790"
+        },
+        {
+            "id": "157121",
+            "name": "UNDER 15",
+            "url": "https://wov.play-cricket.com/Teams/157121"
+        },
+        {
+            "id": "262118",
+            "name": "UNDER 13",
+            "url": "https://wov.play-cricket.com/Teams/262118"
+        },
+        {
+            "id": "262643",
+            "name": "UNDER 9 RED",
+            "url": "https://wov.play-cricket.com/Teams/262643"
+        },
+        {
+            "id": "262641",
+            "name": "UNDER 9 BLUE",
+            "url": "https://wov.play-cricket.com/Teams/262641"
+        },
+        {
+            "id": "305107",
+            "name": "UNDER 11 RED",
+            "url": "https://wov.play-cricket.com/Teams/305107"
+        },
+        {
+            "id": "305110",
+            "name": "UNDER 11 BLUE",
+            "url": "https://wov.play-cricket.com/Teams/305110"
+        },
+        {
+            "id": "322538",
+            "name": "GIRLS SOFTBALL",
+            "url": "https://wov.play-cricket.com/Teams/322538"
+        },
+        {
+            "id": "338664",
+            "name": "VIXENS UNDER 11 GIRLS SOFTBALL",
+            "url": "https://wov.play-cricket.com/Teams/338664"
+        },
+        {
+            "id": "340380",
+            "name": "UNDER 9",
+            "url": "https://wov.play-cricket.com/Teams/340380"
+        },
+        {
+            "id": "356012",
+            "name": "VIXENS UNDER 12 GIRLS SOFTBALL",
+            "url": "https://wov.play-cricket.com/Teams/356012"
+        },
+        {
+            "id": "361559",
+            "name": "UNDER 11 - GREEN",
+            "url": "https://wov.play-cricket.com/Teams/361559"
+        },
+        {
+            "id": "362660",
+            "name": "UNDER 9 GREEN",
+            "url": "https://wov.play-cricket.com/Teams/362660"
+        },
+        {
+            "id": "362672",
+            "name": "UNDER 9 YELLOW",
+            "url": "https://wov.play-cricket.com/Teams/362672"
+        },
+        {
+            "id": "375072",
+            "name": "UNDER 12 GIRLS HARDBALL",
+            "url": "https://wov.play-cricket.com/Teams/375072"
+        },
+        {
+            "id": "389414",
+            "name": "VIXENS UNDER 13 GIRLS SOFTBALL",
+            "url": "https://wov.play-cricket.com/Teams/389414"
+        },
+        {
+            "id": "397743",
+            "name": "WICKERSLEY ROSES",
+            "url": "https://wov.play-cricket.com/Teams/397743"
+        },
+        {
+            "id": "349228",
+            "name": "INDOOR U13",
+            "url": "https://wov.play-cricket.com/Teams/349228"
+        },
+        {
+            "id": "377911",
+            "name": "U15 MIXED INDOOR HARDBALL",
+            "url": "https://wov.play-cricket.com/Teams/377911"
+        }
+    ],
+    "fixtures": [
+        {
+            "team_name_scraping": "Vixens Indoor Hardball",
+            "team_id": "400030",
+            "date_str": "Sunday 16 November 2025",
+            "date_iso": "2025-11-16",
+            "home_team": "Frecheville Community CC-Womens Indoor Hardball",
+            "away_team": "Wickersley Old Village CC-Vixens Indoor Hardball",
+            "time": "13:00",
+            "location": "S20 The Boundary, Court 1",
+            "match_url": "https://wov.play-cricket.com/match_details?id=7200017"
+        },
+        {
+            "team_name_scraping": "Vixens Softball 1",
+            "team_id": "282728",
+            "date_str": "Sunday 09 November 2025",
+            "date_iso": "2025-11-09",
+            "home_team": "Treeton CC-Go Greens Indoor",
+            "away_team": "Wickersley Old Village CC-Vixens Softball 1",
+            "time": "10:00",
+            "location": "S20 The Boundary, Court 1",
+            "match_url": "https://wov.play-cricket.com/match_details?id=7200073"
+        },
+        {
+            "team_name_scraping": "Vixens Softball 1",
+            "team_id": "282728",
+            "date_str": "Sunday 23 November 2025",
+            "date_iso": "2025-11-23",
+            "home_team": "Tickhill CC-Tigers Indoor Softball",
+            "away_team": "Wickersley Old Village CC-Vixens Softball 1",
+            "time": "11:00",
+            "location": "S20 The Boundary, Court 1",
+            "match_url": "https://wov.play-cricket.com/match_details?id=7200081"
+        },
+        {
+            "team_name_scraping": "Vixens Softball 2",
+            "team_id": "297744",
+            "date_str": "Sunday 09 November 2025",
+            "date_iso": "2025-11-09",
+            "home_team": "Norton Oakes CC-Steel Acorns",
+            "away_team": "Wickersley Old Village CC-Vixens Softball 2",
+            "time": "11:00",
+            "location": "S20 The Boundary, Court 1",
+            "match_url": "https://wov.play-cricket.com/match_details?id=7200126"
+        },
+        {
+            "team_name_scraping": "Vixens Softball 2",
+            "team_id": "297744",
+            "date_str": "Sunday 30 November 2025",
+            "date_iso": "2025-11-30",
+            "home_team": "Frecheville Community CC-Women's Softball",
+            "away_team": "Wickersley Old Village CC-Vixens Softball 2",
+            "time": "12:00",
+            "location": "S20 The Boundary, Court 1",
+            "match_url": "https://wov.play-cricket.com/match_details?id=7200124"
+        }
+    ],
+    "results": [
+        {
+            "team_name_scraping": "Vixens Softball 1",
+            "team_id": "282728",
+            "date_str": "Sunday 26 October 2025",
+            "date_iso": "2025-10-26",
+            "home_team": "Wickersley Old Village CC-Vixens Softball 1",
+            "away_team": "Oughtibridge CC-Womens Indoor Softball Team I",
+            "home_score": "129 / 4  (12) Net Score 309",
+            "away_score": "107 / 11  (12) Net Score 252",
+            "summary": "WICKERSLEY OLD VILLAGE CC WON  BY 57 RUNS",
+            "is_win": true,
+            "is_loss": false,
+            "match_url": "https://wov.play-cricket.com/website/results/7200072"
+        },
+        {
+            "team_name_scraping": "Vixens Softball 2",
+            "team_id": "297744",
+            "date_str": "Sunday 26 October 2025",
+            "date_iso": "2025-10-26",
+            "home_team": "Sheffield Transport CC-Transport Women's Indoor Softball",
+            "away_team": "Wickersley Old Village CC-Vixens Softball 2",
+            "home_score": "102 / 0  (12) Net Score 302",
+            "away_score": "91 / 7  (12) Net Score 256",
+            "summary": "SHEFFIELD TRANSPORT CC WON  BY 46 RUNS",
+            "is_win": false,
+            "is_loss": true,
+            "match_url": "https://wov.play-cricket.com/website/results/7200120"
+        },
+        {
+            "team_name_scraping": "Vixens Indoor Hardball",
+            "team_id": "400030",
+            "date_str": "Sunday 19 October 2025",
+            "date_iso": "2025-10-19",
+            "home_team": "Wickersley Old Village CC-Vixens Indoor Hardball",
+            "away_team": "Bradfield Village Fellowship CC-Bernadettes Indoor Hardball",
+            "home_score": "81 / 3  (8.5)",
+            "away_score": "80 / 4  (10)",
+            "summary": "WICKERSLEY OLD VILLAGE CC WON  BY 3 WICKETS",
+            "is_win": true,
+            "is_loss": false,
+            "match_url": "https://wov.play-cricket.com/website/results/7199998"
+        },
+        {
+            "team_name_scraping": "Vixens Softball 1",
+            "team_id": "282728",
+            "date_str": "Sunday 12 October 2025",
+            "date_iso": "2025-10-12",
+            "home_team": "Green Moor Sports Club CC-Women's Soft Ball",
+            "away_team": "Wickersley Old Village CC-Vixens Softball 1",
+            "home_score": "117 / 16  (12.0) Net Score 237",
+            "away_score": "139 / 4  (12.0) Net Score 319",
+            "summary": "WICKERSLEY OLD VILLAGE CC WON  BY 82 RUNS",
+            "is_win": true,
+            "is_loss": false,
+            "match_url": "https://wov.play-cricket.com/website/results/7200069"
+        },
+        {
+            "team_name_scraping": "Vixens Softball 2",
+            "team_id": "297744",
+            "date_str": "Sunday 05 October 2025",
+            "date_iso": "2025-10-05",
+            "home_team": "Oughtibridge CC-Womens Indoor Softball Team 2",
+            "away_team": "Wickersley Old Village CC-Vixens Softball 2",
+            "home_score": "112 / 13  (12) Net Score 247",
+            "away_score": "103 / 3  (12) Net Score 288",
+            "summary": "WICKERSLEY OLD VILLAGE CC WON  BY 41 RUNS",
+            "is_win": true,
+            "is_loss": false,
+            "match_url": "https://wov.play-cricket.com/website/results/7200119"
+        }
+    ]
+}
