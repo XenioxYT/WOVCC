@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Wickersley Old Village Cricket Club - Community cricket in Rotherham">
-  <title>WOVCC - Wickersley Old Village Cricket Club</title>
+  <title>Home - WOVCC | Wickersley Old Village Cricket Club</title>
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="apple-touch-icon" href="assets/logo.png">
   <link rel="stylesheet" href="styles/main.css">
   <link rel="stylesheet" href="styles/pages.css">
 </head>
@@ -17,16 +19,18 @@
         <span>WOVCC</span>
       </a>
       
-      <div class="nav-toggle">
+      <button class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu">
         <span></span>
         <span></span>
         <span></span>
-      </div>
+      </button>
       
-      <ul class="nav-menu">
+      <ul class="nav-menu" id="nav-menu" role="menubar">
         <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="pages/matches.html" class="nav-link">Matches</a></li>
         <li><a href="pages/join.html" class="nav-link">Join / Renew</a></li>
         <li><a href="pages/members.html" class="nav-link">Members</a></li>
+        <li id="admin-nav-link" style="display: none;"><a href="pages/admin.html" class="nav-link">Admin</a></li>
       </ul>
       
       <!-- User Dropdown (shown when logged in) -->
@@ -57,28 +61,28 @@
       <!-- Live Match Section (shown during match days) -->
       <div id="live-match-section" style="display: none;">
         <div class="matchday-content">
-          <!-- Livestream Player -->
-          <div class="livestream-container">
-            <h3>Live Stream</h3>
+          
+          <!-- Optional External Livestream Player (Primary Match) -->
+          <div class="livestream-container" id="external-livestream-container" style="display: none;">
+            <h3 id="livestream-match-title">Live Stream</h3>
             <iframe 
               class="livestream-player"
-              src="https://www.youtube.com/embed/jfKfPfyJRdk" 
+              id="external-livestream-player"
+              src="" 
               frameborder="0" 
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
               allowfullscreen>
             </iframe>
           </div>
           
-          <!-- Live Scores Widget -->
+          <!-- Live Scores Widgets (Multiple - All Today's Matches) -->
           <div class="scores-container">
-            <h3>Live Scores</h3>
-            <div class="scores-widget">
-              <!-- Play-Cricket Live Scores Widget -->
-              <a style="display:none;" class="lsw" href="https://www.play-cricket.com/embed_widget/live_scorer_widgets?club_id=6908&days=0" id="lsw_link_1526534855798"></a>
-              <div class="lsw-col-12 lsw_tile" id="lsw_container_1526534855798"></div>
-              <script type="text/javascript">function loadCSSIfNotAlreadyLoadedForSomeReason() {var ss = document.styleSheets;for (var i = 0, max = ss.length; i < max; i++){if (ss[i].href == "https://www.play-cricket.com/live_scorer.css")return;}var link = document.createElement("link");link.rel = "stylesheet";link.href = "https://www.play-cricket.com/live_scorer.css";document.getElementsByTagName("head")[0].appendChild(link);}loadCSSIfNotAlreadyLoadedForSomeReason();!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="https://www.play-cricket.com/live_scorer.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","lsw-wjs");</script>
+            <h3 style="margin-bottom: 25px;">Live Scores</h3>
+            <div id="live-scores-widgets-container">
+              <!-- Multiple Play-Cricket Live Scores Widgets will be injected here dynamically -->
             </div>
           </div>
+          
         </div>
       </div>
       
@@ -93,32 +97,35 @@
           </select>
         </div>
         
-        <!-- Fixtures and Results Grid -->
-        <div class="fixtures-results-grid">
+        <!-- Fixtures and Results Vertical Stack -->
+        <div style="max-width: 900px; margin: 0 auto;">
           <!-- Upcoming Fixtures -->
-          <div class="fixtures-section">
+          <div class="fixtures-section" style="margin-bottom: 40px;">
             <h3 style="color: var(--primary-color); margin-bottom: 20px;">Upcoming Fixtures</h3>
             <div id="upcoming-fixtures-container">
-              <p style="text-align: center; color: var(--text-light); padding: 40px;">
-                Loading fixtures...
-              </p>
-            </div>
-            <div id="fixtures-show-more-container" style="text-align: center; margin-top: 20px; display: none;">
-              <button id="fixtures-show-more-btn" class="btn btn-outline">Show More</button>
+              <!-- Skeleton loader will be shown here -->
             </div>
           </div>
           
           <!-- Recent Results -->
-          <div class="results-section">
+          <div class="results-section" style="margin-bottom: 40px;">
             <h3 style="color: var(--primary-color); margin-bottom: 20px;">Recent Results</h3>
             <div id="recent-results-container">
-              <p style="text-align: center; color: var(--text-light); padding: 40px;">
-                Loading results...
-              </p>
+              <!-- Skeleton loader will be shown here -->
             </div>
-            <div id="results-show-more-container" style="text-align: center; margin-top: 20px; display: none;">
-              <button id="results-show-more-btn" class="btn btn-outline">Show More</button>
-            </div>
+          </div>
+          
+          <!-- Last Updated Timestamp -->
+          <div id="last-updated-container"></div>
+          
+          <!-- Show All Matches Button -->
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="pages/matches.html" class="btn btn-primary" style="padding: 14px 32px; font-size: 1.05rem;">
+              <svg style="width: 18px; height: 18px; margin-right: 8px; vertical-align: middle;" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+              </svg>
+              Show All Matches
+            </a>
           </div>
         </div>
       </div>

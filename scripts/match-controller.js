@@ -43,6 +43,10 @@ class MatchController {
   async setupTeamSelector() {
     if (!this.teamSelector) return;
     
+    // Show loading state
+    this.teamSelector.style.opacity = '0.6';
+    this.teamSelector.disabled = true;
+    
     try {
       const teams = await wovccApi.getTeams();
       
@@ -63,21 +67,54 @@ class MatchController {
         this.loadData();
       });
       
+      // Restore selector
+      this.teamSelector.style.opacity = '1';
+      this.teamSelector.disabled = false;
+      
     } catch (error) {
       console.error('Failed to setup team selector:', error);
+      this.teamSelector.style.opacity = '1';
+      this.teamSelector.disabled = false;
     }
   }
   
   /**
-   * Check if matches are happening today
+   * Check live match configuration from admin panel
    */
   async checkMatchStatus() {
     try {
-      const hasMatches = await wovccApi.checkMatchStatus();
+      // Get live configuration from API
+      const response = await fetch(`${wovccApi.baseURL}/live-config`);
+      const data = await response.json();
       
-      if (hasMatches) {
-        this.showLiveSection();
+      if (data.success && data.config) {
+        const config = data.config;
+        
+        // Check if admin has enabled live section
+        if (config.is_live && config.selected_match) {
+          // Get all today's matches
+          const todaysMatches = await this.getTodaysMatches();
+          
+          // Show/hide external livestream if provided (for primary match only)
+          if (config.livestream_url && config.livestream_url.trim() !== '') {
+            this.showExternalLivestream(config.livestream_url, config.selected_match);
+          } else {
+            this.hideExternalLivestream();
+          }
+          
+          // Inject Play-Cricket widgets for all today's matches
+          if (todaysMatches.length > 0) {
+            this.injectMultiplePlayCricketWidgets(todaysMatches);
+          }
+          
+          // Show live section
+          this.showLiveSection();
+        } else {
+          // Show regular fixtures/results section
+          this.showNoMatchSection();
+        }
       } else {
+        // Default to showing no-match section
         this.showNoMatchSection();
       }
       
@@ -89,6 +126,135 @@ class MatchController {
   }
   
   /**
+   * Get all fixtures scheduled for today
+   */
+  async getTodaysMatches() {
+    try {
+      const fixtures = await wovccApi.getFixtures('all');
+      
+      // Get today's date in ISO format (YYYY-MM-DD)
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Filter fixtures for today
+      const todaysMatches = fixtures.filter(f => f.date_iso === today);
+      
+      return todaysMatches;
+    } catch (error) {
+      console.error('Failed to get todays matches:', error);
+      return [];
+    }
+  }
+  
+  /**
+   * Inject multiple Play-Cricket live score widgets for today's matches
+   */
+  injectMultiplePlayCricketWidgets(matches) {
+    const container = document.getElementById('live-scores-widgets-container');
+    if (!container || !matches || matches.length === 0) return;
+    
+    // Clear any existing content
+    container.innerHTML = '';
+    
+    // Create a widget for each match
+    matches.forEach((match, index) => {
+      const teamId = match.team_id;
+      if (!teamId) return;
+      
+      // Generate unique IDs for this widget instance
+      const uniqueId = Date.now() + index;
+      const linkId = `lsw_link_${uniqueId}`;
+      const containerId = `lsw_container_${uniqueId}`;
+      
+      // Create a wrapper for each widget with match info
+      const widgetWrapper = document.createElement('div');
+      widgetWrapper.style.cssText = 'margin-bottom: 30px;';
+      
+      // Add match title
+      const matchTitle = document.createElement('h4');
+      matchTitle.style.cssText = 'color: var(--primary-color); margin-bottom: 15px; font-size: 1.1rem;';
+      matchTitle.textContent = `${match.team_name_scraping} - ${match.home_team} vs ${match.away_team}`;
+      widgetWrapper.appendChild(matchTitle);
+      
+      // Create the Play-Cricket widget HTML
+      const widgetHTML = `
+        <a style="display:none;" class="lsw" href="https://www.play-cricket.com/embed_widget/live_scorer_widgets?team_id=${teamId}&days=0" id="${linkId}"></a>
+        <div class="lsw-col-12 lsw_tile" id="${containerId}"></div>
+      `;
+      
+      const widgetDiv = document.createElement('div');
+      widgetDiv.innerHTML = widgetHTML;
+      widgetWrapper.appendChild(widgetDiv);
+      
+      container.appendChild(widgetWrapper);
+    });
+    
+    // Load the CSS and JavaScript for the widgets
+    this.loadPlayCricketResources();
+  }
+  
+  /**
+   * Load Play-Cricket CSS and JavaScript resources
+   */
+  loadPlayCricketResources() {
+    // Load CSS if not already loaded
+    if (!document.querySelector('link[href="https://www.play-cricket.com/live_scorer.css"]')) {
+      const cssLink = document.createElement('link');
+      cssLink.rel = 'stylesheet';
+      cssLink.href = 'https://www.play-cricket.com/live_scorer.css';
+      document.head.appendChild(cssLink);
+    }
+    
+    // Load JavaScript if not already loaded
+    if (!document.getElementById('lsw-wjs')) {
+      const script = document.createElement('script');
+      script.id = 'lsw-wjs';
+      script.src = 'https://www.play-cricket.com/live_scorer.js';
+      script.async = true;
+      document.body.appendChild(script);
+    } else {
+      // If script already loaded, trigger refresh
+      if (window.LSW && window.LSW.refresh) {
+        window.LSW.refresh();
+      }
+    }
+  }
+  
+  /**
+   * Show external livestream iframe with match name
+   */
+  showExternalLivestream(url, match) {
+    const container = document.getElementById('external-livestream-container');
+    const iframe = document.getElementById('external-livestream-player');
+    const titleElement = document.getElementById('livestream-match-title');
+    
+    if (container && iframe && url) {
+      iframe.src = url;
+      container.style.display = 'block';
+      
+      // Update title with match info if available
+      if (titleElement && match) {
+        titleElement.textContent = `Live Stream - ${match.team_name_scraping}: ${match.home_team} vs ${match.away_team}`;
+      }
+    }
+  }
+  
+  /**
+   * Hide external livestream iframe
+   */
+  hideExternalLivestream() {
+    const container = document.getElementById('external-livestream-container');
+    const iframe = document.getElementById('external-livestream-player');
+    
+    if (container) {
+      container.style.display = 'none';
+    }
+    
+    if (iframe) {
+      iframe.src = '';
+    }
+  }
+  
+  /**
    * Load fixtures and results data
    */
   async loadData() {
@@ -96,6 +262,12 @@ class MatchController {
       this.loadFixtures(),
       this.loadResults()
     ]);
+    
+    // Display last updated timestamp
+    const lastUpdatedContainer = document.getElementById('last-updated-container');
+    if (lastUpdatedContainer) {
+      wovccApi.renderLastUpdated(lastUpdatedContainer);
+    }
   }
   
   /**
@@ -104,9 +276,13 @@ class MatchController {
   async loadFixtures() {
     if (!this.fixturesContainer) return;
     
+    // Show skeleton loader while loading
+    wovccApi.renderFixturesSkeleton(this.fixturesContainer, 2);
+    
     try {
       const fixtures = await wovccApi.getFixtures(this.currentTeam);
-      wovccApi.renderFixtures(fixtures, this.fixturesContainer);
+      // Limit to 2 fixtures for homepage
+      wovccApi.renderFixtures(fixtures, this.fixturesContainer, 2);
     } catch (error) {
       console.error('Failed to load fixtures:', error);
       this.fixturesContainer.innerHTML = `
@@ -123,9 +299,13 @@ class MatchController {
   async loadResults() {
     if (!this.resultsContainer) return;
     
+    // Show skeleton loader while loading
+    wovccApi.renderResultsSkeleton(this.resultsContainer, 2);
+    
     try {
       const results = await wovccApi.getResults(this.currentTeam, 10);
-      wovccApi.renderResults(results, this.resultsContainer);
+      // Limit to 2 results for homepage
+      wovccApi.renderResults(results, this.resultsContainer, 2);
     } catch (error) {
       console.error('Failed to load results:', error);
       this.resultsContainer.innerHTML = `

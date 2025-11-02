@@ -154,11 +154,27 @@ p {
   color: var(--primary-color);
 }
 
+.nav-link:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 .nav-toggle {
   display: none;
   flex-direction: column;
   cursor: pointer;
   gap: 5px;
+  background: none;
+  border: none;
+  padding: 5px;
+  outline: none;
+}
+
+.nav-toggle:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .nav-toggle span {
@@ -190,6 +206,11 @@ p {
   background-color: #c89560;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(212, 165, 116, 0.4);
+}
+
+.btn:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
 
 .btn-secondary {
@@ -295,7 +316,8 @@ p {
 .form-input:focus,
 .form-select:focus,
 .form-textarea:focus {
-  outline: none;
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(26, 95, 95, 0.1);
 }
@@ -686,6 +708,90 @@ p {
   padding: 15px 35px;
   font-size: 1rem;
   white-space: nowrap;
+}
+
+/* --- Skeleton Loaders --- */
+.skeleton-loader {
+  background: linear-gradient(90deg, var(--border-color) 25%, rgba(233, 236, 239, 0.5) 50%, var(--border-color) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 15px;
+  box-shadow: var(--glass-shadow);
+}
+
+.skeleton-line {
+  height: 16px;
+  margin-bottom: 12px;
+  border-radius: 4px;
+}
+
+.skeleton-line.short {
+  width: 60%;
+}
+
+.skeleton-line.medium {
+  width: 80%;
+}
+
+.skeleton-line.long {
+  width: 100%;
+}
+
+.skeleton-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.skeleton-select {
+  display: inline-block;
+  width: 200px;
+  height: 40px;
+  border-radius: 8px;
+}
+
+.skeleton-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  gap: 15px;
+  color: var(--text-light);
 }
 
 

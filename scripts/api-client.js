@@ -27,6 +27,50 @@ class WOVCCApi {
     this.cachedData = null;
     this.cacheTimestamp = null;
     this.cacheMaxAge = 5 * 60 * 1000; // 5 minutes in milliseconds
+    this.lastUpdated = null; // Store last updated timestamp from API
+  }
+  
+  /**
+   * Format relative time (e.g., "2 hours ago", "just now")
+   * @param {string} isoString - ISO date string
+   * @returns {string} Relative time string
+   */
+  formatRelativeTime(isoString) {
+    if (!isoString) return 'Unknown';
+    
+    const now = new Date();
+    const then = new Date(isoString);
+    const diffMs = now - then;
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHour = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHour / 24);
+    
+    if (diffSec < 60) return 'just now';
+    if (diffMin < 60) return `${diffMin} minute${diffMin !== 1 ? 's' : ''} ago`;
+    if (diffHour < 24) return `${diffHour} hour${diffHour !== 1 ? 's' : ''} ago`;
+    if (diffDay < 7) return `${diffDay} day${diffDay !== 1 ? 's' : ''} ago`;
+    
+    // For older dates, show formatted date
+    return then.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  
+  /**
+   * Get formatted last updated timestamp
+   * @returns {object} { relative: string, full: string }
+   */
+  getLastUpdated() {
+    if (!this.lastUpdated) return null;
+    return {
+      relative: this.formatRelativeTime(this.lastUpdated),
+      full: new Date(this.lastUpdated).toLocaleString('en-GB', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    };
   }
   
   /**
@@ -80,6 +124,7 @@ class WOVCCApi {
       if (data.success) {
         this.cachedData = data;
         this.cacheTimestamp = now;
+        this.lastUpdated = data.last_updated || null;
         console.log(`Data fetched successfully (last updated: ${data.last_updated})`);
         return data;
       } else {
@@ -213,7 +258,31 @@ class WOVCCApi {
   clearCache() {
     this.cachedData = null;
     this.cacheTimestamp = null;
+    this.lastUpdated = null;
     console.log('Local cache cleared');
+  }
+  
+  /**
+   * Render last updated timestamp
+   * @param {HTMLElement} container - Container element to render into
+   */
+  renderLastUpdated(container) {
+    if (!container) return;
+    
+    const lastUpdated = this.getLastUpdated();
+    if (!lastUpdated) {
+      container.innerHTML = '';
+      return;
+    }
+    
+    container.innerHTML = `
+      <div class="last-updated-display" style="text-align: center; margin-top: 15px; padding: 10px 0; color: var(--text-light); font-size: 0.85rem;">
+        <span style="color: var(--text-light);">Last updated:</span>
+        <span class="last-updated-time" style="color: var(--primary-color); font-weight: 500; margin-left: 5px; cursor: help;" title="${lastUpdated.full}">
+          ${lastUpdated.relative}
+        </span>
+      </div>
+    `;
   }
   
   /**
@@ -225,11 +294,78 @@ class WOVCCApi {
   }
   
   /**
+   * Render skeleton loader for fixtures
+   * @param {HTMLElement} container - Container element
+   * @param {Number} count - Number of skeleton cards to show
+   */
+  renderFixturesSkeleton(container, count = 2) {
+    if (!container) return;
+    
+    let html = '';
+    for (let i = 0; i < count; i++) {
+      html += `
+        <div class="skeleton-card">
+          <div class="skeleton-loader skeleton-line short" style="margin-bottom: 12px;"></div>
+          <div class="skeleton-loader skeleton-line medium" style="margin-bottom: 8px;"></div>
+          <div class="skeleton-loader skeleton-line long" style="margin-bottom: 8px;"></div>
+          <div style="display: flex; gap: 15px; margin-top: 12px;">
+            <div class="skeleton-loader skeleton-line short" style="width: 100px; height: 14px;"></div>
+            <div class="skeleton-loader skeleton-line short" style="width: 120px; height: 14px;"></div>
+          </div>
+        </div>
+      `;
+    }
+    container.innerHTML = html;
+  }
+  
+  /**
+   * Render skeleton loader for results
+   * @param {HTMLElement} container - Container element
+   * @param {Number} count - Number of skeleton cards to show
+   */
+  renderResultsSkeleton(container, count = 2) {
+    if (!container) return;
+    
+    let html = '';
+    for (let i = 0; i < count; i++) {
+      html += `
+        <div class="skeleton-card">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+            <div class="skeleton-loader skeleton-line short" style="width: 120px; height: 16px;"></div>
+            <div class="skeleton-loader skeleton-line short" style="width: 60px; height: 24px; border-radius: 12px;"></div>
+          </div>
+          <div class="skeleton-loader skeleton-line medium" style="margin-bottom: 8px;"></div>
+          <div class="skeleton-loader skeleton-line long" style="margin-bottom: 8px;"></div>
+          <div class="skeleton-loader skeleton-line medium" style="width: 70%; margin-top: 8px;"></div>
+        </div>
+      `;
+    }
+    container.innerHTML = html;
+  }
+  
+  /**
+   * Render loading spinner
+   * @param {HTMLElement} container - Container element
+   * @param {string} message - Optional loading message
+   */
+  renderLoadingSpinner(container, message = 'Loading...') {
+    if (!container) return;
+    
+    container.innerHTML = `
+      <div class="loading-spinner-container">
+        <div class="skeleton-spinner"></div>
+        <span>${message}</span>
+      </div>
+    `;
+  }
+  
+  /**
    * Render fixtures to a container element
    * @param {Array} fixtures - Fixtures data
    * @param {HTMLElement} container - Container element
+   * @param {Number} limit - Optional limit for number of fixtures to display (null = show all)
    */
-  renderFixtures(fixtures, container) {
+  renderFixtures(fixtures, container, limit = null) {
     if (!container) return;
     
     if (!fixtures || fixtures.length === 0) {
@@ -238,25 +374,20 @@ class WOVCCApi {
           No upcoming fixtures found.
         </p>
       `;
-      // Hide show more button
-      const showMoreContainer = document.getElementById('fixtures-show-more-container');
-      if (showMoreContainer) {
-        showMoreContainer.style.display = 'none';
-      }
       return;
     }
     
-    const INITIAL_DISPLAY = 3;
+    // Apply limit if specified
+    const displayFixtures = limit ? fixtures.slice(0, limit) : fixtures;
     let html = '';
     
-    fixtures.forEach((fixture, index) => {
+    displayFixtures.forEach((fixture, index) => {
       const timeText = fixture.time ? `${fixture.time}` : '';
       const locationText = fixture.location ? `${fixture.location}` : '';
       const matchUrl = fixture.match_url || '#';
-      const isHidden = index >= INITIAL_DISPLAY;
       
       html += `
-        <a href="${matchUrl}" target="_blank" class="fixture-card-link fixture-item" style="text-decoration: none; color: inherit; display: ${isHidden ? 'none' : 'block'};">
+        <a href="${matchUrl}" target="_blank" class="fixture-card-link fixture-item" style="text-decoration: none; color: inherit; display: block;">
           <div class="fixture-card">
             <div style="display: flex; justify-content: space-between; align-items: start; gap: 20px;">
               <div style="flex: 1;">
@@ -284,42 +415,15 @@ class WOVCCApi {
     });
     
     container.innerHTML = html;
-    
-    // Handle show more button
-    const showMoreContainer = document.getElementById('fixtures-show-more-container');
-    const showMoreBtn = document.getElementById('fixtures-show-more-btn');
-    
-    if (fixtures.length > INITIAL_DISPLAY) {
-      if (showMoreContainer) {
-        showMoreContainer.style.display = 'block';
-      }
-      
-      if (showMoreBtn) {
-        // Remove old event listeners by cloning and replacing
-        const newBtn = showMoreBtn.cloneNode(true);
-        showMoreBtn.parentNode.replaceChild(newBtn, showMoreBtn);
-        
-        newBtn.addEventListener('click', () => {
-          const hiddenItems = container.querySelectorAll('.fixture-item[style*="display: none"]');
-          hiddenItems.forEach(item => {
-            item.style.display = 'block';
-          });
-          newBtn.parentElement.style.display = 'none';
-        });
-      }
-    } else {
-      if (showMoreContainer) {
-        showMoreContainer.style.display = 'none';
-      }
-    }
   }
   
   /**
    * Render results to a container element
    * @param {Array} results - Results data
    * @param {HTMLElement} container - Container element
+   * @param {Number} limit - Optional limit for number of results to display (null = show all)
    */
-  renderResults(results, container) {
+  renderResults(results, container, limit = null) {
     if (!container) return;
     
     if (!results || results.length === 0) {
@@ -328,25 +432,20 @@ class WOVCCApi {
           No recent results found.
         </p>
       `;
-      // Hide show more button
-      const showMoreContainer = document.getElementById('results-show-more-container');
-      if (showMoreContainer) {
-        showMoreContainer.style.display = 'none';
-      }
       return;
     }
     
-    const INITIAL_DISPLAY = 3;
+    // Apply limit if specified
+    const displayResults = limit ? results.slice(0, limit) : results;
     let html = '';
     
-    results.forEach((result, index) => {
+    displayResults.forEach((result, index) => {
       const resultClass = result.is_win ? 'win' : result.is_loss ? 'loss' : 'draw';
       const matchUrl = result.match_url || '#';
       const resultLabel = result.is_win ? 'Won' : result.is_loss ? 'Lost' : 'Draw';
-      const isHidden = index >= INITIAL_DISPLAY;
       
       html += `
-        <a href="${matchUrl}" target="_blank" class="result-card-link result-item" style="text-decoration: none; color: inherit; display: ${isHidden ? 'none' : 'block'};">
+        <a href="${matchUrl}" target="_blank" class="result-card-link result-item" style="text-decoration: none; color: inherit; display: block;">
           <div class="result-card ${resultClass}">
             <div style="display: flex; justify-content: space-between; align-items: start; gap: 20px;">
               <div style="flex: 1;">
@@ -376,34 +475,6 @@ class WOVCCApi {
     });
     
     container.innerHTML = html;
-    
-    // Handle show more button
-    const showMoreContainer = document.getElementById('results-show-more-container');
-    const showMoreBtn = document.getElementById('results-show-more-btn');
-    
-    if (results.length > INITIAL_DISPLAY) {
-      if (showMoreContainer) {
-        showMoreContainer.style.display = 'block';
-      }
-      
-      if (showMoreBtn) {
-        // Remove old event listeners by cloning and replacing
-        const newBtn = showMoreBtn.cloneNode(true);
-        showMoreBtn.parentNode.replaceChild(newBtn, showMoreBtn);
-        
-        newBtn.addEventListener('click', () => {
-          const hiddenItems = container.querySelectorAll('.result-item[style*="display: none"]');
-          hiddenItems.forEach(item => {
-            item.style.display = 'block';
-          });
-          newBtn.parentElement.style.display = 'none';
-        });
-      }
-    } else {
-      if (showMoreContainer) {
-        showMoreContainer.style.display = 'none';
-      }
-    }
   }
 }
 

@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Join / Renew - WOVCC</title>
+  <meta name="description" content="Join or renew your membership - Annual membership for just £15/year">
+  <title>Join / Renew - WOVCC | Wickersley Old Village Cricket Club</title>
+  <link rel="icon" type="image/png" href="../assets/logo.png">
+  <link rel="apple-touch-icon" href="../assets/logo.png">
   <link rel="stylesheet" href="../styles/main.css">
   <link rel="stylesheet" href="../styles/pages.css">
 </head>
@@ -16,16 +19,18 @@
         <span>WOVCC</span>
       </a>
       
-      <div class="nav-toggle">
+      <button class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu">
         <span></span>
         <span></span>
         <span></span>
-      </div>
+      </button>
       
-      <ul class="nav-menu">
+      <ul class="nav-menu" id="nav-menu" role="menubar">
         <li><a href="../index.html" class="nav-link">Home</a></li>
+        <li><a href="matches.html" class="nav-link">Matches</a></li>
         <li><a href="join.html" class="nav-link">Join / Renew</a></li>
         <li><a href="members.html" class="nav-link">Members</a></li>
+        <li id="admin-nav-link" style="display: none;"><a href="admin.html" class="nav-link">Admin</a></li>
       </ul>
       
       <!-- User Dropdown (shown when logged in) -->
@@ -269,7 +274,7 @@
     }
     
     // Handle new member signup
-    document.getElementById('signup-form').addEventListener('submit', function(e) {
+    document.getElementById('signup-form').addEventListener('submit', async function(e) {
       e.preventDefault();
       
       const name = document.getElementById('name').value;
@@ -278,49 +283,116 @@
       const newsletter = document.getElementById('newsletter').checked;
       
       if (password.length < 6) {
-        alert('Password must be at least 6 characters');
+        if (typeof showNotification === 'function') {
+          showNotification('Password must be at least 6 characters', 'error');
+        } else {
+          alert('Password must be at least 6 characters');
+        }
         return;
       }
       
-      // Mock payment & signup
-      setTimeout(() => {
-        const result = window.WOVCCAuth.signup(
-          name,
-          email,
-          password,
-          'Annual Member',
-          newsletter
-        );
+      // Disable form
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating account...';
+      
+      try {
+        // Register user
+        const result = await window.WOVCCAuth.signup(name, email, password, newsletter);
         
         if (result.success) {
-          document.getElementById('new-member-form').style.display = 'none';
-          document.getElementById('success-section').style.display = 'block';
-          document.getElementById('success-section').scrollIntoView({ behavior: 'smooth' });
+          // Update navbar
+          window.WOVCCAuth.updateNavbar();
+          
+          // Create Stripe checkout session
+          try {
+            await window.WOVCCAuth.createCheckoutSession();
+            // User will be redirected to Stripe Checkout
+            // On return, payment success will be handled by auth.js
+          } catch (error) {
+            // If checkout fails, show success for registration but note payment needed
+            document.getElementById('new-member-form').style.display = 'none';
+            document.getElementById('success-section').style.display = 'block';
+            document.getElementById('success-section').scrollIntoView({ behavior: 'smooth' });
+            
+            if (typeof showNotification === 'function') {
+              showNotification('Account created, but payment setup failed. Please try again.', 'warning');
+            }
+          }
         } else {
-          alert(result.message);
+          if (typeof showNotification === 'function') {
+            showNotification(result.message, 'error');
+          } else {
+            alert(result.message);
+          }
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
         }
-      }, 500);
+      } catch (error) {
+        if (typeof showNotification === 'function') {
+          showNotification('Failed to create account. Please try again.', 'error');
+        } else {
+          alert('Failed to create account. Please try again.');
+        }
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
     });
     
     // Handle membership renewal
-    document.getElementById('renew-form').addEventListener('submit', function(e) {
+    document.getElementById('renew-form').addEventListener('submit', async function(e) {
       e.preventDefault();
       
       const email = document.getElementById('renew-email').value;
       const password = document.getElementById('renew-password').value;
       
-      // Mock payment & renewal
-      setTimeout(() => {
-        const result = window.WOVCCAuth.login(email, password);
+      // Disable form
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Logging in...';
+      
+      try {
+        // Login user
+        const result = await window.WOVCCAuth.login(email, password);
         
         if (result.success) {
-          document.getElementById('renewal-form').style.display = 'none';
-          document.getElementById('success-section').style.display = 'block';
-          document.getElementById('success-section').scrollIntoView({ behavior: 'smooth' });
+          // Update navbar
+          window.WOVCCAuth.updateNavbar();
+          
+          // Create Stripe checkout session for renewal
+          try {
+            await window.WOVCCAuth.createCheckoutSession();
+            // User will be redirected to Stripe Checkout
+          } catch (error) {
+            // If checkout fails, show message
+            if (typeof showNotification === 'function') {
+              showNotification('Logged in, but payment setup failed. Please try again.', 'warning');
+            } else {
+              alert('Logged in, but payment setup failed. Please try again.');
+            }
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+          }
         } else {
-          alert('Invalid email or password. If you need help, contact info@wovcc.co.uk');
+          if (typeof showNotification === 'function') {
+            showNotification(result.message || 'Invalid email or password. If you need help, contact info@wovcc.co.uk', 'error');
+          } else {
+            alert('Invalid email or password. If you need help, contact info@wovcc.co.uk');
+          }
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
         }
-      }, 500);
+      } catch (error) {
+        if (typeof showNotification === 'function') {
+          showNotification('Failed to login. Please try again.', 'error');
+        } else {
+          alert('Failed to login. Please try again.');
+        }
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
     });
   </script>
 </body>
