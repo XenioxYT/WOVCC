@@ -144,3 +144,4 @@ def require_admin(f):
         return f(user, *args, **kwargs)
     return decorated_function
 
+

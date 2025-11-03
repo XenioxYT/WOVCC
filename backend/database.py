@@ -87,3 +87,5 @@ if __name__ == '__main__':
     init_db()
     print(f"Database created at: {DATABASE_URL}")
 
+
+
