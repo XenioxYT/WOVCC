@@ -302,23 +302,17 @@
         const result = await window.WOVCCAuth.signup(name, email, password, newsletter);
         
         if (result.success) {
-          // Update navbar
+          // If pre-register returned a checkout URL, redirect user to Stripe Checkout
+          if (result.checkout_url) {
+            window.location.href = result.checkout_url;
+            return; // browser will navigate away
+          }
+
+          // Otherwise update navbar (legacy behavior)
           window.WOVCCAuth.updateNavbar();
           
-          // Create Stripe checkout session
-          try {
-            await window.WOVCCAuth.createCheckoutSession();
-            // User will be redirected to Stripe Checkout
-            // On return, payment success will be handled by auth.js
-          } catch (error) {
-            // If checkout fails, show success for registration but note payment needed
-            document.getElementById('new-member-form').style.display = 'none';
-            document.getElementById('success-section').style.display = 'block';
-            document.getElementById('success-section').scrollIntoView({ behavior: 'smooth' });
-            
-            if (typeof showNotification === 'function') {
-              showNotification('Account created, but payment setup failed. Please try again.', 'warning');
-            }
+          if (typeof showNotification === 'function') {
+            showNotification('Account created. Please complete payment.', 'info');
           }
         } else {
           if (typeof showNotification === 'function') {
