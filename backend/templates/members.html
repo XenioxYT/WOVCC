@@ -1,0 +1,266 @@
+{% extends "layout.html" %}
+
+{% block title %}Members Area - WOVCC | Wickersley Old Village Cricket Club{% endblock %}
+
+{% block description %}Members Area - Access exclusive content and member benefits{% endblock %}
+
+{% block content %}
+  <!-- Page Header -->
+  <section class="hero" style="background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/assets/banner.jpeg'); background-size: cover; background-position: center 40%; height: 300px;">
+    <div class="hero-content">
+      <h1>Members Area</h1>
+      <p>Login to access exclusive member content</p>
+    </div>
+  </section>
+
+  <!-- Login Section -->
+  <section id="login-section">
+    <div class="login-container">
+      <h2>Members Login</h2>
+      <p class="text-center" style="color: var(--text-light); margin-bottom: 30px;">
+        Login to access members content
+      </p>
+      
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label" for="login-email">Email</label>
+          <input type="email" id="login-email" class="form-input" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="login-password">Password</label>
+          <input type="password" id="login-password" class="form-input" required>
+        </div>
+        
+        <div id="login-error" class="alert alert-error" style="display: none;"></div>
+        
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+          Login
+        </button>
+        
+        <p class="text-center mt-2" style="color: var(--text-light);">
+          Not a member? <a href="/join" style="color: var(--primary-color); font-weight: 600;">Join Now</a>
+        </p>
+      </form>
+    </div>
+  </section>
+
+  <!-- Members Content -->
+  <section id="members-content" style="display: none;">
+    <!-- Welcome Banner -->
+    <div class="welcome-banner">
+      <div>
+        <h2>Welcome, <span id="member-name">Member</span>!</h2>
+      </div>
+      <button class="btn btn-outline" onclick="handleLogout()" style="background-color: rgba(255,255,255,0.2); border-color: white; color: white;">
+        Logout
+      </button>
+    </div>
+
+    <!-- Members Content -->
+    <div class="section">
+      <div class="container" style="max-width: 800px;">
+        
+        <!-- Member Info -->
+        <div class="card" style="margin-bottom: 30px;">
+          <div class="card-body">
+            <h3 style="color: var(--primary-color); margin-bottom: 15px;">Your Membership</h3>
+            <p style="margin-bottom: 10px;">
+              <strong>Status:</strong> <span id="membership-status" style="color: green;">Active</span>
+            </p>
+            <p style="margin-bottom: 10px;">
+              <strong>Type:</strong> <span id="membership-type">Annual Member</span> (£15/year)
+            </p>
+            <p style="margin-bottom: 10px;" id="membership-dates">
+              <strong>Membership Period:</strong><br>
+              <span style="color: var(--text-light); font-size: 0.95rem;">
+                <span id="start-date">-</span> to <span id="expiry-date">-</span>
+              </span>
+            </p>
+            <p style="margin-bottom: 10px;" id="days-remaining-container">
+              <strong>Days Remaining:</strong> <span id="days-remaining" style="font-size: 1.2rem; color: var(--accent-color);">-</span>
+            </p>
+            <p style="margin-bottom: 20px;">
+              <strong>Benefits:</strong> Drink discounts, members area access, newsletter updates
+            </p>
+            <a href="/join" class="btn btn-outline">Renew Membership</a>
+          </div>
+        </div>
+
+        <!-- Latest News -->
+        <div class="card" style="margin-bottom: 30px;">
+          <div class="card-body">
+            <h3 style="color: var(--primary-color); margin-bottom: 15px;">Members News</h3>
+            <div style="padding: 15px 0; border-bottom: 1px solid var(--border-color);">
+              <h4 style="color: var(--text-dark); margin-bottom: 5px;">AGM This Month</h4>
+              <p style="color: var(--text-light); font-size: 0.9rem;">
+                Annual General Meeting on November 20th at 7pm. All members welcome.
+              </p>
+            </div>
+            <div style="padding: 15px 0;">
+              <h4 style="color: var(--text-dark); margin-bottom: 5px;">New Net Sessions</h4>
+              <p style="color: var(--text-light); font-size: 0.9rem;">
+                Indoor winter nets starting December. Sign up at the bar.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Documents -->
+        <div class="card">
+          <div class="card-body">
+            <h3 style="color: var(--primary-color); margin-bottom: 15px;">Documents</h3>
+            <div class="documents-list">
+              <div class="document-item">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                  <div class="icon">📋</div>
+                  <div>
+                    <h4 style="margin: 0;">Club Constitution</h4>
+                  </div>
+                </div>
+                <a href="#" class="btn btn-outline" style="padding: 8px 20px;">Download</a>
+              </div>
+              
+              <div class="document-item">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                  <div class="icon">📄</div>
+                  <div>
+                    <h4 style="margin: 0;">Fixture List 2025</h4>
+                  </div>
+                </div>
+                <a href="#" class="btn btn-outline" style="padding: 8px 20px;">Download</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      checkAuthStatus();
+    });
+    
+    async function checkAuthStatus() {
+      const user = window.WOVCCAuth.getCurrentUser();
+      
+      if (user && user.is_member) {
+        showMembersContent(user);
+      } else {
+        showLoginForm();
+      }
+    }
+    
+    function showLoginForm() {
+      document.getElementById('login-section').style.display = 'block';
+      document.getElementById('members-content').style.display = 'none';
+    }
+    
+    function showMembersContent(user) {
+      document.getElementById('login-section').style.display = 'none';
+      document.getElementById('members-content').style.display = 'block';
+      document.getElementById('member-name').textContent = user.name;
+      
+      // Update membership information
+      updateMembershipInfo(user);
+    }
+    
+    function updateMembershipInfo(user) {
+      // Update membership type
+      if (user.membership_tier) {
+        document.getElementById('membership-type').textContent = user.membership_tier;
+      }
+      
+      // Update status
+      const statusElement = document.getElementById('membership-status');
+      if (user.payment_status === 'active' && user.is_member) {
+        statusElement.textContent = 'Active';
+        statusElement.style.color = 'green';
+      } else if (user.payment_status === 'expired') {
+        statusElement.textContent = 'Expired';
+        statusElement.style.color = 'red';
+      } else {
+        statusElement.textContent = 'Pending';
+        statusElement.style.color = 'orange';
+      }
+      
+      // Update dates if available
+      if (user.membership_start_date && user.membership_expiry_date) {
+        const startDate = new Date(user.membership_start_date);
+        const expiryDate = new Date(user.membership_expiry_date);
+        
+        const formatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('start-date').textContent = startDate.toLocaleDateString('en-GB', formatOptions);
+        document.getElementById('expiry-date').textContent = expiryDate.toLocaleDateString('en-GB', formatOptions);
+        
+        // Calculate days remaining
+        const today = new Date();
+        const timeDiff = expiryDate.getTime() - today.getTime();
+        const daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
+        
+        const daysRemainingElement = document.getElementById('days-remaining');
+        if (daysRemaining > 0) {
+          daysRemainingElement.textContent = daysRemaining;
+          if (daysRemaining <= 30) {
+            daysRemainingElement.style.color = 'orange';
+          } else {
+            daysRemainingElement.style.color = 'var(--accent-color)';
+          }
+        } else {
+          daysRemainingElement.textContent = 'Expired';
+          daysRemainingElement.style.color = 'red';
+        }
+        
+        document.getElementById('membership-dates').style.display = 'block';
+        document.getElementById('days-remaining-container').style.display = 'block';
+      } else {
+        document.getElementById('membership-dates').style.display = 'none';
+        document.getElementById('days-remaining-container').style.display = 'none';
+      }
+    }
+    
+    document.getElementById('login-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const errorDiv = document.getElementById('login-error');
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Logging in...';
+      errorDiv.style.display = 'none';
+      
+      try {
+        const result = await window.WOVCCAuth.login(email, password);
+        
+        if (result.success) {
+          showMembersContent(result.user);
+          window.WOVCCAuth.updateNavbar();
+        } else {
+          errorDiv.textContent = result.message;
+          errorDiv.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      } catch (error) {
+        errorDiv.textContent = 'Failed to login. Please try again.';
+        errorDiv.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    });
+    
+    async function handleLogout() {
+      await window.WOVCCAuth.logout();
+      showLoginForm();
+      window.WOVCCAuth.updateNavbar();
+      window.scrollTo(0, 0);
+    }
+  </script>
+{% endblock %}
