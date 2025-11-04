@@ -34,6 +34,8 @@ class User(Base):
     newsletter = Column(Boolean, default=False)
     stripe_customer_id = Column(String(255), nullable=True, index=True)
     payment_status = Column(String(50), default='pending')  # pending, active, expired, cancelled
+    membership_start_date = Column(DateTime, nullable=True)  # When membership started/renewed
+    membership_expiry_date = Column(DateTime, nullable=True)  # When membership expires
     join_date = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -49,6 +51,8 @@ class User(Base):
             'is_admin': self.is_admin,
             'newsletter': self.newsletter,
             'payment_status': self.payment_status,
+            'membership_start_date': self.membership_start_date.isoformat() if self.membership_start_date else None,
+            'membership_expiry_date': self.membership_expiry_date.isoformat() if self.membership_expiry_date else None,
             'join_date': self.join_date.isoformat() if self.join_date else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
@@ -58,6 +62,27 @@ class User(Base):
             data['stripe_customer_id'] = self.stripe_customer_id
         
         return data
+
+
+class PendingRegistration(Base):
+    """Temporary pending registration stored until payment completes"""
+    __tablename__ = 'pending_registrations'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    email = Column(String(255), index=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    newsletter = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'email': self.email,
+            'newsletter': self.newsletter,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
 
 
 def init_db():
@@ -86,6 +111,7 @@ if __name__ == '__main__':
     # Initialize database when run directly
     init_db()
     print(f"Database created at: {DATABASE_URL}")
+
 
 
 
