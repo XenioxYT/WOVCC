@@ -57,7 +57,14 @@ def create_checkout_session(customer_id: str = None, email: str = None, user_id:
         'success_url': os.environ.get('STRIPE_SUCCESS_URL', f'{default_frontend_url}/join?success=true'),
         'cancel_url': os.environ.get('STRIPE_CANCEL_URL', f'{default_frontend_url}/join?canceled=true'),
         'line_items': [],
-        'metadata': {}
+        'metadata': {},
+        # WOVCC Brand Colors
+        'ui_mode': 'hosted',
+        'custom_text': {
+            'submit': {
+                'message': 'Join Wickersley Old Village Cricket Club'
+            }
+        }
     }
 
     # Prefer a pre-created Price ID if provided (STRIPE_PRICE_ID / MEMBERSHIP_PRICE_ID).
