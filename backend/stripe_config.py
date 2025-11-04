@@ -54,8 +54,8 @@ def create_checkout_session(customer_id: str = None, email: str = None, user_id:
     session_params = {
         'payment_method_types': ['card'],
         'mode': 'payment',
-        'success_url': os.environ.get('STRIPE_SUCCESS_URL', f'{default_frontend_url}/pages/join.html?success=true'),
-        'cancel_url': os.environ.get('STRIPE_CANCEL_URL', f'{default_frontend_url}/pages/join.html?canceled=true'),
+        'success_url': os.environ.get('STRIPE_SUCCESS_URL', f'{default_frontend_url}/join?success=true'),
+        'cancel_url': os.environ.get('STRIPE_CANCEL_URL', f'{default_frontend_url}/join?canceled=true'),
         'line_items': [],
         'metadata': {}
     }

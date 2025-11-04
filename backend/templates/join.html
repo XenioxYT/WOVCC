@@ -6,6 +6,47 @@
 
 {% block extra_js %}
 <script>
+  // Check for success/cancel parameters on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (urlParams.get('success') === 'true') {
+      // Hide forms, show success message
+      document.getElementById('membership-card').style.display = 'none';
+      document.getElementById('tab-selection').style.display = 'none';
+      document.getElementById('new-member-form').style.display = 'none';
+      document.getElementById('renewal-form').style.display = 'none';
+      document.getElementById('success-section').style.display = 'block';
+      
+      // Try to activate account (fallback for webhook)
+      const email = localStorage.getItem('pendingEmail');
+      if (email) {
+        checkAndActivateAccount(email);
+      }
+    } else if (urlParams.get('canceled') === 'true') {
+      if (typeof showNotification === 'function') {
+        showNotification('Payment was canceled. Please try again if you\'d like to join.', 'warning');
+      }
+    }
+  });
+  
+  async function checkAndActivateAccount(email) {
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/check-and-activate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email })
+      });
+      const result = await response.json();
+      if (result.success && result.activated) {
+        localStorage.removeItem('pendingEmail');
+        // Auto-login or show login prompt
+      }
+    } catch (error) {
+      console.error('Failed to activate account:', error);
+    }
+  }
+  
   // Toggle between new member and renewal forms
   function showNewMember() {
     document.getElementById('new-member-form').style.display = 'block';
@@ -53,6 +94,8 @@
         if (result.success) {
           // If pre-register returned a checkout URL, redirect user to Stripe Checkout
           if (result.checkout_url) {
+            // Store email for later activation check
+            localStorage.setItem('pendingEmail', email);
             window.location.href = result.checkout_url;
             return; // browser will navigate away
           }
@@ -156,7 +199,7 @@
       <div style="max-width: 600px; margin: 0 auto;">
         
         <!-- Membership Card -->
-        <div class="card" style="text-align: center; padding: 40px 30px; margin-bottom: 40px;">
+        <div class="card" id="membership-card" style="text-align: center; padding: 40px 30px; margin-bottom: 40px;">
           <h2 style="color: var(--primary-color); margin-bottom: 20px;">Annual Membership</h2>
           <div style="font-size: 3rem; font-weight: 700; color: var(--accent-color); margin-bottom: 20px;">
             £15<span style="font-size: 1.2rem; color: var(--text-light);">/year</span>
@@ -182,7 +225,7 @@
         </div>
 
         <!-- Tab Selection -->
-        <div style="display: flex; gap: 10px; margin-bottom: 30px;">
+        <div id="tab-selection" style="display: flex; gap: 10px; margin-bottom: 30px;">
           <button class="btn btn-primary" id="new-member-btn" onclick="showNewMember()" style="flex: 1;">
             New Member
           </button>
@@ -253,14 +296,14 @@
     </div>
   </section>
 
-  <!-- Success Message (Hidden) -->
-  <section class="section" style="display: none;" id="success-section">
+  <!-- Success Message -->
+  <section class="section">
     <div class="container">
-      <div class="signup-form text-center" style="max-width: 600px; margin: 0 auto;">
+      <div id="success-section" class="signup-form text-center" style="max-width: 600px; margin: 0 auto; display: none;">
         <div style="font-size: 4rem; margin-bottom: 20px;">✅</div>
         <h2 style="color: var(--primary-color);">Welcome to WOVCC!</h2>
         <p style="font-size: 1.1rem; margin: 20px 0;">
-          Your membership is now active.
+          Your membership is now active. Thank you for joining!
         </p>
         
         <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
