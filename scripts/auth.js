@@ -1,6 +1,11 @@
 // ===================================
 // WOVCC Website - Authentication System
 // Uses backend API with JWT tokens
+// 
+// NOTE: This is a Multi-Page Application (MPA) using Flask + Jinja2
+// Each page navigation reloads the HTML and JavaScript runs fresh.
+// To minimize API calls, auth state is cached in localStorage and
+// navbar updates instantly from cache on each page load.
 // ===================================
 
 // Wrap in IIFE to avoid global scope pollution
@@ -118,41 +123,42 @@ async function authenticatedFetch(endpoint, options = {}) {
 }
 
 /**
- * Register a new user
+ * Register a new user - creates pending registration and returns Stripe Checkout URL
  */
 async function signup(name, email, password, newsletter = false) {
   try {
-        // Store credentials temporarily so we can attempt auto-login after successful payment
-        try {
-          sessionStorage.setItem('wovcc_pending_email', email);
-          sessionStorage.setItem('wovcc_pending_password', password);
-        } catch (e) {
-          // sessionStorage may be unavailable in some contexts; proceed regardless
-        }
+    // Store credentials for auto-login after payment
+    try {
+      sessionStorage.setItem('wovcc_pending_email', email);
+      sessionStorage.setItem('wovcc_pending_password', password);
+    } catch (e) {
+      // sessionStorage may be unavailable in some contexts
+      debugAuth.warn('Could not store pending credentials:', e);
+    }
 
-        // Call pre-register endpoint which creates a pending registration and a Checkout session
-        const response = await fetch(`${API_BASE}/auth/pre-register`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            name,
-            email,
-            password,
-            newsletter
-          })
-        });
+    // Create pending registration and get Stripe Checkout URL
+    const response = await fetch(`${API_BASE}/auth/pre-register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name,
+        email,
+        password,
+        newsletter
+      })
+    });
 
-        const data = await response.json();
+    const data = await response.json();
 
-        if (data.success && data.checkout_url) {
-          // The caller will redirect to Stripe Checkout
-          return { success: true, checkout_url: data.checkout_url };
-        }
+    if (data.success && data.checkout_url) {
+      return { success: true, checkout_url: data.checkout_url, pending_id: data.pending_id };
+    }
 
-        return { success: false, message: data.error || 'Registration failed' };
+    return { success: false, message: data.error || 'Registration failed' };
   } catch (error) {
+    debugAuth.error('[Auth] Signup error:', error);
     return {
       success: false,
       message: error.message || 'Failed to connect to server'
@@ -307,118 +313,37 @@ function setupLogoutButton() {
     logoutBtn.addEventListener('click', async function(e) {
       e.preventDefault();
       await logout();
-      updateNavbar();
-      // Redirect to home page
-      window.location.href = 'index.html';
+      // Redirect to home page immediately
+      window.location.href = '/';
     });
   }
 }
 
-/**
- * Create checkout session for payment
- */
-async function createCheckoutSession() {
-  try {
-    const response = await authenticatedFetch('/payments/create-checkout', {
-      method: 'POST'
-    });
-    
-    const data = await response.json();
-    
-    if (data.success && data.checkout_url) {
-      // Redirect to Stripe Checkout
-      window.location.href = data.checkout_url;
-    } else {
-      throw new Error(data.error || 'Failed to create checkout session');
-    }
-  } catch (error) {
-    return {
-      success: false,
-      message: error.message || 'Failed to create checkout session'
-    };
-  }
-}
+
 
 // Initialize auth on page load
 document.addEventListener('DOMContentLoaded', async function() {
-  // Refresh user profile if logged in
-  if (isLoggedIn()) {
-    await refreshUserProfile();
-  }
+  // Update navbar immediately from localStorage (no API call needed)
   updateNavbar();
   setupLogoutButton();
+  
+  // Only refresh user profile on specific pages that need fresh data
+  // (like members page, admin page, etc.)
+  const needsFreshData = window.location.pathname === '/members' || 
+                         window.location.pathname === '/admin' ||
+                         window.location.pathname.startsWith('/join/activate');
+  
+  if (isLoggedIn() && needsFreshData) {
+    await refreshUserProfile();
+    updateNavbar(); // Update again with fresh data
+  }
   
   // Check for payment success/cancel in URL
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('success') === 'true') {
-    // Payment successful - try to auto-login using pending credentials stored in sessionStorage
-    const pendingEmail = sessionStorage.getItem('wovcc_pending_email');
-    const pendingPassword = sessionStorage.getItem('wovcc_pending_password');
-
-    // If user is already logged in, just refresh profile and redirect to members page
-    if (isLoggedIn()) {
-      await refreshUserProfile();
-      updateNavbar();
-      if (typeof showNotification === 'function') {
-        showNotification('Payment successful! Your membership is now active.', 'success');
-      }
-      // Redirect to members page
-      setTimeout(() => {
-        window.location.href = '/pages/members.html';
-      }, 1500);
-    } else if (pendingEmail && pendingPassword) {
-      // FALLBACK: Try to activate account first (for when webhooks don't work in development)
-      try {
-        debugAuth.log('[Auth] Attempting fallback activation for:', pendingEmail);
-        await fetch(`${API_BASE}/auth/check-and-activate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: pendingEmail })
-        });
-      } catch (e) {
-        debugAuth.warn('[Auth] Fallback activation failed, will retry login:', e);
-      }
-      
-      // Attempt to login several times (webhook may take a moment to process)
-      let attempts = 0;
-      let loggedIn = false;
-      while (attempts < 6 && !loggedIn) {
-        try {
-          const result = await login(pendingEmail, pendingPassword);
-          if (result.success) {
-            loggedIn = true;
-            await refreshUserProfile();
-            updateNavbar();
-            if (typeof showNotification === 'function') {
-              showNotification('Welcome! Redirecting to your membership page...', 'success');
-            }
-            // Clear pending credentials
-            sessionStorage.removeItem('wovcc_pending_email');
-            sessionStorage.removeItem('wovcc_pending_password');
-            // Redirect to members page
-            setTimeout(() => {
-              window.location.href = '/pages/members.html';
-            }, 1500);
-            break;
-          }
-        } catch (e) {
-          // Ignore and retry
-        }
-        attempts += 1;
-        // Wait before retrying
-        await new Promise(r => setTimeout(r, 1000));
-      }
-
-      if (!loggedIn) {
-        // Let the user know their account will be ready; they can login manually
-        if (typeof showNotification === 'function') {
-          showNotification('Payment successful. Your account has been created — please log in to continue.', 'info');
-        }
-      }
-    }
-
-    // Clean URL
-    window.history.replaceState({}, document.title, window.location.pathname);
+    // Payment successful - redirect to activation page
+    debugAuth.log('[Auth] Payment successful, redirecting to activation page');
+    window.location.href = '/join/activate';
   } else if (urlParams.get('canceled') === 'true') {
     if (typeof showNotification === 'function') {
       showNotification('Payment was canceled.', 'info');
@@ -438,8 +363,7 @@ window.WOVCCAuth = {
   updateNavbar,
   isAdmin,
   refreshUserProfile,
-  authenticatedFetch,
-  createCheckoutSession
+  authenticatedFetch
 };
 
 })(); // End IIFE

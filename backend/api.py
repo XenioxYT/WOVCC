@@ -615,49 +615,6 @@ def update_profile(user):
 
 # ===== Stripe Payment Endpoints =====
 
-@app.route('/api/payments/create-checkout', methods=['POST'])
-@require_auth
-def create_payment_checkout(user):
-    """Create Stripe Checkout session for membership payment"""
-    try:
-        if not STRIPE_SECRET_KEY:
-            return jsonify({
-                'success': False,
-                'error': 'Stripe is not configured'
-            }), 500
-        
-        db = next(get_db())
-        try:
-            # Get or create Stripe customer
-            if user.stripe_customer_id:
-                customer_id = user.stripe_customer_id
-            else:
-                stripe_customer = create_or_get_customer(user.email, user.name)
-                user.stripe_customer_id = stripe_customer.id
-                db.commit()
-                customer_id = stripe_customer.id
-            
-            # Create checkout session
-            session = create_checkout_session(
-                customer_id=customer_id,
-                user_id=user.id
-            )
-            
-            return jsonify({
-                'success': True,
-                'checkout_url': session.url,
-                'session_id': session.id
-            })
-        finally:
-            db.close()
-            
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-
 @app.route('/api/payments/webhook', methods=['POST'])
 def stripe_webhook():
     """Handle Stripe webhook events"""
@@ -699,94 +656,64 @@ def stripe_webhook():
             session = event['data']['object']
             session_id = session.get('id')
             payment_status = session.get('payment_status')
-            user_id_str = session.get('metadata', {}).get('user_id')
+            pending_id_str = session.get('metadata', {}).get('pending_id')
             
             logger.info(f"[WEBHOOK] Session ID: {session_id}")
             logger.info(f"[WEBHOOK] Payment status: {payment_status}")
-            logger.info(f"[WEBHOOK] User ID from metadata: {user_id_str}")
-            
-            pending_id_str = session.get('metadata', {}).get('pending_id')
+            logger.info(f"[WEBHOOK] Pending ID from metadata: {pending_id_str}")
 
-            # Case 1: existing user (renewal) referenced by user_id
-            if payment_status == 'paid' and user_id_str:
+            # Create user account after successful payment
+            if payment_status == 'paid' and pending_id_str:
                 try:
-                    user_id = int(user_id_str)
+                    pending_id = int(pending_id_str)
                 except (ValueError, TypeError):
-                    logger.error(f"[WEBHOOK] Invalid user_id in metadata: {user_id_str}")
-                    return jsonify({'success': False, 'error': 'Invalid user_id'}), 400
-                
+                    logger.error(f"[WEBHOOK] Invalid pending_id in metadata: {pending_id_str}")
+                    return jsonify({'success': False, 'error': 'Invalid pending_id'}), 400
+
                 db = next(get_db())
                 try:
-                    user = db.query(User).filter(User.id == user_id).first()
-                    if user:
+                    pending = db.query(PendingRegistration).filter(PendingRegistration.id == pending_id).first()
+                    if pending:
                         from dateutil.relativedelta import relativedelta
                         now = datetime.utcnow()
-                        user.is_member = True
-                        user.payment_status = 'active'
-                        user.membership_start_date = now
-                        user.membership_expiry_date = now + relativedelta(years=1)
-                        user.updated_at = now
+                        expiry = now + relativedelta(years=1)
+                        
+                        # Check if user already exists (edge case)
+                        existing_user = db.query(User).filter(User.email == pending.email).first()
+                        if existing_user:
+                            # Update existing user's membership
+                            existing_user.is_member = True
+                            existing_user.payment_status = 'active'
+                            existing_user.membership_start_date = now
+                            existing_user.membership_expiry_date = expiry
+                            existing_user.updated_at = now
+                            logger.info(f"[WEBHOOK] Existing user {existing_user.id} ({existing_user.email}) activated, membership until {expiry}")
+                        else:
+                            # Create new user account
+                            new_user = User(
+                                name=pending.name,
+                                email=pending.email,
+                                password_hash=pending.password_hash,
+                                newsletter=pending.newsletter,
+                                membership_tier='Annual Member',
+                                is_member=True,
+                                is_admin=False,
+                                payment_status='active',
+                                membership_start_date=now,
+                                membership_expiry_date=expiry
+                            )
+                            db.add(new_user)
+                            logger.info(f"[WEBHOOK] Created new user: {pending.email}, membership until {expiry}")
+
+                        # Remove pending registration
+                        db.delete(pending)
                         db.commit()
-                        logger.info(f"[WEBHOOK] User {user_id} ({user.email}) membership activated until {user.membership_expiry_date}!")
                     else:
-                        logger.error(f"[WEBHOOK] User {user_id} not found in database")
+                        logger.error(f"[WEBHOOK] Pending registration {pending_id} not found")
                 finally:
                     db.close()
             else:
-                # Case 2: pending registration flow - create user after successful payment
-                if payment_status == 'paid' and pending_id_str:
-                    try:
-                        pending_id = int(pending_id_str)
-                    except (ValueError, TypeError):
-                        logger.error(f"[WEBHOOK] Invalid pending_id in metadata: {pending_id_str}")
-                        return jsonify({'success': False, 'error': 'Invalid pending_id'}), 400
-
-                    db = next(get_db())
-                    try:
-                        pending = db.query(PendingRegistration).filter(PendingRegistration.id == pending_id).first()
-                        if pending:
-                            from dateutil.relativedelta import relativedelta
-                            now = datetime.utcnow()
-                            expiry = now + relativedelta(years=1)
-                            
-                            # If a user with that email already exists, just activate membership
-                            existing_user = db.query(User).filter(User.email == pending.email).first()
-                            if existing_user:
-                                existing_user.is_member = True
-                                existing_user.payment_status = 'active'
-                                existing_user.membership_start_date = now
-                                existing_user.membership_expiry_date = expiry
-                                existing_user.updated_at = now
-                                logger.info(f"[WEBHOOK] Existing user {existing_user.id} ({existing_user.email}) activated from pending until {expiry}")
-                            else:
-                                new_user = User(
-                                    name=pending.name,
-                                    email=pending.email,
-                                    password_hash=pending.password_hash,
-                                    newsletter=pending.newsletter,
-                                    membership_tier='Annual Member',
-                                    is_member=True,
-                                    is_admin=False,
-                                    payment_status='active',
-                                    membership_start_date=now,
-                                    membership_expiry_date=expiry
-                                )
-                                db.add(new_user)
-                                logger.info(f"[WEBHOOK] Created new user from pending registration: {pending.email}, membership until {expiry}")
-
-                            # Remove pending registration
-                            try:
-                                db.delete(pending)
-                            except Exception:
-                                pass
-
-                            db.commit()
-                        else:
-                            logger.error(f"[WEBHOOK] Pending registration {pending_id} not found")
-                    finally:
-                        db.close()
-                else:
-                    logger.warning("[WEBHOOK] Payment not completed or no user_id/pending_id in metadata")
+                logger.warning("[WEBHOOK] Payment not completed or no pending_id in metadata")
         
         # Handle payment intent succeeded (alternative)
         elif event_type == 'payment_intent.succeeded':

@@ -42,26 +42,72 @@ PORT = int(os.environ.get('PORT', 5000))
 init_db()
 
 
+# Security headers middleware
+@app.after_request
+def add_security_headers(response):
+    """Add security and default cache-control headers to all responses"""
+    # Add default no-cache headers for dynamic content
+    if 'Cache-Control' not in response.headers:
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    
+    # Prevent MIME-type sniffing
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    # Prevent clickjacking
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    # Enable XSS protection
+# response.headers['X-XSS-Protection'] = '1; mode=block'
+# Add a basic Content-Security-Policy for better XSS protection.
+csp = (
+    "default-src 'self'; "
+    "script-src 'self' 'unsafe-inline'; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "font-src 'self' https://fonts.gstatic.com;"
+)
+response.headers['Content-Security-Policy'] = csp
+    # HSTS (only in production with HTTPS)
+    if not DEBUG and request.is_secure:
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    # Referrer policy
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    # Permissions policy
+    response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
+    return response
+
+
 # Routes for static assets (styles, scripts, images)
 @app.route('/styles/<path:filename>')
 def serve_styles(filename):
-    """Serve CSS files from styles directory"""
+    """Serve CSS files from styles directory with caching"""
     styles_dir = os.path.join(os.path.dirname(__file__), '..', 'styles')
-    return send_from_directory(styles_dir, filename)
+    response = send_from_directory(styles_dir, filename)
+    # Cache for 1 year (aggressive caching for CSS)
+    response.cache_control.max_age = 31536000
+    response.cache_control.public = True
+    return response
 
 
 @app.route('/scripts/<path:filename>')
 def serve_scripts(filename):
-    """Serve JavaScript files from scripts directory"""
+    """Serve JavaScript files from scripts directory with caching"""
     scripts_dir = os.path.join(os.path.dirname(__file__), '..', 'scripts')
-    return send_from_directory(scripts_dir, filename)
+    response = send_from_directory(scripts_dir, filename)
+    # Cache for 1 hour (safer caching for JS to allow updates)
+    response.cache_control.max_age = 3600
+    response.cache_control.public = True
+    return response
 
 
 @app.route('/assets/<path:filename>')
 def serve_assets(filename):
-    """Serve asset files (images, etc) from assets directory"""
+    """Serve asset files (images, etc) from assets directory with caching"""
     assets_dir = os.path.join(os.path.dirname(__file__), '..', 'assets')
-    return send_from_directory(assets_dir, filename)
+    response = send_from_directory(assets_dir, filename)
+    # Cache for 1 hour (safer caching for images without versioning)
+    response.cache_control.max_age = 3600
+    response.cache_control.public = True
+    return response
 
 
 # Page routes
@@ -85,14 +131,33 @@ def matches():
 
 @app.route('/join')
 def join():
-    """Join/Renew membership page"""
+    """Join membership page"""
     return render_template('join.html')
+
+
+@app.route('/join/activate')
+def activate():
+    """Account activation page after payment"""
+    return render_template('activate.html')
 
 
 @app.route('/admin')
 def admin():
     """Admin page - requires authentication"""
     return render_template('admin.html')
+
+
+# SEO and utility routes
+@app.route('/robots.txt')
+def robots():
+    """Robots.txt file for search engines"""
+    return """User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin
+
+Sitemap: {}/sitemap.xml
+""".format(request.url_root.rstrip('/')), 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
 
 # Health check
@@ -103,7 +168,8 @@ def health():
     return jsonify({
         'status': 'ok',
         'service': 'WOVCC Application',
-        'version': '2.0.0'
+        'version': '2.0.0',
+        'timestamp': datetime.now().isoformat()
     })
 
 
@@ -118,11 +184,15 @@ def get_teams():
     """Get list of all teams"""
     try:
         teams = scraper.get_teams()
-        return jsonify({
+        resp = jsonify({
             'success': True,
             'teams': teams,
             'count': len(teams)
         })
+        # Cache for 10 minutes (teams rarely change)
+        resp.cache_control.max_age = 600
+        resp.cache_control.public = True
+        return resp
     except Exception as e:
         return jsonify({
             'success': False,
@@ -144,11 +214,15 @@ def get_fixtures():
     
     try:
         fixtures = scraper.get_team_fixtures(team_id)
-        return jsonify({
+        resp = jsonify({
             'success': True,
             'fixtures': fixtures,
             'count': len(fixtures)
         })
+        # Cache for 5 minutes (fixtures can change)
+        resp.cache_control.max_age = 300
+        resp.cache_control.public = True
+        return resp
     except Exception as e:
         return jsonify({
             'success': False,
@@ -172,11 +246,15 @@ def get_results():
     
     try:
         results = scraper.get_team_results(team_id, limit)
-        return jsonify({
+        resp = jsonify({
             'success': True,
             'results': results,
             'count': len(results)
         })
+        # Cache for 5 minutes (results update frequently)
+        resp.cache_control.max_age = 300
+        resp.cache_control.public = True
+        return resp
     except Exception as e:
         return jsonify({
             'success': False,
@@ -217,13 +295,17 @@ def get_all_data():
                 if isinstance(limit, int) and limit > 0:
                     results = results[:limit]
 
-                return jsonify({
+                resp = jsonify({
                     'success': True,
                     'last_updated': data.get('last_updated'),
                     'teams': data.get('teams', []),
                     'fixtures': fixtures,
                     'results': results
                 })
+                # Cache file responses for 5 minutes
+                resp.cache_control.max_age = 300
+                resp.cache_control.public = True
+                return resp
             # If file not present, fall through to live scrape
 
         # Live scrape (default)
@@ -231,13 +313,18 @@ def get_all_data():
         fixtures = scraper.get_team_fixtures(team_id)
         results = scraper.get_team_results(team_id, limit)
 
-        return jsonify({
+        resp = jsonify({
             'success': True,
             'last_updated': datetime.now().isoformat(),
             'teams': teams,
             'fixtures': fixtures,
             'results': results
         })
+        # Cache for 5 minutes
+        resp.cache_control.max_age = 300
+        resp.cache_control.public = True
+        return resp
+        
     except Exception as e:
         return jsonify({
             'success': False,
@@ -250,10 +337,14 @@ def match_status():
     """Check if there are matches scheduled for today"""
     try:
         has_matches = scraper.check_matches_today()
-        return jsonify({
+        resp = jsonify({
             'success': True,
             'has_matches_today': has_matches
         })
+        # Cache for 2 minutes (checked frequently but doesn't change often)
+        resp.cache_control.max_age = 120
+        resp.cache_control.public = True
+        return resp
     except Exception as e:
         return jsonify({
             'success': False,
@@ -279,10 +370,14 @@ def get_live_config():
                 'selected_match': None
             }
         
-        return jsonify({
+        resp = jsonify({
             'success': True,
             'config': config
         })
+        # Cache for 1 minute (needs to be relatively fresh for live updates)
+        resp.cache_control.max_age = 60
+        resp.cache_control.public = True
+        return resp
     except Exception as e:
         return jsonify({
             'success': False,
@@ -627,10 +722,15 @@ def check_and_activate():
 @require_auth
 def get_profile(user):
     """Get current user profile"""
-    return jsonify({
+    resp = jsonify({
         'success': True,
         'user': user.to_dict()
     })
+    # Private cache only (no shared cache for user data)
+    resp.cache_control.private = True
+    resp.cache_control.max_age = 60
+    resp.headers['Vary'] = 'Authorization'
+    return resp
 
 
 @app.route('/api/user/update', methods=['POST'])
@@ -675,49 +775,6 @@ def update_profile(user):
 
 # ----- Stripe Payment API -----
 
-@app.route('/api/payments/create-checkout', methods=['POST'])
-@require_auth
-def create_payment_checkout(user):
-    """Create Stripe Checkout session for membership payment"""
-    try:
-        if not STRIPE_SECRET_KEY:
-            return jsonify({
-                'success': False,
-                'error': 'Stripe is not configured'
-            }), 500
-        
-        db = next(get_db())
-        try:
-            # Get or create Stripe customer
-            if user.stripe_customer_id:
-                customer_id = user.stripe_customer_id
-            else:
-                stripe_customer = create_or_get_customer(user.email, user.name)
-                user.stripe_customer_id = stripe_customer.id
-                db.commit()
-                customer_id = stripe_customer.id
-            
-            # Create checkout session
-            session = create_checkout_session(
-                customer_id=customer_id,
-                user_id=user.id
-            )
-            
-            return jsonify({
-                'success': True,
-                'checkout_url': session.url,
-                'session_id': session.id
-            })
-        finally:
-            db.close()
-            
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-
 @app.route('/api/payments/webhook', methods=['POST'])
 def stripe_webhook():
     """Handle Stripe webhook events"""
@@ -759,94 +816,64 @@ def stripe_webhook():
             session = event['data']['object']
             session_id = session.get('id')
             payment_status = session.get('payment_status')
-            user_id_str = session.get('metadata', {}).get('user_id')
+            pending_id_str = session.get('metadata', {}).get('pending_id')
             
             logger.info(f"[WEBHOOK] Session ID: {session_id}")
             logger.info(f"[WEBHOOK] Payment status: {payment_status}")
-            logger.info(f"[WEBHOOK] User ID from metadata: {user_id_str}")
-            
-            pending_id_str = session.get('metadata', {}).get('pending_id')
+            logger.info(f"[WEBHOOK] Pending ID from metadata: {pending_id_str}")
 
-            # Case 1: existing user (renewal) referenced by user_id
-            if payment_status == 'paid' and user_id_str:
+            # Create user account after successful payment
+            if payment_status == 'paid' and pending_id_str:
                 try:
-                    user_id = int(user_id_str)
+                    pending_id = int(pending_id_str)
                 except (ValueError, TypeError):
-                    logger.error(f"[WEBHOOK] Invalid user_id in metadata: {user_id_str}")
-                    return jsonify({'success': False, 'error': 'Invalid user_id'}), 400
-                
+                    logger.error(f"[WEBHOOK] Invalid pending_id in metadata: {pending_id_str}")
+                    return jsonify({'success': False, 'error': 'Invalid pending_id'}), 400
+
                 db = next(get_db())
                 try:
-                    user = db.query(User).filter(User.id == user_id).first()
-                    if user:
+                    pending = db.query(PendingRegistration).filter(PendingRegistration.id == pending_id).first()
+                    if pending:
                         from dateutil.relativedelta import relativedelta
                         now = datetime.utcnow()
-                        user.is_member = True
-                        user.payment_status = 'active'
-                        user.membership_start_date = now
-                        user.membership_expiry_date = now + relativedelta(years=1)
-                        user.updated_at = now
+                        expiry = now + relativedelta(years=1)
+                        
+                        # Check if user already exists (edge case)
+                        existing_user = db.query(User).filter(User.email == pending.email).first()
+                        if existing_user:
+                            # Update existing user's membership
+                            existing_user.is_member = True
+                            existing_user.payment_status = 'active'
+                            existing_user.membership_start_date = now
+                            existing_user.membership_expiry_date = expiry
+                            existing_user.updated_at = now
+                            logger.info(f"[WEBHOOK] Existing user {existing_user.id} ({existing_user.email}) activated, membership until {expiry}")
+                        else:
+                            # Create new user account
+                            new_user = User(
+                                name=pending.name,
+                                email=pending.email,
+                                password_hash=pending.password_hash,
+                                newsletter=pending.newsletter,
+                                membership_tier='Annual Member',
+                                is_member=True,
+                                is_admin=False,
+                                payment_status='active',
+                                membership_start_date=now,
+                                membership_expiry_date=expiry
+                            )
+                            db.add(new_user)
+                            logger.info(f"[WEBHOOK] Created new user: {pending.email}, membership until {expiry}")
+
+                        # Remove pending registration
+                        db.delete(pending)
                         db.commit()
-                        logger.info(f"[WEBHOOK] User {user_id} ({user.email}) membership activated until {user.membership_expiry_date}!")
                     else:
-                        logger.error(f"[WEBHOOK] User {user_id} not found in database")
+                        logger.error(f"[WEBHOOK] Pending registration {pending_id} not found")
                 finally:
                     db.close()
             else:
-                # Case 2: pending registration flow - create user after successful payment
-                if payment_status == 'paid' and pending_id_str:
-                    try:
-                        pending_id = int(pending_id_str)
-                    except (ValueError, TypeError):
-                        logger.error(f"[WEBHOOK] Invalid pending_id in metadata: {pending_id_str}")
-                        return jsonify({'success': False, 'error': 'Invalid pending_id'}), 400
-
-                    db = next(get_db())
-                    try:
-                        pending = db.query(PendingRegistration).filter(PendingRegistration.id == pending_id).first()
-                        if pending:
-                            from dateutil.relativedelta import relativedelta
-                            now = datetime.utcnow()
-                            expiry = now + relativedelta(years=1)
-                            
-                            # If a user with that email already exists, just activate membership
-                            existing_user = db.query(User).filter(User.email == pending.email).first()
-                            if existing_user:
-                                existing_user.is_member = True
-                                existing_user.payment_status = 'active'
-                                existing_user.membership_start_date = now
-                                existing_user.membership_expiry_date = expiry
-                                existing_user.updated_at = now
-                                logger.info(f"[WEBHOOK] Existing user {existing_user.id} ({existing_user.email}) activated from pending until {expiry}")
-                            else:
-                                new_user = User(
-                                    name=pending.name,
-                                    email=pending.email,
-                                    password_hash=pending.password_hash,
-                                    newsletter=pending.newsletter,
-                                    membership_tier='Annual Member',
-                                    is_member=True,
-                                    is_admin=False,
-                                    payment_status='active',
-                                    membership_start_date=now,
-                                    membership_expiry_date=expiry
-                                )
-                                db.add(new_user)
-                                logger.info(f"[WEBHOOK] Created new user from pending registration: {pending.email}, membership until {expiry}")
-
-                            # Remove pending registration
-                            try:
-                                db.delete(pending)
-                            except Exception:
-                                pass
-
-                            db.commit()
-                        else:
-                            logger.error(f"[WEBHOOK] Pending registration {pending_id} not found")
-                    finally:
-                        db.close()
-                else:
-                    logger.warning("[WEBHOOK] Payment not completed or no user_id/pending_id in metadata")
+                logger.warning("[WEBHOOK] Payment not completed or no pending_id in metadata")
         
         # Handle payment intent succeeded (alternative)
         elif event_type == 'payment_intent.succeeded':
@@ -875,18 +902,35 @@ def stripe_webhook():
 
 @app.errorhandler(404)
 def not_found(e):
-    return jsonify({
-        'success': False,
-        'error': 'Endpoint not found'
-    }), 404
+    """Handle 404 errors - return HTML for pages, JSON for API"""
+    # Check if request is for API endpoint
+    if request.path.startswith('/api/') or request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
+        return jsonify({
+            'success': False,
+            'error': 'Endpoint not found'
+        }), 404
+    # Return HTML error page for regular page requests
+    try:
+        return render_template('404.html'), 404
+    except Exception:
+        return "<h1>404 - Page Not Found</h1><p>The page you're looking for doesn't exist.</p><a href='/'>Go Home</a>", 404
 
 
 @app.errorhandler(500)
 def internal_error(e):
-    return jsonify({
-        'success': False,
-        'error': 'Internal server error'
-    }), 500
+    """Handle 500 errors - return HTML for pages, JSON for API"""
+    logger.error(f"Internal server error: {e}", exc_info=True)
+    # Check if request is for API endpoint
+    if request.path.startswith('/api/') or request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
+    # Return HTML error page for regular page requests
+    try:
+        return render_template('500.html', error=str(e) if DEBUG else None), 500
+    except Exception:
+        return "<h1>500 - Server Error</h1><p>Something went wrong on our end. Please try again later.</p><a href='/'>Go Home</a>", 500
 
 
 # ----- Application Entry Point -----

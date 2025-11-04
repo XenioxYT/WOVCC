@@ -34,7 +34,7 @@ class User(Base):
     newsletter = Column(Boolean, default=False)
     stripe_customer_id = Column(String(255), nullable=True, index=True)
     payment_status = Column(String(50), default='pending')  # pending, active, expired, cancelled
-    membership_start_date = Column(DateTime, nullable=True)  # When membership started/renewed
+    membership_start_date = Column(DateTime, nullable=True)  # When membership started
     membership_expiry_date = Column(DateTime, nullable=True)  # When membership expires
     join_date = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)

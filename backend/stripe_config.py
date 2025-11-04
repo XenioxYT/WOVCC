@@ -32,9 +32,9 @@ def create_checkout_session(customer_id: str = None, email: str = None, user_id:
     Create a Stripe Checkout session for membership payment
     
     Args:
-        customer_id: Existing Stripe customer ID (for renewals)
-        email: Customer email (for new customers)
-        user_id: User ID to include in metadata
+        customer_id: Existing Stripe customer ID (optional)
+        email: Customer email (for new signups)
+        user_id: User ID to include in metadata (optional)
     
     Returns:
         Stripe Checkout Session object
@@ -57,7 +57,14 @@ def create_checkout_session(customer_id: str = None, email: str = None, user_id:
         'success_url': os.environ.get('STRIPE_SUCCESS_URL', f'{default_frontend_url}/join?success=true'),
         'cancel_url': os.environ.get('STRIPE_CANCEL_URL', f'{default_frontend_url}/join?canceled=true'),
         'line_items': [],
-        'metadata': {}
+        'metadata': {},
+        # WOVCC Brand Colors
+        'ui_mode': 'hosted',
+        'custom_text': {
+            'submit': {
+                'message': 'Join Wickersley Old Village Cricket Club'
+            }
+        }
     }
 
     # Prefer a pre-created Price ID if provided (STRIPE_PRICE_ID / MEMBERSHIP_PRICE_ID).

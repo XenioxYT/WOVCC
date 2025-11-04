@@ -1,16 +1,16 @@
 {
-  "is_live": false,
-  "livestream_url": "https://www.youtube.com/embed/VIDEO_ID",
+  "is_live": true,
+  "livestream_url": "",
   "selected_match": {
-    "away_team": "Wickersley Old Village CC-Vixens Softball 2",
+    "away_team": "Wickersley Old Village CC-Vixens Softball 1",
     "date_iso": "2025-11-09",
     "date_str": "Sunday 09 November 2025",
-    "home_team": "Norton Oakes CC-Steel Acorns",
+    "home_team": "Treeton CC-Go Greens Indoor",
     "location": "S20 The Boundary, Court 1",
-    "match_url": "https://wov.play-cricket.com/match_details?id=7200126",
-    "team_id": "297744",
-    "team_name_scraping": "Vixens Softball 2",
-    "time": "11:00"
+    "match_url": "https://wov.play-cricket.com/match_details?id=7200073",
+    "team_id": "282728",
+    "team_name_scraping": "Vixens Softball 1",
+    "time": "10:00"
   },
-  "last_updated": "2025-11-01T12:17:04.506340"
+  "last_updated": "2025-11-04T21:33:16.046953"
 }
