@@ -104,8 +104,8 @@ def serve_assets(filename):
     """Serve asset files (images, etc) from assets directory with caching"""
     assets_dir = os.path.join(os.path.dirname(__file__), '..', 'assets')
     response = send_from_directory(assets_dir, filename)
-    # Cache for 1 year (aggressive caching for images)
-    response.cache_control.max_age = 31536000
+    # Cache for 1 hour (safer caching for images without versioning)
+    response.cache_control.max_age = 3600
     response.cache_control.public = True
     return response
 
