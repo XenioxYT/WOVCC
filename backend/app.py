@@ -15,6 +15,7 @@ import os
 import json
 import logging
 from datetime import datetime
+from pathlib import Path
 
 # Import application modules
 from scraper import scraper
@@ -68,6 +69,10 @@ def add_security_headers(response):
     return response
 
 
+# Constants for cache-busting
+DEFAULT_FILE_VERSION = 'dev'  # Default version when file doesn't exist or can't be accessed
+
+
 # Helper function for cache-busting
 def get_file_version(filepath):
     """Get file version based on modification time for cache-busting"""
@@ -76,7 +81,7 @@ def get_file_version(filepath):
         return str(int(mtime))
     except OSError:
         # If file doesn't exist or can't be accessed, return a default version
-        return '1'
+        return DEFAULT_FILE_VERSION
 
 
 # Template context processor to add versioned_url function
@@ -85,18 +90,22 @@ def utility_processor():
     """Add utility functions to Jinja2 templates"""
     def versioned_url(filepath):
         """Generate a versioned URL for static files based on modification time"""
-        # Normalize the filepath and construct the full path
+        # Normalize the filepath
         normalized_path = filepath.lstrip('/')
-        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-        full_path = os.path.abspath(os.path.join(base_dir, normalized_path))
+        
+        # Get base directory and construct full path
+        base_dir = Path(__file__).parent.parent.resolve()
+        full_path = (base_dir / normalized_path).resolve()
         
         # Security: Ensure the resolved path is within the expected directory
-        if not full_path.startswith(base_dir):
-            # If path traversal detected, return unversioned URL
+        try:
+            full_path.relative_to(base_dir)
+        except ValueError:
+            # Path is outside base directory - potential path traversal
             logger.warning(f"Path traversal attempt detected: {filepath}")
             return f"/{normalized_path}"
         
-        version = get_file_version(full_path)
+        version = get_file_version(str(full_path))
         return f"/{normalized_path}?v={version}"
     
     return dict(versioned_url=versioned_url)
