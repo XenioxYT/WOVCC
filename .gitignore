@@ -19,6 +19,12 @@ backend/venv/
 # Cache
 backend/cache/
 *.cache
+cache/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
 
 # OS Files
 .DS_Store
@@ -66,6 +72,16 @@ node_modules/
 *.temp
 *.bak
 *.backup
+
+# Test and debug files
+test-*.html
+*-debug.html
+
+# Historical documentation (optional - uncomment to ignore)
+# *BUG*.md
+# *FIX*.md
+# *CHANGES*.md
+
 
 
 
