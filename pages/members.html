@@ -104,10 +104,19 @@
           <div class="card-body">
             <h3 style="color: var(--primary-color); margin-bottom: 15px;">Your Membership</h3>
             <p style="margin-bottom: 10px;">
-              <strong>Status:</strong> <span style="color: green;">Active</span>
+              <strong>Status:</strong> <span id="membership-status" style="color: green;">Active</span>
             </p>
             <p style="margin-bottom: 10px;">
-              <strong>Type:</strong> Annual Member (£15/year)
+              <strong>Type:</strong> <span id="membership-type">Annual Member</span> (£15/year)
+            </p>
+            <p style="margin-bottom: 10px;" id="membership-dates">
+              <strong>Membership Period:</strong><br>
+              <span style="color: var(--text-light); font-size: 0.95rem;">
+                <span id="start-date">-</span> to <span id="expiry-date">-</span>
+              </span>
+            </p>
+            <p style="margin-bottom: 10px;" id="days-remaining-container">
+              <strong>Days Remaining:</strong> <span id="days-remaining" style="font-size: 1.2rem; color: var(--accent-color);">-</span>
             </p>
             <p style="margin-bottom: 20px;">
               <strong>Benefits:</strong> Drink discounts, members area access, newsletter updates
@@ -276,6 +285,63 @@
       document.getElementById('login-section').style.display = 'none';
       document.getElementById('members-content').style.display = 'block';
       document.getElementById('member-name').textContent = user.name;
+      
+      // Update membership information
+      updateMembershipInfo(user);
+    }
+    
+    function updateMembershipInfo(user) {
+      // Update membership type
+      if (user.membership_tier) {
+        document.getElementById('membership-type').textContent = user.membership_tier;
+      }
+      
+      // Update status
+      const statusElement = document.getElementById('membership-status');
+      if (user.payment_status === 'active' && user.is_member) {
+        statusElement.textContent = 'Active';
+        statusElement.style.color = 'green';
+      } else if (user.payment_status === 'expired') {
+        statusElement.textContent = 'Expired';
+        statusElement.style.color = 'red';
+      } else {
+        statusElement.textContent = 'Pending';
+        statusElement.style.color = 'orange';
+      }
+      
+      // Update dates if available
+      if (user.membership_start_date && user.membership_expiry_date) {
+        const startDate = new Date(user.membership_start_date);
+        const expiryDate = new Date(user.membership_expiry_date);
+        
+        const formatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('start-date').textContent = startDate.toLocaleDateString('en-GB', formatOptions);
+        document.getElementById('expiry-date').textContent = expiryDate.toLocaleDateString('en-GB', formatOptions);
+        
+        // Calculate days remaining
+        const today = new Date();
+        const timeDiff = expiryDate.getTime() - today.getTime();
+        const daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
+        
+        const daysRemainingElement = document.getElementById('days-remaining');
+        if (daysRemaining > 0) {
+          daysRemainingElement.textContent = daysRemaining;
+          if (daysRemaining <= 30) {
+            daysRemainingElement.style.color = 'orange';
+          } else {
+            daysRemainingElement.style.color = 'var(--accent-color)';
+          }
+        } else {
+          daysRemainingElement.textContent = 'Expired';
+          daysRemainingElement.style.color = 'red';
+        }
+        
+        document.getElementById('membership-dates').style.display = 'block';
+        document.getElementById('days-remaining-container').style.display = 'block';
+      } else {
+        document.getElementById('membership-dates').style.display = 'none';
+        document.getElementById('days-remaining-container').style.display = 'none';
+      }
     }
     
     document.getElementById('login-form').addEventListener('submit', async function(e) {
