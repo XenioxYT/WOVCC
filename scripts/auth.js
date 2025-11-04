@@ -3,13 +3,17 @@
 // Uses backend API with JWT tokens
 // ===================================
 
+// Wrap in IIFE to avoid global scope pollution
+(function() {
+  'use strict';
+
 // Debug utility - only logs in development
-const DEBUG = !window.location.hostname || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const debug = {
-  log: (...args) => DEBUG && console.log(...args),
-  warn: (...args) => DEBUG && console.warn(...args),
+const DEBUG_AUTH = !window.location.hostname || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const debugAuth = {
+  log: (...args) => DEBUG_AUTH && console.log(...args),
+  warn: (...args) => DEBUG_AUTH && console.warn(...args),
   error: (...args) => console.error(...args), // Always log errors
-  info: (...args) => DEBUG && console.info(...args)
+  info: (...args) => DEBUG_AUTH && console.info(...args)
 };
 
 // Storage keys
@@ -189,7 +193,7 @@ async function login(email, password) {
       };
     }
   } catch (error) {
-    debug.error('[Auth] Login error:', error);
+    debugAuth.error('[Auth] Login error:', error);
     
     // Check if it's a network error
     if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
@@ -246,7 +250,7 @@ async function refreshUserProfile() {
     }
     return null;
   } catch (error) {
-    debug.error('Failed to refresh user profile:', error);
+    debugAuth.error('Failed to refresh user profile:', error);
     return null;
   }
 }
@@ -365,14 +369,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     } else if (pendingEmail && pendingPassword) {
       // FALLBACK: Try to activate account first (for when webhooks don't work in development)
       try {
-        debug.log('[Auth] Attempting fallback activation for:', pendingEmail);
+        debugAuth.log('[Auth] Attempting fallback activation for:', pendingEmail);
         await fetch(`${API_BASE}/auth/check-and-activate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: pendingEmail })
         });
       } catch (e) {
-        debug.warn('[Auth] Fallback activation failed, will retry login:', e);
+        debugAuth.warn('[Auth] Fallback activation failed, will retry login:', e);
       }
       
       // Attempt to login several times (webhook may take a moment to process)
@@ -437,4 +441,6 @@ window.WOVCCAuth = {
   authenticatedFetch,
   createCheckoutSession
 };
+
+})(); // End IIFE
 

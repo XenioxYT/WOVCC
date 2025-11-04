@@ -1,50 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Members Area - Access exclusive content and member benefits">
-  <title>Members Area - WOVCC | Wickersley Old Village Cricket Club</title>
-  <link rel="icon" type="image/png" href="../assets/logo.png">
-  <link rel="apple-touch-icon" href="../assets/logo.png">
-  <link rel="stylesheet" href="../styles/main.css">
-  <link rel="stylesheet" href="../styles/pages.css">
-</head>
-<body>
-  <!-- Navigation Bar -->
-  <nav class="navbar">
-    <div class="container">
-      <a href="../index.html" class="navbar-brand">
-        <img src="../assets/logo.png" alt="WOVCC Logo">
-        <span>WOVCC</span>
-      </a>
-      
-      <button class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-      
-      <ul class="nav-menu" id="nav-menu" role="menubar">
-        <li><a href="../index.html" class="nav-link">Home</a></li>
-        <li><a href="matches.html" class="nav-link">Matches</a></li>
-        <li><a href="join.html" class="nav-link">Join / Renew</a></li>
-        <li><a href="members.html" class="nav-link">Members</a></li>
-        <li id="admin-nav-link" style="display: none;"><a href="admin.html" class="nav-link">Admin</a></li>
-      </ul>
-      
-      <!-- User Dropdown (shown when logged in) -->
-      <div class="user-menu" id="user-menu">
-        <span class="user-name" id="user-name-display">Member</span>
-        <div class="dropdown-menu">
-          <a href="#" id="logout-btn">Logout</a>
-        </div>
-      </div>
-    </div>
-  </nav>
+{% extends "layout.html" %}
 
+{% block title %}Members Area - WOVCC | Wickersley Old Village Cricket Club{% endblock %}
+
+{% block description %}Members Area - Access exclusive content and member benefits{% endblock %}
+
+{% block content %}
   <!-- Page Header -->
-  <section class="hero" style="background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('../assets/banner.jpeg'); background-size: cover; background-position: center 40%; height: 300px;">
+  <section class="hero" style="background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/assets/banner.jpeg'); background-size: cover; background-position: center 40%; height: 300px;">
     <div class="hero-content">
       <h1>Members Area</h1>
       <p>Login to access exclusive member content</p>
@@ -77,7 +39,7 @@
         </button>
         
         <p class="text-center mt-2" style="color: var(--text-light);">
-          Not a member? <a href="join.html" style="color: var(--primary-color); font-weight: 600;">Join Now</a>
+          Not a member? <a href="/join" style="color: var(--primary-color); font-weight: 600;">Join Now</a>
         </p>
       </form>
     </div>
@@ -121,7 +83,7 @@
             <p style="margin-bottom: 20px;">
               <strong>Benefits:</strong> Drink discounts, members area access, newsletter updates
             </p>
-            <a href="join.html" class="btn btn-outline">Renew Membership</a>
+            <a href="/join" class="btn btn-outline">Renew Membership</a>
           </div>
         </div>
 
@@ -175,92 +137,9 @@
       </div>
     </div>
   </section>
+{% endblock %}
 
-  <!-- Newsletter Section -->
-  <section class="newsletter-section section">
-    <div class="container">
-      <div class="newsletter-content">
-        <h2>Want to hear more about us?</h2>
-        <p>Stay up to date with match results, club news, events and exclusive member updates delivered straight to your inbox.</p>
-        <form class="newsletter-form-main">
-          <input 
-            type="email" 
-            placeholder="Enter your email address" 
-            class="form-input newsletter-input-main"
-            required
-          >
-          <button type="submit" class="btn btn-primary">Subscribe</button>
-        </form>
-      </div>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-content">
-        <!-- About Section -->
-        <div class="footer-section">
-          <h3>About WOVCC</h3>
-          <p>
-            Community cricket in Wickersley. All ages and abilities welcome.
-          </p>
-          <img src="../assets/logo.png" alt="WOVCC Logo" style="width: 80px; height: 80px; margin-top: 15px; border-radius: 50%;">
-        </div>
-        
-        <!-- Opening Hours -->
-        <div class="footer-section">
-          <h3>Opening Hours</h3>
-          <p style="font-size: 0.95rem; line-height: 1.8;">
-            Mon-Thu: 4pm-10pm<br>
-            Tue: 4pm-10:30pm<br>
-            Fri: 4pm-11pm<br>
-            Sat: 12pm-11pm<br>
-            Sun: 12pm-10pm
-          </p>
-        </div>
-        
-        <!-- Follow Us -->
-        <div class="footer-section">
-          <h3>Follow Us</h3>
-          <div class="social-links">
-            <a href="https://www.facebook.com/wickersleyovcc/" target="_blank" class="social-link" title="Facebook">
-              <svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-            </a>
-            <a href="https://www.instagram.com/wovcc/" target="_blank" class="social-link" title="Instagram">
-              <svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-            </a>
-            <a href="https://x.com/wickersleyovcc" target="_blank" class="social-link" title="X (Twitter)">
-              <svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-            </a>
-            <a href="https://wov.play-cricket.com/home" target="_blank" class="social-link" title="Play-Cricket">
-              <svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-            </a>
-          </div>
-        </div>
-        
-        <!-- Visit Us -->
-        <div class="footer-section">
-          <h3>Visit Us</h3>
-          <p><strong>Wickersley Old Village Cricket Club</strong></p>
-          <p style="margin-top: 8px;">
-            Northfield Lane<br>
-            Wickersley, Rotherham<br>
-            S66 2HL
-          </p>
-        </div>
-      </div>
-      
-      <div class="footer-bottom">
-        <p>&copy; 2025 Wickersley Old Village Cricket Club. All rights reserved.</p>
-      </div>
-    </div>
-  </footer>
-
-  <!-- Scripts -->
-  <script src="../scripts/auth.js"></script>
-  <script src="../scripts/main.js"></script>
-  
+{% block extra_js %}
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       checkAuthStatus();
@@ -384,5 +263,4 @@
       window.scrollTo(0, 0);
     }
   </script>
-</body>
-</html>
+{% endblock %}

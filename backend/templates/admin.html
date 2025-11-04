@@ -1,0 +1,439 @@
+{% extends "layout.html" %}
+
+{% block title %}Admin Panel - WOVCC | Wickersley Old Village Cricket Club{% endblock %}
+
+{% block description %}Admin Panel - Manage live matches and configuration{% endblock %}
+
+{% block extra_js %}
+<script src="/scripts/api-client.js"></script>
+
+<script>
+  // Admin page controller
+  let currentConfig = {};
+  let allFixtures = [];
+
+  document.addEventListener('DOMContentLoaded', function() {
+    checkAdminAccess();
+  });
+  
+  function checkAdminAccess() {
+    if (!window.WOVCCAuth.isAdmin()) {
+      document.getElementById('access-denied-section').style.display = 'block';
+      document.getElementById('admin-content').style.display = 'none';
+    } else {
+      document.getElementById('access-denied-section').style.display = 'none';
+      document.getElementById('admin-content').style.display = 'block';
+      initAdminPanel();
+    }
+  }
+  
+  async function initAdminPanel() {
+    // Load current configuration
+    await loadCurrentConfig();
+    
+    // Load fixtures for selection
+    await loadFixtures();
+    
+    // Setup event listeners
+    setupEventListeners();
+  }
+  
+  async function loadCurrentConfig() {
+    try {
+      const response = await fetch(wovccApi.baseURL + '/live-config');
+      const data = await response.json();
+      
+      if (data.success) {
+        currentConfig = data.config;
+        
+        // Update UI with current config
+        document.getElementById('live-toggle').checked = currentConfig.is_live || false;
+        document.getElementById('livestream-url').value = currentConfig.livestream_url || '';
+        
+        updateLiveStatusIndicator(currentConfig.is_live);
+        
+        if (currentConfig.last_updated) {
+          document.getElementById('last-updated-info').style.display = 'block';
+          document.getElementById('last-updated-time').textContent = new Date(currentConfig.last_updated).toLocaleString();
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load config:', error);
+      showNotification('Failed to load current configuration', 'error');
+    }
+  }
+  
+  async function loadFixtures() {
+    try {
+      const fixtures = await wovccApi.getFixtures('all');
+      allFixtures = fixtures;
+      
+      const selector = document.getElementById('match-selector');
+      selector.innerHTML = '<option value="">No match selected</option>';
+      
+      fixtures.forEach((fixture, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = `${fixture.team_name_scraping} - ${fixture.home_team} vs ${fixture.away_team} (${fixture.date_str})`;
+        selector.appendChild(option);
+      });
+      
+      // Pre-select if there's a selected match in config
+      if (currentConfig.selected_match) {
+        // Try to find matching fixture by comparing key properties
+        const matchIndex = fixtures.findIndex(f => 
+          f.home_team === currentConfig.selected_match.home_team &&
+          f.away_team === currentConfig.selected_match.away_team &&
+          f.date_iso === currentConfig.selected_match.date_iso
+        );
+        
+        if (matchIndex >= 0) {
+          selector.value = matchIndex;
+          showMatchPreview(fixtures[matchIndex]);
+        }
+      }
+      
+    } catch (error) {
+      console.error('Failed to load fixtures:', error);
+      showNotification('Failed to load fixtures', 'error');
+    }
+  }
+  
+  function setupEventListeners() {
+    // Live toggle
+    document.getElementById('live-toggle').addEventListener('change', function(e) {
+      updateLiveStatusIndicator(e.target.checked);
+    });
+    
+    // Match selector
+    document.getElementById('match-selector').addEventListener('change', function(e) {
+      const index = e.target.value;
+      if (index !== '') {
+        const fixture = allFixtures[parseInt(index)];
+        showMatchPreview(fixture);
+      } else {
+        document.getElementById('selected-match-preview').style.display = 'none';
+      }
+    });
+    
+    // Save button
+    document.getElementById('save-config-btn').addEventListener('click', saveConfiguration);
+    
+    // Clear button
+    document.getElementById('clear-config-btn').addEventListener('click', clearConfiguration);
+  }
+  
+  function updateLiveStatusIndicator(isLive) {
+    const indicator = document.getElementById('live-status-indicator');
+    const statusText = document.getElementById('status-text');
+    
+    if (isLive) {
+      indicator.style.backgroundColor = '#d4edda';
+      indicator.style.color = '#155724';
+      indicator.style.border = '1px solid #c3e6cb';
+      statusText.innerHTML = '🟢 Live section is <strong>ACTIVE</strong> - Visible to all visitors';
+    } else {
+      indicator.style.backgroundColor = '#f8d7da';
+      indicator.style.color = '#721c24';
+      indicator.style.border = '1px solid #f5c6cb';
+      statusText.innerHTML = '🔴 Live section is <strong>INACTIVE</strong> - Showing regular fixtures/results';
+    }
+  }
+  
+  function showMatchPreview(fixture) {
+    const preview = document.getElementById('selected-match-preview');
+    const content = document.getElementById('match-preview-content');
+    
+    content.innerHTML = `
+      <div style="color: var(--text-dark);">
+        <div style="margin-bottom: 8px;"><strong>Team:</strong> ${fixture.team_name_scraping}</div>
+        <div style="margin-bottom: 8px;"><strong>Team ID:</strong> <code style="background: #f0f0f0; padding: 2px 6px; border-radius: 4px;">${fixture.team_id}</code> <span style="color: var(--text-light); font-size: 0.85rem;">(for Play-Cricket widget)</span></div>
+        <div style="margin-bottom: 8px;"><strong>Match:</strong> ${fixture.home_team} vs ${fixture.away_team}</div>
+        <div style="margin-bottom: 8px;"><strong>Date:</strong> ${fixture.date_str}</div>
+        ${fixture.time ? `<div style="margin-bottom: 8px;"><strong>Time:</strong> ${fixture.time}</div>` : ''}
+        ${fixture.location ? `<div><strong>Location:</strong> ${fixture.location}</div>` : ''}
+      </div>
+    `;
+    
+    preview.style.display = 'block';
+  }
+  
+  async function saveConfiguration() {
+    try {
+      const isLive = document.getElementById('live-toggle').checked;
+      const livestreamUrl = document.getElementById('livestream-url').value.trim();
+      const matchIndex = document.getElementById('match-selector').value;
+      
+      // Validate
+      if (isLive) {
+        if (matchIndex === '') {
+          showNotification('Please select a match when live section is active', 'warning');
+          return;
+        }
+      }
+      
+      const selectedMatch = matchIndex !== '' ? allFixtures[parseInt(matchIndex)] : null;
+      
+      const configData = {
+        is_live: isLive,
+        livestream_url: livestreamUrl,
+        selected_match: selectedMatch
+      };
+      
+      const response = await window.WOVCCAuth.authenticatedFetch('/live-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(configData)
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        currentConfig = result.config;
+        
+        // Update last updated info
+        document.getElementById('last-updated-info').style.display = 'block';
+        document.getElementById('last-updated-time').textContent = new Date(result.config.last_updated).toLocaleString();
+        
+        showNotification('Configuration saved successfully!', 'success');
+      } else {
+        showNotification('Failed to save configuration: ' + result.error, 'error');
+      }
+      
+    } catch (error) {
+      console.error('Failed to save config:', error);
+      showNotification('Failed to save configuration: ' + error.message, 'error');
+    }
+  }
+  
+  async function clearConfiguration() {
+    if (!confirm('Are you sure you want to clear all configuration? This will turn off the live section.')) {
+      return;
+    }
+    
+    try {
+      const configData = {
+        is_live: false,
+        livestream_url: '',
+        selected_match: null
+      };
+      
+      const response = await window.WOVCCAuth.authenticatedFetch('/live-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(configData)
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Reset UI
+        document.getElementById('live-toggle').checked = false;
+        document.getElementById('livestream-url').value = '';
+        document.getElementById('match-selector').value = '';
+        document.getElementById('selected-match-preview').style.display = 'none';
+        
+        updateLiveStatusIndicator(false);
+        
+        showNotification('Configuration cleared successfully!', 'success');
+      } else {
+        showNotification('Failed to clear configuration: ' + result.error, 'error');
+      }
+      
+    } catch (error) {
+      console.error('Failed to clear config:', error);
+      showNotification('Failed to clear configuration: ' + error.message, 'error');
+    }
+  }
+</script>
+
+<!-- Toggle Switch CSS -->
+<style>
+  .toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+  }
+  
+  .toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 34px;
+  }
+  
+  .toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+  }
+  
+  input:checked + .toggle-slider {
+    background-color: var(--primary-color);
+  }
+  
+  input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+  <!-- Page Header -->
+  <section class="hero" style="background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/assets/banner.jpeg'); background-size: cover; background-position: center 40%; height: 300px;">
+    <div class="hero-content">
+      <h1>Admin Panel</h1>
+      <p>Manage live match configuration</p>
+    </div>
+  </section>
+
+  <!-- Access Denied Section -->
+  <section id="access-denied-section" style="display: none;">
+    <div class="container" style="padding: 60px 20px; text-align: center;">
+      <div style="max-width: 500px; margin: 0 auto;">
+        <svg style="width: 80px; height: 80px; margin: 0 auto 20px; color: var(--accent-color);" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clip-rule="evenodd"/>
+        </svg>
+        <h2 style="color: var(--text-dark); margin-bottom: 15px;">Access Denied</h2>
+        <p style="color: var(--text-light); margin-bottom: 30px;">
+          You must be logged in as an administrator to access this page.
+        </p>
+        <a href="/members" class="btn btn-primary">Go to Login</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Admin Content -->
+  <section id="admin-content" style="display: none;">
+    <div class="section">
+      <div class="container" style="max-width: 900px;">
+        
+        <!-- Live Match Management -->
+        <div class="card" style="margin-bottom: 30px;">
+          <div class="card-body">
+            <h3 style="color: var(--primary-color); margin-bottom: 20px;">Live Match Management</h3>
+            
+            <!-- Toggle Live Section -->
+            <div style="margin-bottom: 30px; padding: 20px; background-color: var(--secondary-bg); border-radius: 8px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+                <div>
+                  <h4 style="margin: 0 0 5px 0; color: var(--text-dark);">Live Section Status</h4>
+                  <p style="margin: 0; color: var(--text-light); font-size: 0.9rem;">
+                    Toggle the live match section visibility on the homepage
+                  </p>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="live-toggle">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div id="live-status-indicator" style="margin-top: 15px; padding: 10px 15px; border-radius: 6px; font-size: 0.9rem; font-weight: 500;">
+                <span id="status-text"></span>
+              </div>
+            </div>
+            
+            <!-- Select Match -->
+            <div class="form-group" style="margin-bottom: 25px;">
+              <label class="form-label" for="match-selector">
+                Select Match <span style="color: var(--text-light); font-weight: 400;">(Choose the match currently being played)</span>
+              </label>
+              <select id="match-selector" class="form-input" style="cursor: pointer;">
+                <option value="">No match selected</option>
+              </select>
+              <div id="selected-match-preview" style="margin-top: 15px; padding: 15px; background-color: var(--secondary-bg); border-radius: 8px; display: none;">
+                <h5 style="margin: 0 0 10px 0; color: var(--primary-color); font-size: 0.95rem;">Selected Match:</h5>
+                <div id="match-preview-content"></div>
+              </div>
+            </div>
+            
+            <!-- Live Widget Info -->
+            <div class="form-group" style="margin-bottom: 25px;">
+              <label class="form-label">
+                Live Score Widget <span style="color: var(--text-light); font-weight: 400;">(Automatic)</span>
+              </label>
+              <div style="padding: 15px; background-color: #e7f3ff; border-left: 4px solid var(--primary-color); border-radius: 6px;">
+                <p style="margin: 0 0 10px 0; color: var(--text-dark); font-size: 0.9rem;">
+                  <strong>ℹ️ Play-Cricket Live Scores</strong>
+                </p>
+                <p style="margin: 0; color: var(--text-light); font-size: 0.85rem; line-height: 1.5;">
+                  When you select a match and enable the live section, the Play-Cricket live score widget will automatically display for the selected team. The widget shows real-time scores and updates automatically.
+                </p>
+              </div>
+            </div>
+            
+            <!-- Optional: External Livestream URL -->
+            <div class="form-group" style="margin-bottom: 25px;">
+              <label class="form-label" for="livestream-url">
+                External Livestream URL <span style="color: var(--text-light); font-weight: 400;">(Optional - YouTube, etc.)</span>
+              </label>
+              <input 
+                type="text" 
+                id="livestream-url" 
+                class="form-input" 
+                placeholder="e.g., https://www.youtube.com/embed/VIDEO_ID"
+              >
+              <p style="margin-top: 8px; font-size: 0.85rem; color: var(--text-light);">
+                💡 Optional: Add a YouTube or other video stream URL. Leave blank to show only Play-Cricket scores.
+              </p>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+              <button id="save-config-btn" class="btn btn-primary">
+                Save Configuration
+              </button>
+              <button id="clear-config-btn" class="btn btn-outline">
+                Clear All
+              </button>
+            </div>
+            
+            <!-- Last Updated Info -->
+            <div id="last-updated-info" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color); font-size: 0.9rem; color: var(--text-light); display: none;">
+              <strong>Last Updated:</strong> <span id="last-updated-time"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="card">
+          <div class="card-body">
+            <h3 style="color: var(--primary-color); margin-bottom: 15px;">Instructions</h3>
+            <ol style="padding-left: 20px; line-height: 1.8; color: var(--text-dark);">
+              <li><strong>Toggle Live Section:</strong> Turn on to show the live match section on the homepage. Turn off to show regular fixtures/results.</li>
+              <li><strong>Select Match:</strong> Choose ONE match for the livestream. All of today's matches will automatically show their live scores via Play-Cricket widgets.</li>
+              <li><strong>External Livestream (Optional):</strong> Add a YouTube or other video stream URL for the selected match. The livestream will display the match name above the video.</li>
+              <li><strong>Save:</strong> Click "Save Configuration" to apply your changes.</li>
+              <li><strong>Clear:</strong> Use "Clear All" to reset the configuration and turn off the live section.</li>
+            </ol>
+            <div style="margin-top: 15px; padding: 15px; background-color: #e7f3ff; border-radius: 8px; color: #0c5460; border-left: 4px solid var(--primary-color);">
+              <strong>ℹ️ How it works:</strong> When live mode is enabled, the system automatically displays Play-Cricket widgets for ALL matches scheduled for today. If you add a livestream URL, it will only show for the match you selected.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+{% endblock %}
