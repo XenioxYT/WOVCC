@@ -42,26 +42,58 @@ PORT = int(os.environ.get('PORT', 5000))
 init_db()
 
 
+# Security headers middleware
+@app.after_request
+def add_security_headers(response):
+    """Add security headers to all responses"""
+    # Prevent MIME-type sniffing
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    # Prevent clickjacking
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    # Enable XSS protection
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    # HSTS (only in production with HTTPS)
+    if not DEBUG and request.is_secure:
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    # Referrer policy
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    # Permissions policy
+    response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
+    return response
+
+
 # Routes for static assets (styles, scripts, images)
 @app.route('/styles/<path:filename>')
 def serve_styles(filename):
-    """Serve CSS files from styles directory"""
+    """Serve CSS files from styles directory with caching"""
     styles_dir = os.path.join(os.path.dirname(__file__), '..', 'styles')
-    return send_from_directory(styles_dir, filename)
+    response = send_from_directory(styles_dir, filename)
+    # Cache for 1 year (aggressive caching for CSS)
+    response.cache_control.max_age = 31536000
+    response.cache_control.public = True
+    return response
 
 
 @app.route('/scripts/<path:filename>')
 def serve_scripts(filename):
-    """Serve JavaScript files from scripts directory"""
+    """Serve JavaScript files from scripts directory with caching"""
     scripts_dir = os.path.join(os.path.dirname(__file__), '..', 'scripts')
-    return send_from_directory(scripts_dir, filename)
+    response = send_from_directory(scripts_dir, filename)
+    # Cache for 1 year (aggressive caching for JS)
+    response.cache_control.max_age = 31536000
+    response.cache_control.public = True
+    return response
 
 
 @app.route('/assets/<path:filename>')
 def serve_assets(filename):
-    """Serve asset files (images, etc) from assets directory"""
+    """Serve asset files (images, etc) from assets directory with caching"""
     assets_dir = os.path.join(os.path.dirname(__file__), '..', 'assets')
-    return send_from_directory(assets_dir, filename)
+    response = send_from_directory(assets_dir, filename)
+    # Cache for 1 year (aggressive caching for images)
+    response.cache_control.max_age = 31536000
+    response.cache_control.public = True
+    return response
 
 
 # Page routes
@@ -95,6 +127,19 @@ def admin():
     return render_template('admin.html')
 
 
+# SEO and utility routes
+@app.route('/robots.txt')
+def robots():
+    """Robots.txt file for search engines"""
+    return """User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin
+
+Sitemap: {}/sitemap.xml
+""".format(request.url_root.rstrip('/')), 200, {'Content-Type': 'text/plain; charset=utf-8'}
+
+
 # Health check
 @app.route('/health')
 @app.route('/api/health')
@@ -103,7 +148,8 @@ def health():
     return jsonify({
         'status': 'ok',
         'service': 'WOVCC Application',
-        'version': '2.0.0'
+        'version': '2.0.0',
+        'timestamp': datetime.now().isoformat()
     })
 
 
@@ -875,18 +921,33 @@ def stripe_webhook():
 
 @app.errorhandler(404)
 def not_found(e):
-    return jsonify({
-        'success': False,
-        'error': 'Endpoint not found'
-    }), 404
+    """Handle 404 errors - return HTML for pages, JSON for API"""
+    # Check if request is for API endpoint
+    if request.path.startswith('/api/') or request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
+        return jsonify({
+            'success': False,
+            'error': 'Endpoint not found'
+        }), 404
+    # Return HTML error page for regular page requests
+    return render_template('404.html') if os.path.exists(os.path.join(app.template_folder, '404.html')) else (
+        "<h1>404 - Page Not Found</h1><p>The page you're looking for doesn't exist.</p><a href='/'>Go Home</a>", 404
+    )
 
 
 @app.errorhandler(500)
 def internal_error(e):
-    return jsonify({
-        'success': False,
-        'error': 'Internal server error'
-    }), 500
+    """Handle 500 errors - return HTML for pages, JSON for API"""
+    logger.error(f"Internal server error: {e}", exc_info=True)
+    # Check if request is for API endpoint
+    if request.path.startswith('/api/') or request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
+    # Return HTML error page for regular page requests
+    return render_template('500.html') if os.path.exists(os.path.join(app.template_folder, '500.html')) else (
+        "<h1>500 - Server Error</h1><p>Something went wrong on our end. Please try again later.</p><a href='/'>Go Home</a>", 500
+    )
 
 
 # ----- Application Entry Point -----
