@@ -7,6 +7,15 @@
 // Data is cached locally for 5 minutes
 // ===================================
 
+// Debug utility - only logs in development
+const DEBUG = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const debug = {
+  log: (...args) => DEBUG && console.log(...args),
+  warn: (...args) => DEBUG && console.warn(...args),
+  error: (...args) => console.error(...args), // Always log errors
+  info: (...args) => DEBUG && console.info(...args)
+};
+
 // API Configuration
 const API_CONFIG = {
   // Change this to your VPS URL after deployment
@@ -113,12 +122,12 @@ class WOVCCApi {
     // Check if cache is still valid
     const now = Date.now();
     if (this.cachedData && this.cacheTimestamp && (now - this.cacheTimestamp < this.cacheMaxAge)) {
-      console.log('Using cached data');
+      debug.log('Using cached data');
       return this.cachedData;
     }
     
     try {
-      console.log('Fetching fresh data from API...');
+      debug.log('Fetching fresh data from API...');
       const data = await this._fetch('/data?source=file');
       
       if (data.success) {
@@ -131,11 +140,11 @@ class WOVCCApi {
         throw new Error('API returned unsuccessful response');
       }
     } catch (error) {
-      console.error('Failed to fetch all data:', error);
+      debug.error('Failed to fetch all data:', error);
       
       // If we have old cached data, use it as fallback
       if (this.cachedData) {
-        console.warn('Using stale cached data as fallback');
+        debug.warn('Using stale cached data as fallback');
         return this.cachedData;
       }
       
@@ -151,7 +160,7 @@ class WOVCCApi {
       const data = await this._fetch('/health');
       return data;
     } catch (error) {
-      console.error('Health check failed:', error);
+      debug.error('Health check failed:', error);
       return { status: 'error', message: error.message };
     }
   }
@@ -164,7 +173,7 @@ class WOVCCApi {
       const data = await this._fetchAllData();
       return data.teams || [];
     } catch (error) {
-      console.error('Failed to fetch teams:', error);
+      debug.error('Failed to fetch teams:', error);
       return [];
     }
   }
@@ -192,7 +201,7 @@ class WOVCCApi {
       
       return fixtures;
     } catch (error) {
-      console.error('Failed to fetch fixtures:', error);
+      debug.error('Failed to fetch fixtures:', error);
       return [];
     }
   }
@@ -226,7 +235,7 @@ class WOVCCApi {
       
       return results;
     } catch (error) {
-      console.error('Failed to fetch results:', error);
+      debug.error('Failed to fetch results:', error);
       return [];
     }
   }
@@ -247,7 +256,7 @@ class WOVCCApi {
       
       return hasMatchesToday;
     } catch (error) {
-      console.error('Failed to check match status:', error);
+      debug.error('Failed to check match status:', error);
       return false;
     }
   }
@@ -259,7 +268,7 @@ class WOVCCApi {
     this.cachedData = null;
     this.cacheTimestamp = null;
     this.lastUpdated = null;
-    console.log('Local cache cleared');
+    debug.log('Local cache cleared');
   }
   
   /**
@@ -483,4 +492,5 @@ const wovccApi = new WOVCCApi(API_CONFIG);
 
 // Export for use in other scripts
 window.WOVCCApi = wovccApi;
+
 

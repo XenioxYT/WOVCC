@@ -3,6 +3,15 @@
 // Uses backend API with JWT tokens
 // ===================================
 
+// Debug utility - only logs in development
+const DEBUG = !window.location.hostname || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const debug = {
+  log: (...args) => DEBUG && console.log(...args),
+  warn: (...args) => DEBUG && console.warn(...args),
+  error: (...args) => console.error(...args), // Always log errors
+  info: (...args) => DEBUG && console.info(...args)
+};
+
 // Storage keys
 const STORAGE_KEYS = {
   ACCESS_TOKEN: 'wovcc_access_token',
@@ -11,9 +20,18 @@ const STORAGE_KEYS = {
 };
 
 // API Configuration
-const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:5000/api'
-  : 'https://api.wovcc.co.uk/api';
+// Better API URL detection that handles file:// protocol
+const API_BASE = (() => {
+  const hostname = window.location.hostname;
+  
+  // If file:// protocol (empty hostname) or localhost, use local API
+  if (!hostname || hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'http://localhost:5000/api';
+  }
+  
+  // Production API
+  return 'https://api.wovcc.co.uk/api';
+})();
 
 /**
  * Get access token from storage
@@ -100,35 +118,36 @@ async function authenticatedFetch(endpoint, options = {}) {
  */
 async function signup(name, email, password, newsletter = false) {
   try {
-    const response = await fetch(`${API_BASE}/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name,
-        email,
-        password,
-        newsletter
-      })
-    });
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      // Save tokens and user
-      saveAuthData(data.access_token, data.refresh_token, data.user);
-      return {
-        success: true,
-        message: data.message || 'Account created successfully!',
-        user: data.user
-      };
-    } else {
-      return {
-        success: false,
-        message: data.error || 'Registration failed'
-      };
-    }
+        // Store credentials temporarily so we can attempt auto-login after successful payment
+        try {
+          sessionStorage.setItem('wovcc_pending_email', email);
+          sessionStorage.setItem('wovcc_pending_password', password);
+        } catch (e) {
+          // sessionStorage may be unavailable in some contexts; proceed regardless
+        }
+
+        // Call pre-register endpoint which creates a pending registration and a Checkout session
+        const response = await fetch(`${API_BASE}/auth/pre-register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            password,
+            newsletter
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.checkout_url) {
+          // The caller will redirect to Stripe Checkout
+          return { success: true, checkout_url: data.checkout_url };
+        }
+
+        return { success: false, message: data.error || 'Registration failed' };
   } catch (error) {
     return {
       success: false,
@@ -170,6 +189,16 @@ async function login(email, password) {
       };
     }
   } catch (error) {
+    debug.error('[Auth] Login error:', error);
+    
+    // Check if it's a network error
+    if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+      return {
+        success: false,
+        message: 'Cannot connect to server. Please ensure the API is running.'
+      };
+    }
+    
     return {
       success: false,
       message: error.message || 'Failed to connect to server'
@@ -217,7 +246,7 @@ async function refreshUserProfile() {
     }
     return null;
   } catch (error) {
-    console.error('Failed to refresh user profile:', error);
+    debug.error('Failed to refresh user profile:', error);
     return null;
   }
 }
@@ -318,14 +347,72 @@ document.addEventListener('DOMContentLoaded', async function() {
   // Check for payment success/cancel in URL
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('success') === 'true') {
-    // Payment successful - refresh user profile
+    // Payment successful - try to auto-login using pending credentials stored in sessionStorage
+    const pendingEmail = sessionStorage.getItem('wovcc_pending_email');
+    const pendingPassword = sessionStorage.getItem('wovcc_pending_password');
+
+    // If user is already logged in, just refresh profile and redirect to members page
     if (isLoggedIn()) {
       await refreshUserProfile();
       updateNavbar();
       if (typeof showNotification === 'function') {
         showNotification('Payment successful! Your membership is now active.', 'success');
       }
+      // Redirect to members page
+      setTimeout(() => {
+        window.location.href = '/pages/members.html';
+      }, 1500);
+    } else if (pendingEmail && pendingPassword) {
+      // FALLBACK: Try to activate account first (for when webhooks don't work in development)
+      try {
+        debug.log('[Auth] Attempting fallback activation for:', pendingEmail);
+        await fetch(`${API_BASE}/auth/check-and-activate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: pendingEmail })
+        });
+      } catch (e) {
+        debug.warn('[Auth] Fallback activation failed, will retry login:', e);
+      }
+      
+      // Attempt to login several times (webhook may take a moment to process)
+      let attempts = 0;
+      let loggedIn = false;
+      while (attempts < 6 && !loggedIn) {
+        try {
+          const result = await login(pendingEmail, pendingPassword);
+          if (result.success) {
+            loggedIn = true;
+            await refreshUserProfile();
+            updateNavbar();
+            if (typeof showNotification === 'function') {
+              showNotification('Welcome! Redirecting to your membership page...', 'success');
+            }
+            // Clear pending credentials
+            sessionStorage.removeItem('wovcc_pending_email');
+            sessionStorage.removeItem('wovcc_pending_password');
+            // Redirect to members page
+            setTimeout(() => {
+              window.location.href = '/pages/members.html';
+            }, 1500);
+            break;
+          }
+        } catch (e) {
+          // Ignore and retry
+        }
+        attempts += 1;
+        // Wait before retrying
+        await new Promise(r => setTimeout(r, 1000));
+      }
+
+      if (!loggedIn) {
+        // Let the user know their account will be ready; they can login manually
+        if (typeof showNotification === 'function') {
+          showNotification('Payment successful. Your account has been created — please log in to continue.', 'info');
+        }
+      }
     }
+
     // Clean URL
     window.history.replaceState({}, document.title, window.location.pathname);
   } else if (urlParams.get('canceled') === 'true') {
@@ -350,3 +437,4 @@ window.WOVCCAuth = {
   authenticatedFetch,
   createCheckoutSession
 };
+
