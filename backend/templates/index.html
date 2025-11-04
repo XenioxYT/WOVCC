@@ -1,0 +1,126 @@
+{% extends "layout.html" %}
+
+{% block title %}Home - WOVCC | Wickersley Old Village Cricket Club{% endblock %}
+
+{% block description %}Wickersley Old Village Cricket Club - Community cricket in Rotherham{% endblock %}
+
+{% block extra_js %}
+<script src="/scripts/api-client.js"></script>
+<script src="/scripts/match-controller.js"></script>
+{% endblock %}
+
+{% block content %}
+  <!-- Hero Section -->
+  <section class="hero" style="background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/assets/banner.jpeg'); background-size: cover; background-position: center bottom;">
+    <div class="hero-content">
+      <img src="/assets/logo.png" alt="WOVCC Logo" style="width: 120px; height: 120px; margin: 0 auto 20px; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+      <h1>Welcome to Wickersley Old Village CC</h1>
+      <p>A Village cricket club offering ECB Premier League Cricket, Women's Cricket & Junior Cricket including Dynamos and All Stars</p>
+      <a href="/join" class="btn btn-primary">Join for £15</a>
+    </div>
+  </section>
+
+  <!-- Match Day Hub -->
+  <section class="matchday-hub section">
+    <div class="container">
+      <h2 class="section-title">Match Information</h2>
+      
+      <!-- Live Match Section (shown during match days) -->
+      <div id="live-match-section" style="display: none;">
+        <div class="matchday-content">
+          
+          <!-- Optional External Livestream Player (Primary Match) -->
+          <div class="livestream-container" id="external-livestream-container" style="display: none;">
+            <h3 id="livestream-match-title">Live Stream</h3>
+            <iframe 
+              class="livestream-player"
+              id="external-livestream-player"
+              src="" 
+              frameborder="0" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+              allowfullscreen>
+            </iframe>
+          </div>
+          
+          <!-- Live Scores Widgets (Multiple - All Today's Matches) -->
+          <div class="scores-container">
+            <h3 style="margin-bottom: 25px;">Live Scores</h3>
+            <div id="live-scores-widgets-container">
+              <!-- Multiple Play-Cricket Live Scores Widgets will be injected here dynamically -->
+            </div>
+          </div>
+          
+        </div>
+      </div>
+      
+      <!-- No Match Section (shown when no matches) -->
+      <div id="no-match-section">
+        <!-- Team Selector -->
+        <div style="text-align: center; margin-bottom: 30px;">
+          <label for="team-selector" style="font-weight: 600; margin-right: 10px; color: var(--text-dark);">Select Team:</label>
+          <select id="team-selector" style="padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border-color); background: white; font-family: var(--font-family); font-size: 1rem; cursor: pointer;">
+            <option value="all">All Teams</option>
+            <!-- Options will be populated by JavaScript -->
+          </select>
+        </div>
+        
+        <!-- Fixtures and Results Vertical Stack -->
+        <div style="max-width: 900px; margin: 0 auto;">
+          <!-- Upcoming Fixtures -->
+          <div class="fixtures-section" style="margin-bottom: 40px;">
+            <h3 style="color: var(--primary-color); margin-bottom: 20px;">Upcoming Fixtures</h3>
+            <div id="upcoming-fixtures-container">
+              <!-- Skeleton loader will be shown here -->
+            </div>
+          </div>
+          
+          <!-- Recent Results -->
+          <div class="results-section" style="margin-bottom: 40px;">
+            <h3 style="color: var(--primary-color); margin-bottom: 20px;">Recent Results</h3>
+            <div id="recent-results-container">
+              <!-- Skeleton loader will be shown here -->
+            </div>
+          </div>
+          
+          <!-- Last Updated Timestamp -->
+          <div id="last-updated-container"></div>
+          
+          <!-- Show All Matches Button -->
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="/matches" class="btn btn-primary" style="padding: 14px 32px; font-size: 1.05rem;">
+              <svg style="width: 18px; height: 18px; margin-right: 8px; vertical-align: middle;" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+              </svg>
+              Show All Matches
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Club Information -->
+  <section class="about-section section" style="background-color: var(--secondary-bg);">
+    <div class="container">
+      <h2 class="section-title">About Wickersley Old Village Cricket Club</h2>
+      
+      <div class="about-text-content">
+        <p>
+          We're a Village cricket club offering a variety of cricket from ECB Premier League Cricket, Women's Cricket & Junior Cricket including Dynamos and All Stars. We have 3 senior teams playing in the Yorkshire Cricket Southern Premier League in the Championship, Division 1 & Division 5.
+        </p>
+        
+        <p>
+          Our Women's section - The Vixens, have 3 teams in the Yorkshire Cricket Premier League competing in Division 1 for Hardball and Softball, and also in Division 3 Softball.
+        </p>
+        
+        <p>
+          We have junior teams in the Ben Jessop Junior Cricket League: U9s, U11s, U13s, U15s, U18s plus our Junior Vixens. Our successful All Stars programme will be back again this year along with Dynamos cricket.
+        </p>
+        
+        <p>
+          Join WOVCC for just £15/year and enjoy drink discounts, member benefits, and access to exclusive content. Thank you to all our members, guests and sponsors for making each season a great success.
+        </p>
+      </div>
+    </div>
+  </section>
+{% endblock %}

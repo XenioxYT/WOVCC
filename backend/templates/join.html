@@ -1,0 +1,273 @@
+{% extends "layout.html" %}
+
+{% block title %}Join / Renew - WOVCC | Wickersley Old Village Cricket Club{% endblock %}
+
+{% block description %}Join or renew your membership - Annual membership for just £15/year{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Toggle between new member and renewal forms
+  function showNewMember() {
+    document.getElementById('new-member-form').style.display = 'block';
+    document.getElementById('renewal-form').style.display = 'none';
+    document.getElementById('new-member-btn').className = 'btn btn-primary';
+    document.getElementById('renew-btn').className = 'btn btn-outline';
+  }
+  
+  function showRenewal() {
+    document.getElementById('new-member-form').style.display = 'none';
+    document.getElementById('renewal-form').style.display = 'block';
+    document.getElementById('new-member-btn').className = 'btn btn-outline';
+    document.getElementById('renew-btn').className = 'btn btn-primary';
+  }
+  
+  // Handle new member signup
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('signup-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const newsletter = document.getElementById('newsletter').checked;
+      
+      if (password.length < 6) {
+        if (typeof showNotification === 'function') {
+          showNotification('Password must be at least 6 characters', 'error');
+        } else {
+          alert('Password must be at least 6 characters');
+        }
+        return;
+      }
+      
+      // Disable form
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating account...';
+      
+      try {
+        // Register user
+        const result = await window.WOVCCAuth.signup(name, email, password, newsletter);
+        
+        if (result.success) {
+          // If pre-register returned a checkout URL, redirect user to Stripe Checkout
+          if (result.checkout_url) {
+            window.location.href = result.checkout_url;
+            return; // browser will navigate away
+          }
+
+          // Otherwise update navbar (legacy behavior)
+          window.WOVCCAuth.updateNavbar();
+          
+          if (typeof showNotification === 'function') {
+            showNotification('Account created. Please complete payment.', 'info');
+          }
+        } else {
+          if (typeof showNotification === 'function') {
+            showNotification(result.message, 'error');
+          } else {
+            alert(result.message);
+          }
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      } catch (error) {
+        if (typeof showNotification === 'function') {
+          showNotification('Failed to create account. Please try again.', 'error');
+        } else {
+          alert('Failed to create account. Please try again.');
+        }
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    });
+    
+    // Handle membership renewal
+    document.getElementById('renew-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const email = document.getElementById('renew-email').value;
+      const password = document.getElementById('renew-password').value;
+      
+      // Disable form
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Logging in...';
+      
+      try {
+        // Login user
+        const result = await window.WOVCCAuth.login(email, password);
+        
+        if (result.success) {
+          // Update navbar
+          window.WOVCCAuth.updateNavbar();
+          
+          // Create Stripe checkout session for renewal
+          try {
+            await window.WOVCCAuth.createCheckoutSession();
+            // User will be redirected to Stripe Checkout
+          } catch (error) {
+            // If checkout fails, show message
+            if (typeof showNotification === 'function') {
+              showNotification('Logged in, but payment setup failed. Please try again.', 'warning');
+            } else {
+              alert('Logged in, but payment setup failed. Please try again.');
+            }
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+          }
+        } else {
+          if (typeof showNotification === 'function') {
+            showNotification(result.message || 'Invalid email or password. If you need help, contact info@wovcc.co.uk', 'error');
+          } else {
+            alert('Invalid email or password. If you need help, contact info@wovcc.co.uk');
+          }
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      } catch (error) {
+        if (typeof showNotification === 'function') {
+          showNotification('Failed to login. Please try again.', 'error');
+        } else {
+          alert('Failed to login. Please try again.');
+        }
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    });
+  });
+</script>
+{% endblock %}
+
+{% block content %}
+  <!-- Page Header -->
+  <section class="hero" style="background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/assets/banner.jpeg'); background-size: cover; background-position: center 40%; height: 300px;">
+    <div class="hero-content">
+      <h1>Membership</h1>
+      <p>Join or renew your membership</p>
+    </div>
+  </section>
+
+  <!-- Membership Section -->
+  <section class="section">
+    <div class="container">
+      <div style="max-width: 600px; margin: 0 auto;">
+        
+        <!-- Membership Card -->
+        <div class="card" style="text-align: center; padding: 40px 30px; margin-bottom: 40px;">
+          <h2 style="color: var(--primary-color); margin-bottom: 20px;">Annual Membership</h2>
+          <div style="font-size: 3rem; font-weight: 700; color: var(--accent-color); margin-bottom: 20px;">
+            £15<span style="font-size: 1.2rem; color: var(--text-light);">/year</span>
+          </div>
+          
+          <div style="text-align: left; margin: 30px auto; max-width: 350px;">
+            <h4 style="color: var(--primary-color); margin-bottom: 15px;">Benefits:</h4>
+            <ul style="list-style: none; padding: 0;">
+              <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                ✓ Drink discounts at the bar
+              </li>
+              <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                ✓ Access to members area
+              </li>
+              <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                ✓ Support the club
+              </li>
+              <li style="padding: 8px 0;">
+                ✓ Newsletter updates
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Tab Selection -->
+        <div style="display: flex; gap: 10px; margin-bottom: 30px;">
+          <button class="btn btn-primary" id="new-member-btn" onclick="showNewMember()" style="flex: 1;">
+            New Member
+          </button>
+          <button class="btn btn-outline" id="renew-btn" onclick="showRenewal()" style="flex: 1;">
+            Renew Membership
+          </button>
+        </div>
+
+        <!-- New Member Form -->
+        <div id="new-member-form" class="signup-form">
+          <h3 style="color: var(--primary-color); margin-bottom: 20px;">Sign Up</h3>
+          
+          <form id="signup-form">
+            <div class="form-group">
+              <label class="form-label" for="name">Full Name</label>
+              <input type="text" id="name" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" for="email">Email Address</label>
+              <input type="email" id="email" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" for="password">Create Password</label>
+              <input type="password" id="password" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+              <div class="form-checkbox">
+                <input type="checkbox" id="newsletter" name="newsletter">
+                <label for="newsletter">Receive club news and updates via email</label>
+              </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+              Pay £15 & Join
+            </button>
+          </form>
+        </div>
+
+        <!-- Renewal Form -->
+        <div id="renewal-form" class="signup-form" style="display: none;">
+          <h3 style="color: var(--primary-color); margin-bottom: 20px;">Renew Membership</h3>
+          
+          <form id="renew-form">
+            <div class="form-group">
+              <label class="form-label" for="renew-email">Email Address</label>
+              <input type="email" id="renew-email" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" for="renew-password">Password</label>
+              <input type="password" id="renew-password" class="form-input" required>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+              Pay £15 & Renew
+            </button>
+            
+            <p class="text-center mt-2" style="color: var(--text-light); font-size: 0.9rem;">
+              Forgot your password? Contact us at info@wovcc.co.uk
+            </p>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Success Message (Hidden) -->
+  <section class="section" style="display: none;" id="success-section">
+    <div class="container">
+      <div class="signup-form text-center" style="max-width: 600px; margin: 0 auto;">
+        <div style="font-size: 4rem; margin-bottom: 20px;">✅</div>
+        <h2 style="color: var(--primary-color);">Welcome to WOVCC!</h2>
+        <p style="font-size: 1.1rem; margin: 20px 0;">
+          Your membership is now active.
+        </p>
+        
+        <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
+          <a href="/members" class="btn btn-primary">Go to Members Area</a>
+          <a href="/" class="btn btn-outline">Return Home</a>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}

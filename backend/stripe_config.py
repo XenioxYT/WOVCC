@@ -49,7 +49,7 @@ def create_checkout_session(customer_id: str = None, email: str = None, user_id:
     # Determine the base URL for frontend redirects
     # In development, frontend is served from file:// or a different port
     # In production, use the environment variable or default to the main domain
-    default_frontend_url = os.environ.get('FRONTEND_URL', 'http://127.0.0.1:5500')
+    default_frontend_url = os.environ.get('FRONTEND_URL', 'http://127.0.0.1:5000')
     
     session_params = {
         'payment_method_types': ['card'],

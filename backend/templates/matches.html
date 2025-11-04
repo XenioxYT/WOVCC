@@ -1,0 +1,272 @@
+{% extends "layout.html" %}
+
+{% block title %}Matches - WOVCC | Wickersley Old Village Cricket Club{% endblock %}
+
+{% block description %}View upcoming fixtures and recent match results{% endblock %}
+
+{% block extra_js %}
+<script src="/scripts/api-client.js"></script>
+
+<script>
+  // Matches page controller
+  let currentTeam = 'all';
+  let currentTab = 'fixtures';
+
+  document.addEventListener('DOMContentLoaded', async function() {
+    await initMatchesPage();
+  });
+  
+  async function initMatchesPage() {
+    // Setup team selector
+    await setupTeamSelector();
+    
+    // Setup tabs
+    setupTabs();
+    
+    // Load initial data
+    await loadMatchesData();
+  }
+  
+  async function setupTeamSelector() {
+    const selector = document.getElementById('team-selector');
+    if (!selector) return;
+    
+    // Show loading state
+    selector.style.opacity = '0.6';
+    selector.disabled = true;
+    
+    try {
+      const teams = await wovccApi.getTeams();
+      
+      // Clear and repopulate
+      selector.innerHTML = '<option value="all">All Teams</option>';
+      teams.forEach(team => {
+        const option = document.createElement('option');
+        option.value = team.id;
+        option.textContent = team.name;
+        selector.appendChild(option);
+      });
+      
+      // Setup change handler
+      selector.addEventListener('change', function() {
+        currentTeam = selector.value;
+        loadMatchesData();
+      });
+      
+      // Restore selector
+      selector.style.opacity = '1';
+      selector.disabled = false;
+      
+    } catch (error) {
+      console.error('Failed to setup team selector:', error);
+      selector.style.opacity = '1';
+      selector.disabled = false;
+    }
+  }
+  
+  function setupTabs() {
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const tab = this.getAttribute('data-tab');
+        switchTab(tab);
+      });
+    });
+  }
+  
+  function switchTab(tab) {
+    currentTab = tab;
+    
+    // Update button states
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    document.getElementById(`${tab}-tab-btn`).classList.add('active');
+    
+    // Update content visibility
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.classList.remove('active');
+    });
+    document.getElementById(`${tab}-content`).classList.add('active');
+  }
+  
+  async function loadMatchesData() {
+    await Promise.all([
+      loadFixtures(),
+      loadResults()
+    ]);
+    
+    // Display last updated timestamp
+    const lastUpdatedContainer = document.getElementById('last-updated-container');
+    if (lastUpdatedContainer) {
+      wovccApi.renderLastUpdated(lastUpdatedContainer);
+    }
+  }
+  
+  async function loadFixtures() {
+    const container = document.getElementById('fixtures-container');
+    if (!container) return;
+    
+    // Show skeleton loader while loading
+    wovccApi.renderFixturesSkeleton(container, 5);
+    
+    try {
+      const fixtures = await wovccApi.getFixtures(currentTeam);
+      wovccApi.renderFixtures(fixtures, container);
+    } catch (error) {
+      console.error('Failed to load fixtures:', error);
+      container.innerHTML = `
+        <p style="text-align: center; color: var(--text-light); padding: 40px;">
+          Failed to load fixtures. Please try again later.
+        </p>
+      `;
+    }
+  }
+  
+  async function loadResults() {
+    const container = document.getElementById('results-container');
+    if (!container) return;
+    
+    // Show skeleton loader while loading
+    wovccApi.renderResultsSkeleton(container, 5);
+    
+    try {
+      const results = await wovccApi.getResults(currentTeam, 9999);
+      wovccApi.renderResults(results, container);
+    } catch (error) {
+      console.error('Failed to load results:', error);
+      container.innerHTML = `
+        <p style="text-align: center; color: var(--text-light); padding: 40px;">
+          Failed to load results. Please try again later.
+        </p>
+      `;
+    }
+  }
+</script>
+{% endblock %}
+
+{% block content %}
+  <!-- Page Header -->
+  <section class="hero" style="background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/assets/banner.jpeg'); background-size: cover; background-position: center 40%; height: 300px;">
+    <div class="hero-content">
+      <h1>Matches</h1>
+      <p>Fixtures and Results</p>
+    </div>
+  </section>
+
+  <!-- Matches Section -->
+  <section class="section">
+    <div class="container">
+      <!-- Team Filter -->
+      <div style="text-align: center; margin-bottom: 30px;">
+        <label for="team-selector" style="font-weight: 600; margin-right: 10px; color: var(--text-dark);">Select Team:</label>
+        <select id="team-selector" style="padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border-color); background: white; font-family: var(--font-family); font-size: 1rem; cursor: pointer;">
+          <option value="all">All Teams</option>
+          <!-- Options will be populated by JavaScript -->
+        </select>
+      </div>
+      
+      <!-- Tabs -->
+      <div class="match-tabs">
+        <button class="tab-btn active" data-tab="fixtures" id="fixtures-tab-btn">
+          <svg style="width: 18px; height: 18px; margin-right: 6px; vertical-align: middle;" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+          </svg>
+          Upcoming Fixtures
+        </button>
+        <button class="tab-btn" data-tab="results" id="results-tab-btn">
+          <svg style="width: 18px; height: 18px; margin-right: 6px; vertical-align: middle;" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+          Recent Results
+        </button>
+      </div>
+      
+      <!-- Tab Contents -->
+      <div class="tab-content active" id="fixtures-content">
+        <div id="fixtures-container">
+          <!-- Skeleton loader will be shown here -->
+        </div>
+      </div>
+      
+      <div class="tab-content" id="results-content">
+        <div id="results-container">
+          <!-- Skeleton loader will be shown here -->
+        </div>
+      </div>
+      
+      <!-- Last Updated Timestamp -->
+      <div id="last-updated-container" style="margin-top: 30px;"></div>
+    </div>
+  </section>
+
+  <!-- Tab Styles -->
+  <style>
+    .match-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+      border-bottom: 2px solid var(--border-color);
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+      padding: 12px 24px;
+      background: none;
+      border: none;
+      color: var(--text-light);
+      font-family: var(--font-family);
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .tab-btn:hover {
+      color: var(--primary-color);
+    }
+    
+    .tab-btn.active {
+      color: var(--primary-color);
+      border-bottom-color: var(--primary-color);
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .tab-btn {
+        font-size: 0.9rem;
+        padding: 10px 16px;
+      }
+      
+      .tab-btn svg {
+        width: 16px;
+        height: 16px;
+      }
+    }
+  </style>
+{% endblock %}
