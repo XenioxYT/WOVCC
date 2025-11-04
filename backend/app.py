@@ -57,7 +57,15 @@ def add_security_headers(response):
     # Prevent clickjacking
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     # Enable XSS protection
-    response.headers['X-XSS-Protection'] = '1; mode=block'
+# response.headers['X-XSS-Protection'] = '1; mode=block'
+# Add a basic Content-Security-Policy for better XSS protection.
+csp = (
+    "default-src 'self'; "
+    "script-src 'self' 'unsafe-inline'; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "font-src 'self' https://fonts.gstatic.com;"
+)
+response.headers['Content-Security-Policy'] = csp
     # HSTS (only in production with HTTPS)
     if not DEBUG and request.is_secure:
         response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
