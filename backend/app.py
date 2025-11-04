@@ -45,7 +45,13 @@ init_db()
 # Security headers middleware
 @app.after_request
 def add_security_headers(response):
-    """Add security headers to all responses"""
+    """Add security and default cache-control headers to all responses"""
+    # Add default no-cache headers for dynamic content
+    if 'Cache-Control' not in response.headers:
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    
     # Prevent MIME-type sniffing
     response.headers['X-Content-Type-Options'] = 'nosniff'
     # Prevent clickjacking
@@ -164,11 +170,15 @@ def get_teams():
     """Get list of all teams"""
     try:
         teams = scraper.get_teams()
-        return jsonify({
+        resp = jsonify({
             'success': True,
             'teams': teams,
             'count': len(teams)
         })
+        # Cache for 10 minutes (teams rarely change)
+        resp.cache_control.max_age = 600
+        resp.cache_control.public = True
+        return resp
     except Exception as e:
         return jsonify({
             'success': False,
@@ -190,11 +200,15 @@ def get_fixtures():
     
     try:
         fixtures = scraper.get_team_fixtures(team_id)
-        return jsonify({
+        resp = jsonify({
             'success': True,
             'fixtures': fixtures,
             'count': len(fixtures)
         })
+        # Cache for 5 minutes (fixtures can change)
+        resp.cache_control.max_age = 300
+        resp.cache_control.public = True
+        return resp
     except Exception as e:
         return jsonify({
             'success': False,
@@ -218,11 +232,15 @@ def get_results():
     
     try:
         results = scraper.get_team_results(team_id, limit)
-        return jsonify({
+        resp = jsonify({
             'success': True,
             'results': results,
             'count': len(results)
         })
+        # Cache for 5 minutes (results update frequently)
+        resp.cache_control.max_age = 300
+        resp.cache_control.public = True
+        return resp
     except Exception as e:
         return jsonify({
             'success': False,
@@ -263,13 +281,17 @@ def get_all_data():
                 if isinstance(limit, int) and limit > 0:
                     results = results[:limit]
 
-                return jsonify({
+                resp = jsonify({
                     'success': True,
                     'last_updated': data.get('last_updated'),
                     'teams': data.get('teams', []),
                     'fixtures': fixtures,
                     'results': results
                 })
+                # Cache file responses for 5 minutes
+                resp.cache_control.max_age = 300
+                resp.cache_control.public = True
+                return resp
             # If file not present, fall through to live scrape
 
         # Live scrape (default)
@@ -277,13 +299,18 @@ def get_all_data():
         fixtures = scraper.get_team_fixtures(team_id)
         results = scraper.get_team_results(team_id, limit)
 
-        return jsonify({
+        resp = jsonify({
             'success': True,
             'last_updated': datetime.now().isoformat(),
             'teams': teams,
             'fixtures': fixtures,
             'results': results
         })
+        # Cache for 5 minutes
+        resp.cache_control.max_age = 300
+        resp.cache_control.public = True
+        return resp
+        
     except Exception as e:
         return jsonify({
             'success': False,
@@ -296,10 +323,14 @@ def match_status():
     """Check if there are matches scheduled for today"""
     try:
         has_matches = scraper.check_matches_today()
-        return jsonify({
+        resp = jsonify({
             'success': True,
             'has_matches_today': has_matches
         })
+        # Cache for 2 minutes (checked frequently but doesn't change often)
+        resp.cache_control.max_age = 120
+        resp.cache_control.public = True
+        return resp
     except Exception as e:
         return jsonify({
             'success': False,
@@ -325,10 +356,14 @@ def get_live_config():
                 'selected_match': None
             }
         
-        return jsonify({
+        resp = jsonify({
             'success': True,
             'config': config
         })
+        # Cache for 1 minute (needs to be relatively fresh for live updates)
+        resp.cache_control.max_age = 60
+        resp.cache_control.public = True
+        return resp
     except Exception as e:
         return jsonify({
             'success': False,
@@ -673,10 +708,15 @@ def check_and_activate():
 @require_auth
 def get_profile(user):
     """Get current user profile"""
-    return jsonify({
+    resp = jsonify({
         'success': True,
         'user': user.to_dict()
     })
+    # Private cache only (no shared cache for user data)
+    resp.cache_control.private = True
+    resp.cache_control.max_age = 60
+    resp.headers['Vary'] = 'Authorization'
+    return resp
 
 
 @app.route('/api/user/update', methods=['POST'])
@@ -929,9 +969,10 @@ def not_found(e):
             'error': 'Endpoint not found'
         }), 404
     # Return HTML error page for regular page requests
-    return render_template('404.html') if os.path.exists(os.path.join(app.template_folder, '404.html')) else (
-        "<h1>404 - Page Not Found</h1><p>The page you're looking for doesn't exist.</p><a href='/'>Go Home</a>", 404
-    )
+    try:
+        return render_template('404.html'), 404
+    except Exception:
+        return "<h1>404 - Page Not Found</h1><p>The page you're looking for doesn't exist.</p><a href='/'>Go Home</a>", 404
 
 
 @app.errorhandler(500)
@@ -945,9 +986,10 @@ def internal_error(e):
             'error': 'Internal server error'
         }), 500
     # Return HTML error page for regular page requests
-    return render_template('500.html') if os.path.exists(os.path.join(app.template_folder, '500.html')) else (
-        "<h1>500 - Server Error</h1><p>Something went wrong on our end. Please try again later.</p><a href='/'>Go Home</a>", 500
-    )
+    try:
+        return render_template('500.html', error=str(e) if DEBUG else None), 500
+    except Exception:
+        return "<h1>500 - Server Error</h1><p>Something went wrong on our end. Please try again later.</p><a href='/'>Go Home</a>", 500
 
 
 # ----- Application Entry Point -----
