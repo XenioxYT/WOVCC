@@ -68,13 +68,37 @@ def add_security_headers(response):
     return response
 
 
+# Helper function for cache-busting
+def get_file_version(filepath):
+    """Get file version based on modification time for cache-busting"""
+    try:
+        mtime = os.path.getmtime(filepath)
+        return str(int(mtime))
+    except OSError:
+        # If file doesn't exist or can't be accessed, return a default version
+        return '1'
+
+
+# Template context processor to add versioned_url function
+@app.context_processor
+def utility_processor():
+    """Add utility functions to Jinja2 templates"""
+    def versioned_url(filepath):
+        """Generate a versioned URL for static files based on modification time"""
+        full_path = os.path.join(os.path.dirname(__file__), '..', filepath.lstrip('/'))
+        version = get_file_version(full_path)
+        return f"/{filepath.lstrip('/')}?v={version}"
+    
+    return dict(versioned_url=versioned_url)
+
+
 # Routes for static assets (styles, scripts, images)
 @app.route('/styles/<path:filename>')
 def serve_styles(filename):
     """Serve CSS files from styles directory with caching"""
     styles_dir = os.path.join(os.path.dirname(__file__), '..', 'styles')
     response = send_from_directory(styles_dir, filename)
-    # Cache for 1 year (aggressive caching for CSS)
+    # Cache for 1 year (aggressive caching for CSS with version query param)
     response.cache_control.max_age = 31536000
     response.cache_control.public = True
     return response
@@ -85,7 +109,7 @@ def serve_scripts(filename):
     """Serve JavaScript files from scripts directory with caching"""
     scripts_dir = os.path.join(os.path.dirname(__file__), '..', 'scripts')
     response = send_from_directory(scripts_dir, filename)
-    # Cache for 1 year (aggressive caching for JS)
+    # Cache for 1 year (aggressive caching for JS with version query param)
     response.cache_control.max_age = 31536000
     response.cache_control.public = True
     return response
