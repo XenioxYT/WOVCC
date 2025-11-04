@@ -85,9 +85,19 @@ def utility_processor():
     """Add utility functions to Jinja2 templates"""
     def versioned_url(filepath):
         """Generate a versioned URL for static files based on modification time"""
-        full_path = os.path.join(os.path.dirname(__file__), '..', filepath.lstrip('/'))
+        # Normalize the filepath and construct the full path
+        normalized_path = filepath.lstrip('/')
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+        full_path = os.path.abspath(os.path.join(base_dir, normalized_path))
+        
+        # Security: Ensure the resolved path is within the expected directory
+        if not full_path.startswith(base_dir):
+            # If path traversal detected, return unversioned URL
+            logger.warning(f"Path traversal attempt detected: {filepath}")
+            return f"/{normalized_path}"
+        
         version = get_file_version(full_path)
-        return f"/{filepath.lstrip('/')}?v={version}"
+        return f"/{normalized_path}?v={version}"
     
     return dict(versioned_url=versioned_url)
 
