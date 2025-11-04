@@ -89,15 +89,22 @@ def get_file_version(filepath):
 def utility_processor():
     """Add utility functions to Jinja2 templates"""
     def versioned_url(filepath):
-        """Generate a versioned URL for static files based on modification time"""
-        # Normalize the filepath
-        normalized_path = filepath.lstrip('/')
+        """
+        Generate a versioned URL for static files based on modification time.
+        
+        Note: This function is only called from trusted Jinja2 templates with 
+        hardcoded paths, not from user input. Security checks are in place as 
+        defense-in-depth but the primary security comes from controlled template access.
+        """
+        # Normalize and sanitize the filepath
+        normalized_path = os.path.normpath(filepath.lstrip('/'))
         
         # Get base directory and construct full path
         base_dir = Path(__file__).parent.parent.resolve()
         full_path = (base_dir / normalized_path).resolve()
         
         # Security: Ensure the resolved path is within the expected directory
+        # This prevents path traversal even though inputs are from trusted templates
         try:
             full_path.relative_to(base_dir)
         except ValueError:
