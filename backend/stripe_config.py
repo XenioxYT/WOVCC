@@ -32,9 +32,9 @@ def create_checkout_session(customer_id: str = None, email: str = None, user_id:
     Create a Stripe Checkout session for membership payment
     
     Args:
-        customer_id: Existing Stripe customer ID (for renewals)
-        email: Customer email (for new customers)
-        user_id: User ID to include in metadata
+        customer_id: Existing Stripe customer ID (optional)
+        email: Customer email (for new signups)
+        user_id: User ID to include in metadata (optional)
     
     Returns:
         Stripe Checkout Session object

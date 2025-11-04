@@ -29,7 +29,7 @@ WOVCC/
 │
 ├── index.html                     # Homepage with smart match display
 ├── pages/
-│   ├── join.html                 # Join/renew membership
+│   ├── join.html                 # Join membership
 │   └── members.html              # Members area
 ├── scripts/
 │   ├── auth.js                   # Authentication with dropdown
@@ -90,11 +90,11 @@ API runs on `http://localhost:5000`
 - Team selector for filtering
 - Club information cards
 
-### Join / Renew (`pages/join.html`)
+### Join (`pages/join.html`)
 - £15/year membership
 - Benefits list
 - New member signup
-- Renewal for existing members
+- Payment via Stripe Checkout
 
 ### Members Area (`pages/members.html`)
 - Login gate

@@ -1,0 +1,240 @@
+{% extends "layout.html" %}
+
+{% block title %}Activating Your Account - WOVCC{% endblock %}
+
+{% block description %}Creating your WOVCC membership account{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', async function() {
+    const pendingEmail = sessionStorage.getItem('wovcc_pending_email');
+    const pendingPassword = sessionStorage.getItem('wovcc_pending_password');
+    
+    if (!pendingEmail || !pendingPassword) {
+      // No pending credentials, show error
+      showError();
+      return;
+    }
+    
+    // Update status message
+    updateStatus('processing', 'Creating Your Account', 'Please wait while we set up your membership...');
+    
+    // Try to activate account (fallback for development)
+    try {
+      await fetch('http://localhost:5000/api/auth/check-and-activate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingEmail })
+      });
+    } catch (e) {
+      console.log('Fallback activation attempt:', e);
+    }
+    
+    // Attempt to login (retry up to 10 times over 20 seconds)
+    let attempts = 0;
+    let maxAttempts = 10;
+    
+    while (attempts < maxAttempts) {
+      attempts++;
+      
+      try {
+        const result = await window.WOVCCAuth.login(pendingEmail, pendingPassword);
+        
+        if (result.success) {
+          // Clear pending credentials
+          sessionStorage.removeItem('wovcc_pending_email');
+          sessionStorage.removeItem('wovcc_pending_password');
+          
+          // Show success
+          updateStatus('success', 'Welcome to WOVCC!', 'Your membership is now active. Redirecting to your members area...');
+          
+          // Refresh profile and redirect
+          await window.WOVCCAuth.refreshUserProfile();
+          window.WOVCCAuth.updateNavbar();
+          
+          setTimeout(() => {
+            window.location.href = '/members';
+          }, 2000);
+          
+          return;
+        }
+      } catch (e) {
+        console.log('Login attempt failed:', e);
+      }
+      
+      // Wait 2 seconds before next attempt
+      if (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+    
+    // If we get here, all attempts failed
+    showTimeout();
+  });
+  
+  function updateStatus(type, title, message) {
+    const statusIcon = document.getElementById('status-icon');
+    const statusTitle = document.getElementById('status-title');
+    const statusMessage = document.getElementById('status-message');
+    const actionsDiv = document.getElementById('actions');
+    
+    if (type === 'processing') {
+      statusIcon.className = 'status-icon spinner';
+      statusIcon.innerHTML = '';
+    } else if (type === 'success') {
+      statusIcon.className = 'status-icon checkmark';
+      statusIcon.innerHTML = '<svg viewBox="0 0 52 52"><circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/><path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>';
+    }
+    
+    statusTitle.textContent = title;
+    statusMessage.textContent = message;
+    actionsDiv.style.display = 'none';
+  }
+  
+  function showTimeout() {
+    const statusIcon = document.getElementById('status-icon');
+    const statusTitle = document.getElementById('status-title');
+    const statusMessage = document.getElementById('status-message');
+    const actionsDiv = document.getElementById('actions');
+    
+    statusIcon.className = 'status-icon';
+    statusIcon.innerHTML = '<svg viewBox="0 0 52 52" style="width: 60px; height: 60px;"><circle cx="26" cy="26" r="25" fill="none" stroke="#f39c12" stroke-width="2"/><text x="26" y="35" text-anchor="middle" font-size="30" fill="#f39c12">⏱</text></svg>';
+    
+    statusTitle.textContent = 'Your account is being created';
+    statusMessage.textContent = 'Your payment was successful! Your account is being set up and should be ready in a few moments.';
+    
+    actionsDiv.innerHTML = `
+      <a href="/members" class="btn btn-primary">Try Login Now</a>
+      <button onclick="location.reload()" class="btn btn-outline">Retry Activation</button>
+    `;
+    actionsDiv.style.display = 'flex';
+  }
+  
+  function showError() {
+    const statusIcon = document.getElementById('status-icon');
+    const statusTitle = document.getElementById('status-title');
+    const statusMessage = document.getElementById('status-message');
+    const actionsDiv = document.getElementById('actions');
+    
+    statusIcon.className = 'status-icon';
+    statusIcon.innerHTML = '<svg viewBox="0 0 52 52" style="width: 60px; height: 60px;"><circle cx="26" cy="26" r="25" fill="none" stroke="#e74c3c" stroke-width="2"/><text x="26" y="35" text-anchor="middle" font-size="30" fill="#e74c3c">!</text></svg>';
+    
+    statusTitle.textContent = 'No pending registration found';
+    statusMessage.textContent = 'Please try logging in or signing up again.';
+    
+    actionsDiv.innerHTML = `
+      <a href="/members" class="btn btn-primary">Go to Login</a>
+      <a href="/join" class="btn btn-outline">Sign Up</a>
+    `;
+    actionsDiv.style.display = 'flex';
+  }
+</script>
+
+<style>
+  .activation-container {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+  
+  .activation-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    padding: 60px 40px;
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .status-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Spinner Animation */
+  .status-icon.spinner {
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  /* Checkmark Animation */
+  .status-icon.checkmark {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .status-icon.checkmark svg {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .checkmark-circle {
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    stroke-width: 2;
+    stroke-miterlimit: 10;
+    stroke: var(--primary-color);
+    animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+  }
+  
+  .checkmark-check {
+    transform-origin: 50% 50%;
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    stroke: var(--primary-color);
+    stroke-width: 3;
+    animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
+  }
+  
+  @keyframes stroke {
+    100% {
+      stroke-dashoffset: 0;
+    }
+  }
+  
+  #status-title {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    color: var(--text-dark);
+  }
+  
+  #status-message {
+    color: var(--text-light);
+    line-height: 1.6;
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+  }
+  
+  #actions {
+    display: none;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+  <div class="activation-container">
+    <div class="activation-card">
+      <div id="status-icon" class="status-icon spinner"></div>
+      <h2 id="status-title">Creating Your Account</h2>
+      <p id="status-message">Please wait while we set up your membership...</p>
+      <div id="actions"></div>
+    </div>
+  </div>
+{% endblock %}
