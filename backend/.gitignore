@@ -9,3 +9,14 @@ venv/
 env/
 .env
 
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Compiled Python
+*.pyc
+
+# Test files
+tests/__pycache__/
+
