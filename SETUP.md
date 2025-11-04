@@ -21,18 +21,32 @@ pip install -r requirements.txt
 
 ### 2. Configure Environment Variables
 
-Copy `.env.example` to `.env` and update with your values:
+Create a `.env` file in the `backend` directory with the following:
 
 ```bash
-cp .env.example .env
+# JWT Secret (generate a strong random key)
+JWT_SECRET_KEY=your-secret-key-here
+
+# Stripe Configuration
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_PRODUCT_ID=prod_TLphFe62v2j1Xw
+# STRIPE_PRICE_ID=price_...  # Optional: Use a specific Price ID instead of creating inline prices
+# STRIPE_WEBHOOK_SECRET=whsec_...  # Leave commented for development, set for production
+
+# URLs
+STRIPE_SUCCESS_URL=http://localhost:5000/pages/join.html?success=true
+STRIPE_CANCEL_URL=http://localhost:5000/pages/join.html?canceled=true
 ```
 
-Edit `.env` and set:
-- `JWT_SECRET_KEY`: A strong random secret key (generate one: `python -c "import secrets; print(secrets.token_urlsafe(32))"`)
+**Important Configuration Notes:**
+- `JWT_SECRET_KEY`: Generate a strong random key: `python -c "import secrets; print(secrets.token_urlsafe(32))"`
 - `STRIPE_SECRET_KEY`: Your Stripe test secret key (starts with `sk_test_`)
 - `STRIPE_PUBLISHABLE_KEY`: Your Stripe test publishable key (starts with `pk_test_`)
-- `STRIPE_WEBHOOK_SECRET`: For webhook verification (get from Stripe dashboard)
-- Update `STRIPE_SUCCESS_URL` and `STRIPE_CANCEL_URL` with your domain
+- `STRIPE_PRODUCT_ID`: Your Stripe product ID (default: `prod_TLphFe62v2j1Xw`)
+- `STRIPE_PRICE_ID`: (Optional) If you have a Price object in Stripe, set this. Otherwise, prices are created inline using `STRIPE_PRODUCT_ID`
+- `STRIPE_WEBHOOK_SECRET`: Leave commented/blank for development. Set when using Stripe CLI or in production
+- Update `STRIPE_SUCCESS_URL` and `STRIPE_CANCEL_URL` with your actual domain in production
 
 ### 3. Initialize Database
 
@@ -60,22 +74,61 @@ The API will start on `http://localhost:5000`
 
 ## Stripe Test Mode Setup
 
+### Getting Your Stripe Keys
+
 1. Go to https://dashboard.stripe.com/test/apikeys
-2. Copy your test API keys to `.env`
-3. For testing payments, use these test card numbers:
-   - Success: `4242 4242 4242 4242`
-   - Decline: `4000 0000 0000 0002`
-   - Any future expiry date and any 3-digit CVC
+2. Copy your **Publishable key** (starts with `pk_test_`) and **Secret key** (starts with `sk_test_`)
+3. Add them to your `.env` file
 
-### Webhook Setup (for production)
+### Product and Price Configuration
 
-For testing webhooks locally, use Stripe CLI:
+The integration uses product ID `prod_TLphFe62v2j1Xw` by default. You have two options:
 
-```bash
-stripe listen --forward-to localhost:5000/api/payments/webhook
-```
+**Option 1: Use inline prices (default)**
+- Set `STRIPE_PRODUCT_ID=prod_TLphFe62v2j1Xw` in `.env`
+- Prices are created dynamically for each checkout session
+- Easiest for development
 
-This will give you a webhook secret to add to `.env`.
+**Option 2: Use a Price object**
+- Create a Price in Stripe Dashboard: https://dashboard.stripe.com/test/products/prod_TLphFe62v2j1Xw
+- Set the price to £15.00 (1500 pence)
+- Copy the Price ID (starts with `price_`)
+- Add `STRIPE_PRICE_ID=price_...` to your `.env`
+- The code will prefer the Price ID when available
+
+### Testing Payments
+
+Use these test card numbers:
+- **Success**: `4242 4242 4242 4242`
+- **Decline**: `4000 0000 0000 0002`
+- **Requires authentication**: `4000 0025 0000 3155`
+- Use any future expiry date and any 3-digit CVC
+
+### Webhook Setup
+
+**For Development (without webhook verification):**
+- Leave `STRIPE_WEBHOOK_SECRET` blank or commented in `.env`
+- Webhooks will accept any payload (insecure, development only!)
+- Test the flow using the test script: `python backend/test_flow.py`
+
+**For Production (with webhook verification):**
+
+1. Install Stripe CLI: https://stripe.com/docs/stripe-cli
+2. Run webhook forwarding:
+   ```bash
+   stripe listen --forward-to localhost:5000/api/payments/webhook
+   ```
+3. Copy the webhook secret (starts with `whsec_`) and add to `.env`:
+   ```
+   STRIPE_WEBHOOK_SECRET=whsec_...
+   ```
+4. Test payments will now be properly verified
+
+**For Production Deployment:**
+- Set up webhook endpoint in Stripe Dashboard: https://dashboard.stripe.com/webhooks
+- Add your production webhook URL: `https://yourdomain.com/api/payments/webhook`
+- Select event: `checkout.session.completed`
+- Copy the signing secret and add to production `.env`
 
 ## New Features
 
@@ -86,9 +139,12 @@ This will give you a webhook secret to add to `.env`.
 - Protected admin endpoints
 
 ### Stripe Integration
-- Stripe Checkout for payments
-- Automatic membership activation on payment
-- Customer ID storage for renewals
+- Stripe Checkout for secure payments
+- Uses product ID `prod_TLphFe62v2j1Xw` for £15 annual membership
+- Automatic membership activation via webhooks
+- Customer ID storage for renewal tracking
+- Supports both Price objects and inline pricing
+- Webhook signature verification for production security
 
 ### Database
 - SQLite database for user management
