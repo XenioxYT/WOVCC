@@ -3,13 +3,17 @@
 // Controls display of live matches vs fixtures/results
 // ===================================
 
+// Wrap in IIFE to avoid global scope pollution
+(function() {
+  'use strict';
+
 // Debug utility - only logs in development
-const DEBUG = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || !window.location.hostname;
-const debug = {
-  log: (...args) => DEBUG && console.log(...args),
-  warn: (...args) => DEBUG && console.warn(...args),
+const DEBUG_MATCH = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || !window.location.hostname;
+const debugMatch = {
+  log: (...args) => DEBUG_MATCH && console.log(...args),
+  warn: (...args) => DEBUG_MATCH && console.warn(...args),
   error: (...args) => console.error(...args), // Always log errors
-  info: (...args) => DEBUG && console.info(...args)
+  info: (...args) => DEBUG_MATCH && console.info(...args)
 };
 
 class MatchController {
@@ -81,7 +85,7 @@ class MatchController {
       this.teamSelector.disabled = false;
       
     } catch (error) {
-      debug.error('Failed to setup team selector:', error);
+      debugMatch.error('Failed to setup team selector:', error);
       this.teamSelector.style.opacity = '1';
       this.teamSelector.disabled = false;
     }
@@ -128,7 +132,7 @@ class MatchController {
       }
       
     } catch (error) {
-      debug.error('Failed to check match status:', error);
+      debugMatch.error('Failed to check match status:', error);
       // Default to showing no-match section on error
       this.showNoMatchSection();
     }
@@ -149,7 +153,7 @@ class MatchController {
       
       return todaysMatches;
     } catch (error) {
-      debug.error('Failed to get todays matches:', error);
+      debugMatch.error('Failed to get todays matches:', error);
       return [];
     }
   }
@@ -293,7 +297,7 @@ class MatchController {
       // Limit to 2 fixtures for homepage
       wovccApi.renderFixtures(fixtures, this.fixturesContainer, 2);
     } catch (error) {
-      debug.error('Failed to load fixtures:', error);
+      debugMatch.error('Failed to load fixtures:', error);
       this.fixturesContainer.innerHTML = `
         <p style="text-align: center; color: var(--text-light); padding: 40px;">
           Failed to load fixtures. Please try again later.
@@ -316,7 +320,7 @@ class MatchController {
       // Limit to 2 results for homepage
       wovccApi.renderResults(results, this.resultsContainer, 2);
     } catch (error) {
-      debug.error('Failed to load results:', error);
+      debugMatch.error('Failed to load results:', error);
       this.resultsContainer.innerHTML = `
         <p style="text-align: center; color: var(--text-light); padding: 40px;">
           Failed to load results. Please try again later.
@@ -381,5 +385,10 @@ window.addEventListener('beforeunload', function() {
     window.matchController.stopPolling();
   }
 });
+
+// Export MatchController for use in other scripts
+window.MatchController = MatchController;
+
+})(); // End IIFE
 
 

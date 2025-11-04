@@ -7,13 +7,17 @@
 // Data is cached locally for 5 minutes
 // ===================================
 
+// Wrap in IIFE to avoid global scope pollution
+(function() {
+  'use strict';
+
 // Debug utility - only logs in development
-const DEBUG = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const debug = {
-  log: (...args) => DEBUG && console.log(...args),
-  warn: (...args) => DEBUG && console.warn(...args),
+const DEBUG_API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const debugApi = {
+  log: (...args) => DEBUG_API && console.log(...args),
+  warn: (...args) => DEBUG_API && console.warn(...args),
   error: (...args) => console.error(...args), // Always log errors
-  info: (...args) => DEBUG && console.info(...args)
+  info: (...args) => DEBUG_API && console.info(...args)
 };
 
 // API Configuration
@@ -491,6 +495,9 @@ class WOVCCApi {
 const wovccApi = new WOVCCApi(API_CONFIG);
 
 // Export for use in other scripts
-window.WOVCCApi = wovccApi;
+window.wovccApi = wovccApi;
+window.WOVCCApi = WOVCCApi;
+
+})(); // End IIFE
 
 
