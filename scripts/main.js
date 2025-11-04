@@ -50,12 +50,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Highlight active navigation link
 function highlightActivePage() {
-  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+  const currentPath = window.location.pathname;
   const navLinks = document.querySelectorAll('.nav-link');
   
   navLinks.forEach(link => {
     const href = link.getAttribute('href');
-    if (href === currentPage || (currentPage === '' && href === 'index.html')) {
+    // Match both the exact path and root path
+    if (href === currentPath || (currentPath === '/' && href === '/')) {
       link.classList.add('active');
     } else {
       link.classList.remove('active');

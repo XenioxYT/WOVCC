@@ -309,7 +309,7 @@ function setupLogoutButton() {
       await logout();
       updateNavbar();
       // Redirect to home page
-      window.location.href = 'index.html';
+      window.location.href = '/';
     });
   }
 }
@@ -364,7 +364,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       }
       // Redirect to members page
       setTimeout(() => {
-        window.location.href = '/pages/members.html';
+        window.location.href = '/members';
       }, 1500);
     } else if (pendingEmail && pendingPassword) {
       // FALLBACK: Try to activate account first (for when webhooks don't work in development)
@@ -397,7 +397,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             sessionStorage.removeItem('wovcc_pending_password');
             // Redirect to members page
             setTimeout(() => {
-              window.location.href = '/pages/members.html';
+              window.location.href = '/members';
             }, 1500);
             break;
           }
