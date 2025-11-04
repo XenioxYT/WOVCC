@@ -107,9 +107,13 @@ def utility_processor():
         # This prevents path traversal even though inputs are from trusted templates
         try:
             full_path.relative_to(base_dir)
-        except ValueError:
-            # Path is outside base directory - potential path traversal
-            logger.warning(f"Path traversal attempt detected: {filepath}")
+        except (ValueError, RuntimeError) as e:
+            # Path is outside base directory or resolution failed - potential path traversal
+            try:
+                logger.warning(f"Path traversal attempt detected: {filepath} - {e}")
+            except NameError:
+                # Fallback if logger is not available
+                app.logger.warning(f"Path traversal attempt detected: {filepath} - {e}")
             return f"/{normalized_path}"
         
         version = get_file_version(str(full_path))
