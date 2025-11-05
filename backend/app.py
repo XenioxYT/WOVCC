@@ -947,8 +947,9 @@ def get_event(event_id):
                 }), 404
             
             # Check if event is published (unless admin)
+            current_user = get_current_user()
+            # Check if event is published (unless admin)
             if not event.is_published:
-                current_user = get_current_user()
                 if not current_user or not current_user.is_admin:
                     return jsonify({
                         'success': False,
@@ -957,7 +958,6 @@ def get_event(event_id):
             
             # Check if user has expressed interest
             user_interested = False
-            current_user = get_current_user()
             if current_user:
                 interest = db.query(EventInterest).filter(
                     EventInterest.event_id == event_id,
