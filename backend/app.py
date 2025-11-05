@@ -1022,7 +1022,7 @@ def create_event(user):
         # Parse date
         try:
             event_date = datetime.fromisoformat(data['date'].replace('Z', '+00:00'))
-        except:
+        except ValueError:
             return jsonify({
                 'success': False,
                 'error': 'Invalid date format'
@@ -1051,8 +1051,8 @@ def create_event(user):
             if is_recurring and data.get('recurrence_end_date'):
                 try:
                     recurrence_end_date = datetime.fromisoformat(data['recurrence_end_date'].replace('Z', '+00:00'))
-                except:
-                    pass
+                except (ValueError, TypeError):
+                    return jsonify({'success': False, 'error': 'Invalid recurrence_end_date format'}), 400
             
             # Create event
             new_event = Event(
@@ -1345,19 +1345,22 @@ def get_interested_users(user, event_id):
     try:
         db = next(get_db())
         try:
-            interests = db.query(EventInterest).filter(EventInterest.event_id == event_id).all()
+            results = (
+                db.query(EventInterest, User)
+                .outerjoin(User, EventInterest.user_id == User.id)
+                .filter(EventInterest.event_id == event_id)
+                .all()
+            )
             
             users_list = []
-            for interest in interests:
-                if interest.user_id:
-                    user_obj = db.query(User).filter(User.id == interest.user_id).first()
-                    if user_obj:
-                        users_list.append({
-                            'name': user_obj.name,
-                            'email': user_obj.email,
-                            'is_member': True,
-                            'created_at': interest.created_at.isoformat()
-                        })
+            for interest, user_obj in results:
+                if user_obj:
+                    users_list.append({
+                        'name': user_obj.name,
+                        'email': user_obj.email,
+                        'is_member': True,
+                        'created_at': interest.created_at.isoformat()
+                    })
                 else:
                     users_list.append({
                         'name': interest.user_name or 'Anonymous',
