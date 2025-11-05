@@ -14,7 +14,7 @@ from flask_cors import CORS
 import os
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Import application modules
 from scraper import scraper
@@ -862,7 +862,7 @@ def check_and_activate():
             
             # Activate the pending registration
             from dateutil.relativedelta import relativedelta
-            now = datetime.now(datetime.UTC)
+            now = datetime.now(timezone.utc)
             expiry = now + relativedelta(years=1)
             
             new_user = User(
@@ -930,7 +930,7 @@ def update_profile(user):
             if 'newsletter' in data:
                 user.newsletter = data['newsletter']
             
-            user.updated_at = datetime.now(datetime.UTC)
+            user.updated_at = datetime.now(timezone.utc)
             db.commit()
             db.refresh(user)
             
@@ -1028,7 +1028,7 @@ def get_events():
                 query = query.filter(Event.is_published == True)
             
             # Date filtering
-            now = datetime.now(datetime.UTC)
+            now = datetime.now(timezone.utc)
             if filter_type == 'upcoming':
                 query = query.filter(Event.date >= now)
                 query = query.order_by(Event.date.asc())
@@ -1335,7 +1335,7 @@ def update_event(user, event_id):
                     if new_image_url:
                         event.image_url = new_image_url
             
-            event.updated_at = datetime.now(datetime.UTC)
+            event.updated_at = datetime.now(timezone.utc)
             db.commit()
             db.refresh(event)
             
@@ -1633,7 +1633,7 @@ def stripe_webhook():
                     pending = db.query(PendingRegistration).filter(PendingRegistration.id == pending_id).first()
                     if pending:
                         from dateutil.relativedelta import relativedelta
-                        now = datetime.now(datetime.UTC)
+                        now = datetime.now(timezone.utc)
                         expiry = now + relativedelta(years=1)
                         
                         # Check if user already exists (edge case)
