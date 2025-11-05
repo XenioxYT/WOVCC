@@ -21,3 +21,5 @@ env/
 tests/__pycache__/
 
 uploads/*
+
+scraped_data.json
