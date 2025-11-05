@@ -20,3 +20,4 @@ env/
 # Test files
 tests/__pycache__/
 
+uploads/*
