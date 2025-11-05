@@ -1,0 +1,78 @@
+{% extends "layout.html" %}
+
+{% block title %}Events - WOVCC | Wickersley Old Village Cricket Club{% endblock %}
+
+{% block description %}Upcoming events and activities at Wickersley Old Village Cricket Club{% endblock %}
+
+{% block extra_js %}
+<script src="/scripts/api-client.js"></script>
+<script src="/scripts/events.js"></script>
+{% endblock %}
+
+{% block content %}
+  <!-- Hero Section -->
+  <section class="hero events-hero">
+    <div class="hero-content">
+      <h1>Club Events</h1>
+      <p>Stay up to date with all our upcoming events and activities</p>
+    </div>
+  </section>
+
+  <!-- Events Section -->
+  <section class="section">
+    <div class="container">
+      
+      <!-- Filters and Search -->
+      <div class="events-filters-container">
+        <div class="events-filters-row">
+          
+          <!-- Filter Tabs -->
+          <div class="events-filter-tabs">
+            <button class="filter-tab active" data-filter="upcoming">Upcoming</button>
+            <button class="filter-tab" data-filter="past">Past</button>
+            <button class="filter-tab" data-filter="all">All Events</button>
+          </div>
+          
+          <!-- Category Filter -->
+          <div class="events-category-filter">
+            <label for="category-filter" class="category-label">Category:</label>
+            <select id="category-filter" class="form-input category-select">
+              <option value="all">All Categories</option>
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+        </div>
+        
+        <!-- Search Bar -->
+        <div class="events-search-container">
+          <input 
+            type="text" 
+            id="search-input" 
+            class="form-input events-search-input" 
+            placeholder="Search events..."
+          >
+        </div>
+      </div>
+      
+      <!-- Loading Skeleton -->
+      <div id="events-skeleton" class="events-skeleton">
+        <!-- Skeleton cards will be injected here -->
+      </div>
+      
+      <!-- Events Grid -->
+      <div id="events-container" class="events-grid">
+        <!-- Events will be dynamically loaded here -->
+      </div>
+      
+      <!-- No Events Message -->
+      <div id="no-events-message" class="no-events-message">
+        <svg class="no-events-icon" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+        </svg>
+        <h3 class="no-events-title">No Events Found</h3>
+        <p class="no-events-text">Check back soon for upcoming events and activities!</p>
+      </div>
+      
+    </div>
+  </section>
+{% endblock %}

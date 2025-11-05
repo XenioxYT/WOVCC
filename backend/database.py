@@ -3,7 +3,7 @@ WOVCC Database Models and Connection
 SQLite database for user management
 """
 
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Text
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Text, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
@@ -81,6 +81,87 @@ class PendingRegistration(Base):
             'name': self.name,
             'email': self.email,
             'newsletter': self.newsletter,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class Event(Base):
+    """Event model for club events"""
+    __tablename__ = 'events'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255), nullable=False)
+    short_description = Column(String(255), nullable=False)
+    long_description = Column(Text, nullable=False)
+    date = Column(DateTime, nullable=False, index=True)
+    time = Column(String(50), nullable=True)
+    image_url = Column(String(500), nullable=True)
+    location = Column(String(255), nullable=True)
+    category = Column(String(100), nullable=True, index=True)
+    
+    # Recurring event fields
+    is_recurring = Column(Boolean, default=False)
+    recurrence_pattern = Column(String(50), nullable=True)  # 'daily', 'weekly', 'monthly'
+    recurrence_end_date = Column(DateTime, nullable=True)
+    parent_event_id = Column(Integer, ForeignKey('events.id'), nullable=True, index=True)  # For tracking recurring instances
+    
+    # Publishing and tracking
+    is_published = Column(Boolean, default=False, index=True)
+    interested_count = Column(Integer, default=0)
+    
+    # Metadata
+    created_by_user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self, include_sensitive=False):
+        """Convert event to dictionary"""
+        data = {
+            'id': self.id,
+            'title': self.title,
+            'short_description': self.short_description,
+            'long_description': self.long_description,
+            'date': self.date.isoformat() if self.date else None,
+            'date_display': self.date.strftime('%A, %d %B %Y') if self.date else None,
+            'time': self.time,
+            'image_url': self.image_url,
+            'location': self.location,
+            'category': self.category,
+            'is_recurring': self.is_recurring,
+            'recurrence_pattern': self.recurrence_pattern,
+            'recurrence_end_date': self.recurrence_end_date.isoformat() if self.recurrence_end_date else None,
+            'parent_event_id': self.parent_event_id,
+            'is_published': self.is_published,
+            'interested_count': self.interested_count,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+        
+        if include_sensitive:
+            data['created_by_user_id'] = self.created_by_user_id
+        
+        return data
+
+
+class EventInterest(Base):
+    """Track which users are interested in which events"""
+    __tablename__ = 'event_interests'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    event_id = Column(Integer, ForeignKey('events.id'), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=True, index=True)  # Nullable for anonymous interest
+    user_email = Column(String(255), nullable=True)  # For non-members
+    user_name = Column(String(255), nullable=True)  # For non-members
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        """Convert event interest to dictionary"""
+        return {
+            'id': self.id,
+            'event_id': self.event_id,
+            'user_id': self.user_id,
+            'user_email': self.user_email,
+            'user_name': self.user_name,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
