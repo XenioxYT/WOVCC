@@ -3,7 +3,7 @@ WOVCC Database Models and Connection
 SQLite database for user management
 """
 
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Text
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Text, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
@@ -148,7 +148,7 @@ class EventInterest(Base):
     __tablename__ = 'event_interests'
     
     id = Column(Integer, primary_key=True, index=True)
-    event_id = Column(Integer, nullable=False, index=True)
+    event_id = Column(Integer, ForeignKey('events.id'), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=True, index=True)  # Nullable for anonymous interest
     user_email = Column(String(255), nullable=True)  # For non-members
     user_name = Column(String(255), nullable=True)  # For non-members
