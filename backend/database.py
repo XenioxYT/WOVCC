@@ -149,7 +149,7 @@ class EventInterest(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     event_id = Column(Integer, nullable=False, index=True)
-    user_id = Column(Integer, nullable=True, index=True)  # Nullable for anonymous interest
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=True, index=True)  # Nullable for anonymous interest
     user_email = Column(String(255), nullable=True)  # For non-members
     user_name = Column(String(255), nullable=True)  # For non-members
     created_at = Column(DateTime, default=datetime.utcnow)
