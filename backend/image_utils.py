@@ -111,7 +111,7 @@ def process_and_save_image(file, upload_folder, max_width=MAX_WIDTH, max_height=
         return relative_path
         
     except Exception as e:
-        print(f"Error processing image: {e}")
+        logger.error(f"Error processing image: {e}", exc_info=True)
         return None
 
 
