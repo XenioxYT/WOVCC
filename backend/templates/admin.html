@@ -6,6 +6,8 @@
 
 {% block extra_js %}
 <script src="/scripts/api-client.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="/scripts/admin-events.js"></script>
 
 <script>
   // Admin page controller
@@ -14,6 +16,7 @@
 
   document.addEventListener('DOMContentLoaded', function() {
     checkAdminAccess();
+    setupTabs();
   });
   
   function checkAdminAccess() {
@@ -25,6 +28,34 @@
       document.getElementById('admin-content').style.display = 'block';
       initAdminPanel();
     }
+  }
+  
+  function setupTabs() {
+    document.querySelectorAll('.admin-tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        // Remove active class from all tabs
+        document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+        // Add active class to clicked tab
+        this.classList.add('active');
+        
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.style.display = 'none';
+        });
+        
+        // Show selected tab content
+        const tabName = this.dataset.tab;
+        const tabContent = document.getElementById(`${tabName}-tab-content`);
+        if (tabContent) {
+          tabContent.style.display = 'block';
+        }
+        
+        // Load events if events tab is clicked
+        if (tabName === 'events' && window.AdminEvents) {
+          window.AdminEvents.loadAdminEvents();
+        }
+      });
+    });
   }
   
   async function initAdminPanel() {
@@ -251,8 +282,133 @@
   }
 </script>
 
-<!-- Toggle Switch CSS -->
+<!-- Toggle Switch CSS and Admin Styles -->
 <style>
+  /* Admin Tabs */
+  .admin-tabs {
+    display: flex;
+    gap: 10px;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 30px;
+  }
+  
+  .admin-tab {
+    padding: 12px 24px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-weight: 600;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 1rem;
+    position: relative;
+    top: 2px;
+  }
+  
+  .admin-tab:hover {
+    color: var(--primary-color);
+  }
+  
+  .admin-tab.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+  }
+  
+  /* Modal */
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 20px;
+    overflow-y: auto;
+  }
+  
+  .modal-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    margin: auto;
+  }
+  
+  .modal-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .modal-body {
+    padding: 25px;
+  }
+  
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: var(--text-light);
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: var(--transition);
+  }
+  
+  .modal-close:hover {
+    background: var(--secondary-bg);
+    color: var(--text-dark);
+  }
+  
+  /* Button Icons */
+  .btn-icon {
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    min-height: 40px;
+  }
+  
+  .btn-icon svg {
+    width: 20px !important;
+    height: 20px !important;
+  }
+  
+  .btn-icon:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(26, 95, 95, 0.2);
+  }
+  
+  .btn-icon-danger:hover {
+    background: #dc3545;
+    border-color: #dc3545;
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.2);
+  }
+  
+  /* Toggle Switch */
   .toggle-switch {
     position: relative;
     display: inline-block;
@@ -328,10 +484,17 @@
   <!-- Admin Content -->
   <section id="admin-content" style="display: none;">
     <div class="section">
-      <div class="container" style="max-width: 900px;">
+      <div class="container" style="max-width: 1200px;">
         
-        <!-- Live Match Management -->
-        <div class="card" style="margin-bottom: 30px;">
+        <!-- Admin Tabs -->
+        <div class="admin-tabs" style="margin-bottom: 30px;">
+          <button class="admin-tab active" data-tab="live-matches">Live Matches</button>
+          <button class="admin-tab" data-tab="events" id="events-tab">Events</button>
+        </div>
+        
+        <!-- Live Matches Tab Content -->
+        <div id="live-matches-tab-content" class="tab-content">
+          <div class="card" style="margin-bottom: 30px;">
           <div class="card-body">
             <h3 style="color: var(--primary-color); margin-bottom: 20px;">Live Match Management</h3>
             
@@ -432,8 +595,155 @@
             </div>
           </div>
         </div>
+        </div> <!-- End live-matches-tab-content -->
+        
+        <!-- Events Tab Content -->
+        <div id="events-tab-content" class="tab-content" style="display: none;">
+          <div class="card" style="margin-bottom: 30px;">
+            <div class="card-body">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="color: var(--primary-color); margin: 0;">Events Management</h3>
+                <button onclick="window.AdminEvents.openCreateEventModal()" class="btn btn-primary">
+                  <svg style="width: 18px; height: 18px; margin-right: 8px;" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+                  </svg>
+                  Create Event
+                </button>
+              </div>
+              
+              <div id="admin-events-list">
+                <!-- Events list will be loaded here -->
+              </div>
+            </div>
+          </div>
+        </div> <!-- End events-tab-content -->
 
       </div>
     </div>
   </section>
+  
+  <!-- Event Modal -->
+  <div id="event-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h3 id="event-modal-title" style="margin: 0;">Create New Event</h3>
+        <button class="modal-close" onclick="window.AdminEvents.closeEventModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="event-form" onsubmit="window.AdminEvents.handleEventSubmit(event)">
+          <div class="form-group">
+            <label class="form-label" for="event-title">Title *</label>
+            <input type="text" id="event-title" class="form-input" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="event-short-description">Short Description * (max 255 chars)</label>
+            <textarea id="event-short-description" class="form-input" rows="2" maxlength="255" required></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="event-long-description">
+              Long Description * (Markdown supported)
+              <button type="button" onclick="window.AdminEvents.updateMarkdownPreview()" class="btn btn-outline" style="float: right; padding: 4px 12px; font-size: 0.85rem;">Preview</button>
+            </label>
+            <textarea id="event-long-description" class="form-input" rows="6" required></textarea>
+            <div id="markdown-preview" style="margin-top: 10px; padding: 15px; background: var(--secondary-bg); border-radius: 8px; display: none; min-height: 50px; line-height: 1.6;"></div>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+              <label class="form-label" for="event-date">Date & Time *</label>
+              <input type="datetime-local" id="event-date" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" for="event-time">Time (optional, e.g., "2:00 PM")</label>
+              <input type="text" id="event-time" class="form-input" placeholder="2:00 PM">
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="event-location">Location (optional)</label>
+            <input type="text" id="event-location" class="form-input" placeholder="Wickersley Old Village Cricket Club">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="event-category">Category (optional)</label>
+            <input type="text" id="event-category" class="form-input" placeholder="e.g., Training, Social, Match Day, Fundraiser">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="event-image">Event Image</label>
+            <input type="file" id="event-image" class="form-input" accept="image/png,image/jpeg,image/jpg,image/webp" onchange="window.AdminEvents.handleImageSelect(event)">
+            <p style="margin-top: 8px; font-size: 0.85rem; color: var(--text-light);">
+              Accepted formats: PNG, JPG, WebP. Max size: 5MB. Image will be auto-resized and optimized.
+            </p>
+            <div id="image-preview-container" style="margin-top: 15px; position: relative; display: none;">
+              <img id="image-preview" src="" alt="Preview" style="max-width: 100%; max-height: 300px; border-radius: 8px; display: block;">
+              <button type="button" onclick="window.AdminEvents.removeImage()" style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                <svg style="width: 20px; height: 20px; color: var(--accent-color);" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+              <input type="checkbox" id="event-is-recurring" onchange="window.AdminEvents.toggleRecurringOptions()">
+              <span class="form-label" style="margin: 0;">Recurring Event</span>
+            </label>
+          </div>
+          
+          <div id="recurring-options" style="display: none; padding: 15px; background: var(--secondary-bg); border-radius: 8px; margin-bottom: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" for="event-recurrence-pattern">Pattern</label>
+                <select id="event-recurrence-pattern" class="form-input">
+                  <option value="daily">Daily</option>
+                  <option value="weekly" selected>Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+              
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" for="event-recurrence-end-date">End Date</label>
+                <input type="date" id="event-recurrence-end-date" class="form-input">
+              </div>
+            </div>
+            <p style="margin-top: 10px; font-size: 0.85rem; color: var(--text-light);">
+              ℹ️ Will generate up to 12 occurrences of this event.
+            </p>
+          </div>
+          
+          <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+              <input type="checkbox" id="event-is-published">
+              <span class="form-label" style="margin: 0;">Publish Event (make visible to public)</span>
+            </label>
+          </div>
+          
+          <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+            <button type="button" class="btn btn-outline" onclick="window.AdminEvents.closeEventModal()">Cancel</button>
+            <button type="submit" id="event-submit-btn" class="btn btn-primary">Create Event</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Interested Users Modal -->
+  <div id="interested-users-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 style="margin: 0;">Interested Users</h3>
+        <button class="modal-close" onclick="window.AdminEvents.closeInterestedUsersModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="interested-users-list">
+          <!-- Users list will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}
