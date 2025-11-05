@@ -103,14 +103,14 @@ class Event(Base):
     is_recurring = Column(Boolean, default=False)
     recurrence_pattern = Column(String(50), nullable=True)  # 'daily', 'weekly', 'monthly'
     recurrence_end_date = Column(DateTime, nullable=True)
-    parent_event_id = Column(Integer, nullable=True, index=True)  # For tracking recurring instances
+    parent_event_id = Column(Integer, ForeignKey('events.id'), nullable=True, index=True)  # For tracking recurring instances
     
     # Publishing and tracking
     is_published = Column(Boolean, default=False, index=True)
     interested_count = Column(Integer, default=0)
     
     # Metadata
-    created_by_user_id = Column(Integer, nullable=False)
+    created_by_user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
