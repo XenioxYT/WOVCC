@@ -186,15 +186,19 @@ p {
 
 /* --- Buttons --- */
 .btn {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 12px 30px;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition);
   text-align: center;
+  text-decoration: none;
+  font-family: var(--font-family);
 }
 
 .btn-primary {
@@ -205,7 +209,12 @@ p {
 .btn-primary:hover {
   background-color: #c89560;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(212, 165, 116, 0.4);
+  box-shadow: 0 6px 20px rgba(212, 165, 116, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(212, 165, 116, 0.3);
 }
 
 .btn:focus {
@@ -220,6 +229,8 @@ p {
 
 .btn-secondary:hover {
   background-color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(26, 95, 95, 0.3);
 }
 
 .btn-outline {
@@ -231,6 +242,8 @@ p {
 .btn-outline:hover {
   background-color: var(--primary-color);
   color: var(--white);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(26, 95, 95, 0.2);
 }
 
 /* --- Cards with Glassmorphism --- */
