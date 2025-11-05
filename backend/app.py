@@ -25,14 +25,20 @@ from image_utils import process_and_save_image, delete_image, allowed_file
 from werkzeug.utils import secure_filename
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import or_
+import time
+from functools import wraps
 
-# Configure logging
+# Configure logging with more detail for performance tracking
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 logger = logging.getLogger(__name__)
+
+# Performance logger specifically for timing
+perf_logger = logging.getLogger('performance')
+perf_logger.setLevel(logging.INFO)
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -44,6 +50,73 @@ PORT = int(os.environ.get('PORT', 5000))
 
 # Initialize database on startup
 init_db()
+
+
+# ========================================
+# PERFORMANCE MONITORING MIDDLEWARE
+# ========================================
+
+@app.before_request
+def start_timer():
+    """Start timing the request"""
+    request.start_time = time.time()
+    request.db_query_count = 0
+    request.db_query_time = 0
+
+
+@app.after_request
+def log_request_performance(response):
+    """Log detailed performance metrics for each request"""
+    if hasattr(request, 'start_time'):
+        elapsed_time = (time.time() - request.start_time) * 1000  # Convert to ms
+        
+        # Get query stats if available
+        db_queries = getattr(request, 'db_query_count', 0)
+        db_time = getattr(request, 'db_query_time', 0) * 1000  # Convert to ms
+        
+        # Determine if this is slow
+        is_slow = elapsed_time > 500  # Flag requests over 500ms
+        
+        # Calculate breakdown
+        app_time = elapsed_time - db_time
+        
+        # Log with different levels based on performance
+        log_level = logging.WARNING if is_slow else logging.INFO
+        
+        perf_logger.log(
+            log_level,
+            f"{request.method} {request.path} | "
+            f"Total: {elapsed_time:.2f}ms | "
+            f"App: {app_time:.2f}ms | "
+            f"DB: {db_time:.2f}ms ({db_queries} queries) | "
+            f"Status: {response.status_code}"
+            f"{' ⚠️ SLOW REQUEST' if is_slow else ''}"
+        )
+        
+        # Add performance headers for debugging
+        response.headers['X-Response-Time'] = f"{elapsed_time:.2f}ms"
+        response.headers['X-DB-Queries'] = str(db_queries)
+        response.headers['X-DB-Time'] = f"{db_time:.2f}ms"
+    
+    return response
+
+
+def track_db_time(func):
+    """Decorator to track database query time"""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if hasattr(request, 'db_query_count'):
+            request.db_query_count += 1
+        
+        start = time.time()
+        result = func(*args, **kwargs)
+        elapsed = time.time() - start
+        
+        if hasattr(request, 'db_query_time'):
+            request.db_query_time += elapsed
+        
+        return result
+    return wrapper
 
 
 # Security headers middleware
@@ -132,49 +205,81 @@ def serve_uploads(filename):
 @app.route('/')
 def index():
     """Home page"""
-    return render_template('index.html')
+    start = time.time()
+    result = render_template('index.html')
+    render_time = (time.time() - start) * 1000
+    perf_logger.debug(f"Template 'index.html' rendered in {render_time:.2f}ms")
+    return result
 
 
 @app.route('/members')
 def members():
     """Members page - shows login form or member content based on auth"""
-    return render_template('members.html')
+    start = time.time()
+    result = render_template('members.html')
+    render_time = (time.time() - start) * 1000
+    perf_logger.debug(f"Template 'members.html' rendered in {render_time:.2f}ms")
+    return result
 
 
 @app.route('/matches')
 def matches():
     """Matches page"""
-    return render_template('matches.html')
+    start = time.time()
+    result = render_template('matches.html')
+    render_time = (time.time() - start) * 1000
+    perf_logger.debug(f"Template 'matches.html' rendered in {render_time:.2f}ms")
+    return result
 
 
 @app.route('/join')
 def join():
     """Join membership page"""
-    return render_template('join.html')
+    start = time.time()
+    result = render_template('join.html')
+    render_time = (time.time() - start) * 1000
+    perf_logger.debug(f"Template 'join.html' rendered in {render_time:.2f}ms")
+    return result
 
 
 @app.route('/join/activate')
 def activate():
     """Account activation page after payment"""
-    return render_template('activate.html')
+    start = time.time()
+    result = render_template('activate.html')
+    render_time = (time.time() - start) * 1000
+    perf_logger.debug(f"Template 'activate.html' rendered in {render_time:.2f}ms")
+    return result
 
 
 @app.route('/admin')
 def admin():
     """Admin page - requires authentication"""
-    return render_template('admin.html')
+    start = time.time()
+    result = render_template('admin.html')
+    render_time = (time.time() - start) * 1000
+    perf_logger.debug(f"Template 'admin.html' rendered in {render_time:.2f}ms")
+    return result
 
 
 @app.route('/events')
 def events():
     """Events page - shows all published events"""
-    return render_template('events.html')
+    start = time.time()
+    result = render_template('events.html')
+    render_time = (time.time() - start) * 1000
+    perf_logger.debug(f"Template 'events.html' rendered in {render_time:.2f}ms")
+    return result
 
 
 @app.route('/events/<int:event_id>')
 def event_detail(event_id):
     """Event detail page"""
-    return render_template('event-detail.html', event_id=event_id)
+    start = time.time()
+    result = render_template('event-detail.html', event_id=event_id)
+    render_time = (time.time() - start) * 1000
+    perf_logger.debug(f"Template 'event-detail.html' rendered in {render_time:.2f}ms")
+    return result
 
 
 # SEO and utility routes
@@ -203,6 +308,25 @@ def health():
     })
 
 
+# Performance monitoring endpoint
+@app.route('/api/performance/stats')
+@require_admin
+def performance_stats(user):
+    """Get performance statistics (admin only)"""
+    # This would typically pull from a metrics store
+    # For now, just return a sample response
+    return jsonify({
+        'success': True,
+        'message': 'Check server logs for detailed performance metrics',
+        'note': 'Performance data is logged for each request with timing breakdowns',
+        'headers_info': {
+            'X-Response-Time': 'Total response time in milliseconds',
+            'X-DB-Queries': 'Number of database queries executed',
+            'X-DB-Time': 'Total database query time in milliseconds'
+        }
+    })
+
+
 # ========================================
 # API ENDPOINTS
 # ========================================
@@ -213,7 +337,11 @@ def health():
 def get_teams():
     """Get list of all teams"""
     try:
+        start = time.time()
         teams = scraper.get_teams()
+        scraper_time = (time.time() - start) * 1000
+        perf_logger.debug(f"Scraper.get_teams() took {scraper_time:.2f}ms, returned {len(teams)} teams")
+        
         resp = jsonify({
             'success': True,
             'teams': teams,
@@ -311,10 +439,14 @@ def get_all_data():
     try:
         if source == 'file':
             # Serve directly from saved JSON if available
+            start = time.time()
             file_path = os.path.join(os.path.dirname(__file__), 'scraped_data.json')
             if os.path.exists(file_path):
                 with open(file_path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
+                
+                read_time = (time.time() - start) * 1000
+                perf_logger.debug(f"Read scraped_data.json in {read_time:.2f}ms")
 
                 # Optionally filter fixtures/results by team and apply limit
                 fixtures = data.get('fixtures', [])
@@ -339,9 +471,23 @@ def get_all_data():
             # If file not present, fall through to live scrape
 
         # Live scrape (default)
+        start = time.time()
         teams = scraper.get_teams()
+        teams_time = (time.time() - start) * 1000
+        
+        start = time.time()
         fixtures = scraper.get_team_fixtures(team_id)
+        fixtures_time = (time.time() - start) * 1000
+        
+        start = time.time()
         results = scraper.get_team_results(team_id, limit)
+        results_time = (time.time() - start) * 1000
+        
+        total_scrape_time = teams_time + fixtures_time + results_time
+        perf_logger.info(
+            f"Live scrape completed in {total_scrape_time:.2f}ms: "
+            f"teams={teams_time:.2f}ms, fixtures={fixtures_time:.2f}ms, results={results_time:.2f}ms"
+        )
 
         resp = jsonify({
             'success': True,
@@ -716,7 +862,7 @@ def check_and_activate():
             
             # Activate the pending registration
             from dateutil.relativedelta import relativedelta
-            now = datetime.utcnow()
+            now = datetime.now(datetime.UTC)
             expiry = now + relativedelta(years=1)
             
             new_user = User(
@@ -784,7 +930,7 @@ def update_profile(user):
             if 'newsletter' in data:
                 user.newsletter = data['newsletter']
             
-            user.updated_at = datetime.utcnow()
+            user.updated_at = datetime.now(datetime.UTC)
             db.commit()
             db.refresh(user)
             
@@ -870,6 +1016,7 @@ def get_events():
         
         db = next(get_db())
         try:
+            query_start = time.time()
             query = db.query(Event)
             
             # Admin-only: show unpublished events
@@ -881,7 +1028,7 @@ def get_events():
                 query = query.filter(Event.is_published == True)
             
             # Date filtering
-            now = datetime.utcnow()
+            now = datetime.now(datetime.UTC)
             if filter_type == 'upcoming':
                 query = query.filter(Event.date >= now)
                 query = query.order_by(Event.date.asc())
@@ -907,6 +1054,16 @@ def get_events():
                 )
             
             events = query.all()
+            query_time = (time.time() - query_start) * 1000
+            
+            perf_logger.debug(
+                f"Events query took {query_time:.2f}ms "
+                f"(filter={filter_type}, category={category}, search={bool(search)}, results={len(events)})"
+            )
+            
+            if hasattr(request, 'db_query_count'):
+                request.db_query_count += 1
+                request.db_query_time += query_time / 1000
             
             resp = jsonify({
                 'success': True,
@@ -1178,7 +1335,7 @@ def update_event(user, event_id):
                     if new_image_url:
                         event.image_url = new_image_url
             
-            event.updated_at = datetime.utcnow()
+            event.updated_at = datetime.now(datetime.UTC)
             db.commit()
             db.refresh(event)
             
@@ -1476,7 +1633,7 @@ def stripe_webhook():
                     pending = db.query(PendingRegistration).filter(PendingRegistration.id == pending_id).first()
                     if pending:
                         from dateutil.relativedelta import relativedelta
-                        now = datetime.utcnow()
+                        now = datetime.now(datetime.UTC)
                         expiry = now + relativedelta(years=1)
                         
                         # Check if user already exists (edge case)
