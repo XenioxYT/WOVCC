@@ -24,6 +24,10 @@
   <meta name="twitter:description" content="{% block twitter_description %}{{ self.description() }}{% endblock %}">
   <meta name="twitter:image" content="{{ request.url_root }}assets/logo.png">
   
+  <!-- Preconnect to external domains -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
   <!-- Stylesheets -->
   <link rel="stylesheet" href="/styles/main.css">
   <link rel="stylesheet" href="/styles/pages.css">

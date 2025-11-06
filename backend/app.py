@@ -1071,10 +1071,9 @@ def get_events():
                 'count': len(events)
             })
             
-            # No cache - always fetch fresh data
-            resp.cache_control.no_cache = True
-            resp.cache_control.no_store = True
-            resp.cache_control.must_revalidate = True
+            # Cache for 60 seconds to enable bfcache
+            resp.cache_control.max_age = 60
+            resp.cache_control.private = True
             
             return resp
             
