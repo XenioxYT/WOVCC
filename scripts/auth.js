@@ -232,7 +232,7 @@
         }
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('success') === 'true') {
-            debugAuth.log('[Auth]Payment successful,redirecting to activation page');
+            debugAuth.log('[Auth] Payment successful, redirecting to activation page');
             window.location.href = '/join/activate';
         } else if (urlParams.get('canceled') === 'true') {
             if (typeof showNotification === 'function') {
