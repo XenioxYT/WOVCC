@@ -185,7 +185,7 @@
         }
     }
     async function deleteEvent(eventId) {
-        if (!confirm('Are you sure you want to delete this event?This action cannot be undone.')) {
+        if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
             return;
         }
         try {
