@@ -284,10 +284,15 @@ def event_detail(event_id):
         db = None
         try:
             db = next(get_db())
+            query_start = time.time()
             interest = db.query(EventInterest).filter(
                 EventInterest.event_id == event_id,
                 EventInterest.user_id == current_user.id
             ).first()
+            query_time = time.time() - query_start
+            if hasattr(request, 'db_query_count'):
+                request.db_query_count += 1
+                request.db_query_time += query_time
             user_interested = interest is not None
         except Exception as exc:
             logger.error(f"Failed to determine interest for event {event_id}: {exc}")
