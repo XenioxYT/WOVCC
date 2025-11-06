@@ -4,7 +4,6 @@ This includes assets (banners, logos) and event uploads
 """
 
 import os
-import sys
 from PIL import Image
 import logging
 
