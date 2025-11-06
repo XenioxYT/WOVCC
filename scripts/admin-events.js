@@ -254,7 +254,7 @@
         const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
         if (!validTypes.includes(file.type)) {
             if (typeof showNotification === 'function') {
-                showNotification('Invalid file type. Please select a PNG,JPG,or WebP image.', 'error');
+                showNotification('Invalid file type. Please select a PNG, JPG, or WebP image.', 'error');
             }
             return;
         }
