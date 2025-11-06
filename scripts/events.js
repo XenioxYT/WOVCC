@@ -32,24 +32,33 @@ let searchTerm = '';
 let listenersInitialized = false;
 
 // Initialize listing page
+let eventsPageInitialized = false;
+
 function initializeListingPage() {
   if (!isListingPage()) return;
   
   // Initialize immediately if DOM is already loaded, otherwise wait
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
-      initEventsPage();
+      if (!eventsPageInitialized) {
+        eventsPageInitialized = true;
+        initEventsPage();
+      }
     });
   } else {
     // DOM is already loaded (page transition scenario)
-    initEventsPage();
+    if (!eventsPageInitialized) {
+      eventsPageInitialized = true;
+      initEventsPage();
+    }
   }
 }
 
 // Listen for page transitions
 document.addEventListener('pageTransitionComplete', function(e) {
   if (e.detail.path === '/events') {
-    // Reset the listeners flag to allow re-initialization
+    // Reset the flags to allow re-initialization
+    eventsPageInitialized = false;
     listenersInitialized = false;
     initEventsPage();
   }
