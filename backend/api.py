@@ -399,7 +399,7 @@ def pre_register():
                 return jsonify({'success': False, 'error': 'An account with this email already exists'}), 400
 
             # Check for existing pending registration and reuse/update it
-            pending = db.query(PendingRegistration).filter(PendingRegistration.email == data['email']).first()
+            pending = db.query(PendingRegistration).filter(PendingRegistration.email == data['email']).with_for_update().first()
             if pending:
                 # Update existing pending registration with new data
                 pending.name = data['name']
