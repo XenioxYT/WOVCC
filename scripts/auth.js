@@ -137,7 +137,7 @@
                 };
             }
         } catch (error) {
-            debugAuth.error('[Auth]Login error:', error);
+            debugAuth.error('[Auth] Login error:', error);
             if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
                 return {
                     success: false,
