@@ -135,88 +135,54 @@ def serve_uploads(filename):
 @app.route('/')
 def index():
     """Home page"""
-    start = time.time()
-    result = render_template('index.html')
-    render_time = (time.time() - start) * 1000
-    perf_logger.debug(f"Template 'index.html' rendered in {render_time:.2f}ms")
-    return result
+    return render_template('index.html')
 
 
 @app.route('/members')
 def members():
     """Members page - shows login form or member content based on auth"""
-    start = time.time()
-    result = render_template('members.html')
-    render_time = (time.time() - start) * 1000
-    perf_logger.debug(f"Template 'members.html' rendered in {render_time:.2f}ms")
-    return result
+    return render_template('members.html')
 
 
 @app.route('/matches')
 def matches():
     """Matches page"""
-    start = time.time()
-    result = render_template('matches.html')
-    render_time = (time.time() - start) * 1000
-    perf_logger.debug(f"Template 'matches.html' rendered in {render_time:.2f}ms")
-    return result
+    return render_template('matches.html')
 
 
 @app.route('/join')
 def join():
     """Join membership page"""
-    start = time.time()
-    result = render_template('join.html')
-    render_time = (time.time() - start) * 1000
-    perf_logger.debug(f"Template 'join.html' rendered in {render_time:.2f}ms")
-    return result
+    return render_template('join.html')
 
 
 @app.route('/join/activate')
 def activate():
     """Account activation page after payment"""
-    start = time.time()
-    result = render_template('activate.html')
-    render_time = (time.time() - start) * 1000
-    perf_logger.debug(f"Template 'activate.html' rendered in {render_time:.2f}ms")
-    return result
+    return render_template('activate.html')
 
 
 @app.route('/join/cancel')
 def cancel():
     """Payment cancellation page"""
-    start = time.time()
-    result = render_template('cancel.html')
-    render_time = (time.time() - start) * 1000
-    perf_logger.debug(f"Template 'cancel.html' rendered in {render_time:.2f}ms")
-    return result
+    return render_template('cancel.html')
 
 
 @app.route('/admin')
 def admin():
     """Admin page - requires authentication"""
-    start = time.time()
-    result = render_template('admin.html')
-    render_time = (time.time() - start) * 1000
-    perf_logger.debug(f"Template 'admin.html' rendered in {render_time:.2f}ms")
-    return result
+    return render_template('admin.html')
 
 
 @app.route('/events')
 def events():
     """Events page - shows all published events"""
-    start = time.time()
-    result = render_template('events.html')
-    render_time = (time.time() - start) * 1000
-    perf_logger.debug(f"Template 'events.html' rendered in {render_time:.2f}ms")
-    return result
+    return render_template('events.html')
 
 
 @app.route('/events/<int:event_id>')
 def event_detail(event_id):
     """Event detail page"""
-    start = time.time()
-
     user_interested = False
     current_user = get_current_user()
 
@@ -224,15 +190,10 @@ def event_detail(event_id):
         db = None
         try:
             db = next(get_db())
-            query_start = time.time()
             interest = db.query(EventInterest).filter(
                 EventInterest.event_id == event_id,
                 EventInterest.user_id == current_user.id
             ).first()
-            query_time = time.time() - query_start
-            if hasattr(request, 'db_query_count'):
-                request.db_query_count += 1
-                request.db_query_time += query_time
             user_interested = interest is not None
         except Exception as exc:
             logger.error(f"Failed to determine interest for event {event_id}: {exc}")
@@ -240,10 +201,7 @@ def event_detail(event_id):
             if db:
                 db.close()
 
-    result = render_template('event-detail.html', event_id=event_id, user_interested=user_interested)
-    render_time = (time.time() - start) * 1000
-    perf_logger.debug(f"Template 'event-detail.html' rendered in {render_time:.2f}ms")
-    return result
+    return render_template('event-detail.html', event_id=event_id, user_interested=user_interested)
 
 
 # SEO and utility routes
@@ -301,10 +259,7 @@ def performance_stats(user):
 def get_teams():
     """Get list of all teams"""
     try:
-        start = time.time()
         teams = scraper.get_teams()
-        scraper_time = (time.time() - start) * 1000
-        perf_logger.debug(f"Scraper.get_teams() took {scraper_time:.2f}ms, returned {len(teams)} teams")
         
         resp = jsonify({
             'success': True,
@@ -403,14 +358,10 @@ def get_all_data():
     try:
         if source == 'file':
             # Serve directly from saved JSON if available
-            start = time.time()
             file_path = os.path.join(os.path.dirname(__file__), 'scraped_data.json')
             if os.path.exists(file_path):
                 with open(file_path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
-                
-                read_time = (time.time() - start) * 1000
-                perf_logger.debug(f"Read scraped_data.json in {read_time:.2f}ms")
 
                 # Optionally filter fixtures/results by team and apply limit
                 fixtures = data.get('fixtures', [])
@@ -435,23 +386,9 @@ def get_all_data():
             # If file not present, fall through to live scrape
 
         # Live scrape (default)
-        start = time.time()
         teams = scraper.get_teams()
-        teams_time = (time.time() - start) * 1000
-        
-        start = time.time()
         fixtures = scraper.get_team_fixtures(team_id)
-        fixtures_time = (time.time() - start) * 1000
-        
-        start = time.time()
         results = scraper.get_team_results(team_id, limit)
-        results_time = (time.time() - start) * 1000
-        
-        total_scrape_time = teams_time + fixtures_time + results_time
-        perf_logger.info(
-            f"Live scrape completed in {total_scrape_time:.2f}ms: "
-            f"teams={teams_time:.2f}ms, fixtures={fixtures_time:.2f}ms, results={results_time:.2f}ms"
-        )
 
         resp = jsonify({
             'success': True,
@@ -1003,7 +940,6 @@ def get_events():
         
         db = next(get_db())
         try:
-            query_start = time.time()
             query = db.query(Event)
             
             # Admin-only: show unpublished events
@@ -1041,16 +977,6 @@ def get_events():
                 )
             
             events = query.all()
-            query_time = (time.time() - query_start) * 1000
-            
-            perf_logger.debug(
-                f"Events query took {query_time:.2f}ms "
-                f"(filter={filter_type}, category={category}, search={bool(search)}, results={len(events)})"
-            )
-            
-            if hasattr(request, 'db_query_count'):
-                request.db_query_count += 1
-                request.db_query_time += query_time / 1000
             
             resp = jsonify({
                 'success': True,
