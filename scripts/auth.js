@@ -103,7 +103,7 @@
                 message: data.error || 'Registration failed'
             };
         } catch (error) {
-            debugAuth.error('[Auth]Signup error:', error);
+            debugAuth.error('[Auth] Signup error:', error);
             return {
                 success: false,
                 message: error.message || 'Failed to connect to server'
