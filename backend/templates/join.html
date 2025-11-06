@@ -7,11 +7,40 @@
 {% block extra_js %}
 <script>
 (function() {
+  console.log('[Join] Script loaded, URL:', window.location.href);
+  
   // Initialize immediately if DOM is already loaded, otherwise wait
   function initJoinPage() {
+    console.log('[Join] initJoinPage called, readyState:', document.readyState);
+    console.log('[Join] Full URL:', window.location.href);
+    console.log('[Join] Search string:', window.location.search);
+    
     const urlParams = new URLSearchParams(window.location.search);
+    console.log('[Join] URL params:', Array.from(urlParams.entries()));
+    console.log('[Join] success param value:', urlParams.get('success'));
+    console.log('[Join] success param check:', urlParams.get('success') === 'true');
+    
+    // Also check directly in URL string as backup
+    const hasSuccessParam = window.location.search.includes('success=true') || window.location.href.includes('success=true');
+    console.log('[Join] Direct URL check for success=true:', hasSuccessParam);
+    
+    // Handle successful payment - redirect to activation page
+    if (urlParams.get('success') === 'true' || hasSuccessParam) {
+      console.log('[Join] ✅ SUCCESS=TRUE DETECTED! Redirecting to activation...');
+      console.log('[Join] Checking localStorage for credentials...');
+      console.log('[Join] - pending_email:', localStorage.getItem('wovcc_pending_email'));
+      console.log('[Join] - pending_password:', localStorage.getItem('wovcc_pending_password') ? '***set***' : 'NOT SET');
+      
+      // Use setTimeout to ensure console logs are visible
+      setTimeout(function() {
+        console.log('[Join] Executing redirect NOW...');
+        window.location.href = '/join/activate';
+      }, 100);
+      return; // Don't setup form, we're leaving this page
+    }
     
     if (urlParams.get('canceled') === 'true') {
+      console.log('[Join] Payment was canceled');
       if (typeof showNotification === 'function') {
         showNotification('Payment was canceled. Please try again if you\'d like to join.', 'warning');
       }
@@ -19,6 +48,7 @@
       window.history.replaceState({}, document.title, window.location.pathname);
     }
     
+    console.log('[Join] Setting up signup form...');
     // Setup form handler
     setupSignupForm();
   }
@@ -38,8 +68,13 @@
   
   // Handle new member signup
   function setupSignupForm() {
+    console.log('[Join] setupSignupForm called');
     const form = document.getElementById('signup-form');
-    if (!form) return;
+    if (!form) {
+      console.error('[Join] signup-form not found!');
+      return;
+    }
+    console.log('[Join] Form found, setting up event listener');
     
     // Remove any existing listener by cloning
     const newForm = form.cloneNode(true);
@@ -47,11 +82,14 @@
     
     newForm.addEventListener('submit', async function(e) {
       e.preventDefault();
+      console.log('[Join] Form submitted!');
       
       const name = document.getElementById('name').value;
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
       const newsletter = document.getElementById('newsletter').checked;
+      
+      console.log('[Join] Form data:', { name, email, newsletter, password: '***' });
       
       if (password.length < 6) {
         if (typeof showNotification === 'function') {
@@ -70,13 +108,17 @@
       
       try {
         // Register user - creates pending registration and redirects to Stripe
+        console.log('[Join] Calling WOVCCAuth.signup...');
         const result = await window.WOVCCAuth.signup(name, email, password, newsletter);
+        console.log('[Join] Signup result:', result);
         
         if (result.success && result.checkout_url) {
+          console.log('[Join] SUCCESS! Redirecting to Stripe:', result.checkout_url);
           // Redirect to Stripe Checkout
           window.location.href = result.checkout_url;
           return; // browser will navigate away
         } else {
+          console.error('[Join] Signup failed:', result);
           if (typeof showNotification === 'function') {
             showNotification(result.message || 'Failed to start registration. Please try again.', 'error');
           } else {
@@ -86,6 +128,7 @@
           submitBtn.textContent = originalText;
         }
       } catch (error) {
+        console.error('[Join] Error during signup:', error);
         if (typeof showNotification === 'function') {
           showNotification('Failed to connect to server. Please try again.', 'error');
         } else {
