@@ -7,63 +7,45 @@
 {% block extra_js %}
 <script>
 (function() {
-  console.log('[Activate] Page loaded, URL:', window.location.href);
-  
   document.addEventListener('DOMContentLoaded', async function() {
-    console.log('[Activate] DOMContentLoaded fired');
-    
     // Use localStorage instead of sessionStorage (persists across Stripe redirect)
     const pendingEmail = localStorage.getItem('wovcc_pending_email');
     const pendingPassword = localStorage.getItem('wovcc_pending_password');
     
-    console.log('[Activate] Checking localStorage for credentials...');
-    console.log('[Activate] - pending_email:', pendingEmail);
-    console.log('[Activate] - pending_password:', pendingPassword ? '***set***' : 'NOT SET');
-    
     if (!pendingEmail || !pendingPassword) {
       // No pending credentials, show error
-      console.error('[Activate] No pending credentials found!');
       showError();
       return;
     }
     
-    console.log('[Activate] Credentials found, proceeding with activation...');
     // Update status message
     updateStatus('processing', 'Creating Your Account', 'Please wait while we set up your membership...');
     
     // Try to activate account (fallback for development)
     try {
-      console.log('[Activate] Calling check-and-activate endpoint...');
-      const activateResponse = await fetch('http://localhost:5000/api/auth/check-and-activate', {
+      await fetch('http://localhost:5000/api/auth/check-and-activate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: pendingEmail })
       });
-      console.log('[Activate] check-and-activate response:', activateResponse.status);
     } catch (e) {
-      console.log('[Activate] Fallback activation attempt failed (expected):', e);
+      // Expected to fail, continue
     }
     
     // Attempt to login (retry up to 10 times over 20 seconds)
     let attempts = 0;
     let maxAttempts = 10;
     
-    console.log('[Activate] Starting login attempts (max:', maxAttempts, ')');
-    
     while (attempts < maxAttempts) {
       attempts++;
-      console.log('[Activate] Login attempt', attempts, 'of', maxAttempts);
       
       try {
         const result = await window.WOVCCAuth.login(pendingEmail, pendingPassword);
-        console.log('[Activate] Login result:', result);
         
         if (result.success) {
-          console.log('[Activate] Login successful! Cleaning up and redirecting...');
           // Clear pending credentials from localStorage
           localStorage.removeItem('wovcc_pending_email');
           localStorage.removeItem('wovcc_pending_password');
-          console.log('[Activate] Credentials cleared from localStorage');
           
           // Show success
           updateStatus('success', 'Welcome to WOVCC!', 'Your membership is now active. Redirecting to your members area...');
@@ -72,28 +54,23 @@
           await window.WOVCCAuth.refreshUserProfile();
           window.WOVCCAuth.updateNavbar();
           
-          console.log('[Activate] Redirecting to /members in 2 seconds...');
           setTimeout(() => {
             window.location.href = '/members';
           }, 2000);
           
           return;
-        } else {
-          console.log('[Activate] Login not successful yet, will retry...');
         }
       } catch (e) {
-        console.log('[Activate] Login attempt', attempts, 'failed:', e);
+        // Continue to retry
       }
       
       // Wait 2 seconds before next attempt
       if (attempts < maxAttempts) {
-        console.log('[Activate] Waiting 2 seconds before next attempt...');
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
     }
     
     // If we get here, all attempts failed
-    console.error('[Activate] All login attempts failed!');
     showTimeout();
   });
   

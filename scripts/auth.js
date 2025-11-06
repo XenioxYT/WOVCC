@@ -67,20 +67,16 @@
         return response;
     }
     async function signup(name, email, password, newsletter = false) {
-        console.log('[Auth] signup() called with:', { name, email, newsletter, password: '***' });
         try {
             // Store credentials in localStorage (persists across redirects)
             // These will be cleared after successful login
             try {
-                console.log('[Auth] Storing credentials in localStorage...');
                 localStorage.setItem('wovcc_pending_email', email);
                 localStorage.setItem('wovcc_pending_password', password);
-                console.log('[Auth] Credentials stored successfully');
             } catch (e) {
                 debugAuth.warn('Could not store pending credentials:', e);
             }
             
-            console.log('[Auth] Sending pre-register request to API...');
             const response = await fetch(`${API_BASE}/auth/pre-register`, {
                 method: 'POST',
                 headers: {
@@ -94,9 +90,7 @@
                 })
             });
             
-            console.log('[Auth] Response status:', response.status);
             const data = await response.json();
-            console.log('[Auth] Response data:', data);
             if (data.success && data.checkout_url) {
                 return {
                     success: true,
@@ -109,7 +103,7 @@
                 message: data.error || 'Registration failed'
             };
         } catch (error) {
-            debugAuth.error('[Auth] Signup error:', error);
+            debugAuth.error('Signup error:', error);
             return {
                 success: false,
                 message: error.message || 'Failed to connect to server'
@@ -117,9 +111,7 @@
         }
     }
     async function login(email, password) {
-        console.log('[Auth] login() called with email:', email);
         try {
-            console.log('[Auth] Sending login request to API...');
             const response = await fetch(`${API_BASE}/auth/login`, {
                 method: 'POST',
                 headers: {
@@ -130,9 +122,7 @@
                     password
                 })
             });
-            console.log('[Auth] Login response status:', response.status);
             const data = await response.json();
-            console.log('[Auth] Login response data:', { success: data.success, user: data.user });
             if (data.success) {
                 saveAuthData(data.access_token, data.refresh_token, data.user);
                 return {
@@ -147,7 +137,7 @@
                 };
             }
         } catch (error) {
-            debugAuth.error('[Auth] Login error:', error);
+            debugAuth.error('Login error:', error);
             if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
                 return {
                     success: false,
@@ -241,14 +231,10 @@
             updateNavbar();
         }
         const urlParams = new URLSearchParams(window.location.search);
-        console.log('[Auth] Checking URL params:', Array.from(urlParams.entries()));
         
         if (urlParams.get('success') === 'true') {
-            debugAuth.log('[Auth] Payment successful, redirecting to activation page');
-            console.log('[Auth] success=true detected, redirecting to /join/activate...');
             window.location.href = '/join/activate';
         } else if (urlParams.get('canceled') === 'true') {
-            console.log('[Auth] canceled=true detected');
             if (typeof showNotification === 'function') {
                 showNotification('Payment was canceled.', 'info');
             }
