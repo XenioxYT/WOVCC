@@ -317,11 +317,6 @@ function initDetailPage() {
   
   const eventId = getEventIdFromUrl();
   if (eventId) {
-    const interestButton = document.getElementById('interest-button');
-    if (interestButton && typeof interestButton.dataset.initialInterested === 'string') {
-      userInterested = interestButton.dataset.initialInterested === 'true';
-      updateInterestButton();
-    }
     loadEventDetail(eventId);
     setupDetailEventListeners();
   }
@@ -372,7 +367,13 @@ async function loadEventDetail(eventId) {
       error.style.display = 'none';
     }
     
-    const response = await fetch(`${API_BASE}/events/${eventId}`);
+    const headers = {};
+    const token = localStorage.getItem('wovcc_access_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE}/events/${eventId}`, { headers });
     const data = await response.json();
     
     if (data.success && data.event) {
