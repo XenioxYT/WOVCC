@@ -30,41 +30,32 @@ let currentFilter = 'upcoming';
 let currentCategory = 'all';
 let searchTerm = '';
 let listenersInitialized = false;
+let listingPageInitialized = false;
 
-// Initialize listing page
-let eventsPageInitialized = false;
-
-function initializeListingPage() {  
-  if (!isListingPage()) return;  
-
-  const runInitOnce = () => {  
-    if (!eventsPageInitialized) {  
-      eventsPageInitialized = true;  
-      initEventsPage();  
-    }  
-  };  
-  
-  // Initialize immediately if DOM is already loaded, otherwise wait  
-  if (document.readyState === 'loading') {  
-    document.addEventListener('DOMContentLoaded', runInitOnce);  
-  } else {  
-    // DOM is already loaded (page transition scenario)  
-    runInitOnce();  
-  }  
-}  
-
-// Listen for page transitions
+// Unified initialization for the listing page.
 document.addEventListener('pageTransitionComplete', function(e) {
   if (e.detail.path === '/events') {
-    // Reset the flags to allow re-initialization
-    eventsPageInitialized = false;
+    // Initialize the page if it hasn't been for this view
+    if (!listingPageInitialized) {
+      showSkeleton(); // Show placeholder immediately on transition
+      initEventsPage();
+      listingPageInitialized = true;
+    }
+  } else {
+    // When navigating away, reset the state for the next visit.
+    listingPageInitialized = false;
     listenersInitialized = false;
-    initEventsPage();
   }
 });
 
-// Expose globally for page transitions
-window.initEventsPage = initEventsPage;
+// Fallback for the very first page load.
+document.addEventListener('DOMContentLoaded', () => {
+    if(isListingPage() && !listingPageInitialized) {
+        showSkeleton(); // Show placeholder immediately on hard load
+        initEventsPage();
+        listingPageInitialized = true;
+    }
+});
 
 async function initEventsPage() {
   if (!isListingPage()) return;
@@ -230,7 +221,7 @@ async function loadCategories() {
     
     skeleton.innerHTML = `
       <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px;">
-        ${Array(6).fill(0).map(() => `
+        ${Array(12).fill(0).map(() => `
           <div class="skeleton-event-card">
             <div class="skeleton-image"></div>
             <div class="skeleton-content">
@@ -293,9 +284,6 @@ async function loadCategories() {
       });
     }
   }
-
-// Initialize listing page on script load
-initializeListingPage();
 
 // ===================================
 // EVENT DETAIL PAGE
