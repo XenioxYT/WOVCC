@@ -6,8 +6,9 @@
 
 {% block extra_js %}
 <script>
-  // Check for cancel parameter on page load
-  document.addEventListener('DOMContentLoaded', function() {
+(function() {
+  // Initialize immediately if DOM is already loaded, otherwise wait
+  function initJoinPage() {
     const urlParams = new URLSearchParams(window.location.search);
     
     if (urlParams.get('canceled') === 'true') {
@@ -17,11 +18,34 @@
       // Clean URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
+    
+    // Setup form handler
+    setupSignupForm();
+  }
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initJoinPage);
+  } else {
+    initJoinPage();
+  }
+  
+  // Listen for page transitions
+  document.addEventListener('pageTransitionComplete', function(e) {
+    if (e.detail.path === '/join') {
+      initJoinPage();
+    }
   });
   
   // Handle new member signup
-  document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('signup-form').addEventListener('submit', async function(e) {
+  function setupSignupForm() {
+    const form = document.getElementById('signup-form');
+    if (!form) return;
+    
+    // Remove any existing listener by cloning
+    const newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+    
+    newForm.addEventListener('submit', async function(e) {
       e.preventDefault();
       
       const name = document.getElementById('name').value;
@@ -71,13 +95,14 @@
         submitBtn.textContent = originalText;
       }
     });
-  });
+  }
+})(); // End IIFE
 </script>
 {% endblock %}
 
 {% block content %}
   <!-- Page Header -->
-  <section class="hero" style="background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/assets/banner.jpeg'); background-size: cover; background-position: center 40%; height: 300px;">
+  <section class="hero" style="background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/assets/banner.webp'); background-size: cover; background-position: center 40%; height: 300px;">
     <div class="hero-content">
       <h1>Join WOVCC</h1>
       <p>Become a member of our club</p>

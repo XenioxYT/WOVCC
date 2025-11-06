@@ -6,47 +6,89 @@
 (function() {
   'use strict';
 
-// Check if we're on the events listing page or detail page
-const isListingPage = window.location.pathname === '/events';
-const isDetailPage = window.location.pathname.startsWith('/events/');
-
 // API Base URL
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:5000/api'
   : 'https://api.wovcc.co.uk/api';
 
+// Check if we're on the events listing page or detail page
+function isListingPage() {
+  return window.location.pathname === '/events';
+}
+
+function isDetailPage() {
+  return window.location.pathname.startsWith('/events/');
+}
+
 // ===================================
 // EVENTS LISTING PAGE
 // ===================================
 
-if (isListingPage) {
-  let allEvents = [];
-  let currentFilter = 'upcoming';
-  let currentCategory = 'all';
-  let searchTerm = '';
+// Listing page variables and functions
+let allEvents = [];
+let currentFilter = 'upcoming';
+let currentCategory = 'all';
+let searchTerm = '';
+let listenersInitialized = false;
 
-  document.addEventListener('DOMContentLoaded', function() {
+// Initialize listing page
+function initializeListingPage() {
+  if (!isListingPage()) return;
+  
+  // Initialize immediately if DOM is already loaded, otherwise wait
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      initEventsPage();
+    });
+  } else {
+    // DOM is already loaded (page transition scenario)
     initEventsPage();
-  });
-
-  async function initEventsPage() {
-    // Load categories
-    await loadCategories();
-    
-    // Load events
-    await loadEvents();
-    
-    // Setup event listeners
-    setupEventListeners();
   }
+}
 
-  async function loadCategories() {
+// Listen for page transitions
+document.addEventListener('pageTransitionComplete', function(e) {
+  if (e.detail.path === '/events') {
+    // Reset the listeners flag to allow re-initialization
+    listenersInitialized = false;
+    initEventsPage();
+  }
+});
+
+// Expose globally for page transitions
+window.initEventsPage = initEventsPage;
+
+async function initEventsPage() {
+  if (!isListingPage()) return;
+  
+  // Load categories
+  await loadCategories();
+  
+  // Load events
+  await loadEvents();
+  
+  // Setup event listeners
+  setupEventListeners();
+}
+
+async function loadCategories() {
     try {
       const response = await fetch(`${API_BASE}/events/categories`);
       const data = await response.json();
       
       if (data.success && data.categories) {
         const categoryFilter = document.getElementById('category-filter');
+        if (!categoryFilter) {
+          console.error('Category filter element not found');
+          return;
+        }
+        
+        // Clear existing options (except the first "All Categories" option)
+        while (categoryFilter.options.length > 1) {
+          categoryFilter.remove(1);
+        }
+        
+        // Add new categories
         data.categories.forEach(cat => {
           const option = document.createElement('option');
           option.value = cat;
@@ -106,7 +148,7 @@ if (isListingPage) {
 
   function createEventCard(event) {
     const hasImage = event.image_url && event.image_url.trim() !== '';
-    const imageUrl = hasImage ? event.image_url : '/assets/logo.png';
+    const imageUrl = hasImage ? event.image_url : '/assets/logo.webp';
     const categoryBadge = event.category ? `<div class="event-card-category">${event.category}</div>` : '';
     
     // Format date
@@ -138,9 +180,9 @@ if (isListingPage) {
     ` : '';
     
     return `
-      <div class="event-card" onclick="window.location.href='/events/${event.id}'">
+      <a href="/events/${event.id}" class="event-card" style="text-decoration: none; color: inherit; display: block;">
         <div class="event-card-image-container ${hasImage ? 'has-image' : ''}" style="${hasImage ? `--card-image: url('${imageUrl}');` : ''}">
-          <img src="${imageUrl}" alt="${event.title}" class="event-card-image" onerror="this.src='/assets/logo.png'">
+          <img src="${imageUrl}" alt="${event.title}" class="event-card-image" onerror="this.src='/assets/logo.webp'">
         </div>
         <div class="event-card-body">
           ${categoryBadge}
@@ -165,7 +207,7 @@ if (isListingPage) {
             ` : ''}
           </div>
         </div>
-      </div>
+      </a>
     `;
   }
 
@@ -207,6 +249,10 @@ if (isListingPage) {
   }
 
   function setupEventListeners() {
+    // Only set up listeners once to avoid duplicates
+    if (listenersInitialized) return;
+    listenersInitialized = true;
+    
     // Filter tabs
     document.querySelectorAll('.filter-tab').forEach(tab => {
       tab.addEventListener('click', function() {
@@ -218,66 +264,146 @@ if (isListingPage) {
     });
     
     // Category filter
-    document.getElementById('category-filter').addEventListener('change', function() {
-      currentCategory = this.value;
-      loadEvents();
-    });
+    const categoryFilter = document.getElementById('category-filter');
+    if (categoryFilter) {
+      categoryFilter.addEventListener('change', function() {
+        currentCategory = this.value;
+        loadEvents();
+      });
+    }
     
     // Search input (with debounce)
     let searchTimeout;
-    document.getElementById('search-input').addEventListener('input', function() {
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => {
-        searchTerm = this.value.trim();
-        loadEvents();
-      }, 300);
-    });
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          searchTerm = this.value.trim();
+          loadEvents();
+        }, 300);
+      });
+    }
   }
-}
+
+// Initialize listing page on script load
+initializeListingPage();
 
 // ===================================
 // EVENT DETAIL PAGE
 // ===================================
 
-if (isDetailPage) {
-  let currentEvent = null;
-  let userInterested = false;
+// Event detail page variables (always define these, check page type when needed)
+let currentEvent = null;
+let userInterested = false;
 
+// Function to extract event ID from URL
+function getEventIdFromUrl() {
+  const pathParts = window.location.pathname.split('/');
+  return pathParts[pathParts.length - 1];
+}
+
+// Initialize detail page
+function initDetailPage() {
+  if (!isDetailPage()) return;
+  
+  const eventId = getEventIdFromUrl();
+  if (eventId) {
+    const interestButton = document.getElementById('interest-button');
+    if (interestButton && typeof interestButton.dataset.initialInterested === 'string') {
+      userInterested = interestButton.dataset.initialInterested === 'true';
+      updateInterestButton();
+    }
+    loadEventDetail(eventId);
+    setupDetailEventListeners();
+  }
+}
+
+// Initialize on DOMContentLoaded if we're on detail page
+if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', function() {
-    if (typeof EVENT_ID !== 'undefined') {
-      loadEventDetail(EVENT_ID);
-      setupDetailEventListeners();
+    if (isDetailPage()) {
+      initDetailPage();
     }
   });
+} else {
+  if (isDetailPage()) {
+    initDetailPage();
+  }
+}
 
-  async function loadEventDetail(eventId) {
-    try {
-      // Show skeleton
-      document.getElementById('event-skeleton').style.display = 'block';
-      document.getElementById('event-content').style.display = 'none';
-      document.getElementById('event-error').style.display = 'none';
-      
-      const response = await fetch(`${API_BASE}/events/${eventId}`);
-      const data = await response.json();
-      
-      if (data.success && data.event) {
-        currentEvent = data.event;
-        userInterested = data.event.user_interested || false;
-        renderEventDetail(data.event);
-        setupDetailEventListeners();
-      } else {
-        showError();
-      }
-    } catch (error) {
-      console.error('Failed to load event:', error);
+// Re-initialize on page transitions
+document.addEventListener('pageTransitionComplete', function(e) {
+  if (e.detail.path.startsWith('/events/') && e.detail.path !== '/events') {
+    // Add a small delay to ensure DOM is ready
+    setTimeout(() => {
+      initDetailPage();
+    }, 100);
+  }
+});
+
+async function loadEventDetail(eventId) {
+  try {
+    // Show skeleton with fade-in
+    const skeleton = document.getElementById('event-skeleton');
+    const content = document.getElementById('event-content');
+    const error = document.getElementById('event-error');
+    
+    if (skeleton) {
+      skeleton.style.display = 'block';
+      // Force reflow to ensure display change is applied
+      skeleton.offsetHeight;
+      skeleton.classList.add('active');
+    }
+    if (content) {
+      content.classList.remove('loaded');
+      content.style.display = 'none';
+    }
+    if (error) {
+      error.classList.remove('active');
+      error.style.display = 'none';
+    }
+    
+    const response = await fetch(`${API_BASE}/events/${eventId}`);
+    const data = await response.json();
+    
+    if (data.success && data.event) {
+      currentEvent = data.event;
+      userInterested = data.event.user_interested || false;
+      renderEventDetail(data.event);
+      setupDetailEventListeners();
+    } else {
       showError();
     }
+  } catch (error) {
+    console.error('Failed to load event:', error);
+    showError();
   }
-
-  function renderEventDetail(event) {
-    // Hide skeleton, show content
-    document.getElementById('event-skeleton').style.display = 'none';
-    document.getElementById('event-content').style.display = 'block';
+}  function renderEventDetail(event) {
+    // Fade out skeleton first
+    const skeleton = document.getElementById('event-skeleton');
+    const content = document.getElementById('event-content');
+    
+    // Remove active class to fade out skeleton
+    if (skeleton) {
+      skeleton.classList.remove('active');
+      
+      // Wait for skeleton fade-out before showing content
+      setTimeout(() => {
+        skeleton.style.display = 'none';
+        
+        // Show content with fade-in
+        content.style.display = 'block';
+        // Force reflow
+        content.offsetHeight;
+        content.classList.add('loaded');
+      }, 300); // Match the CSS transition duration
+    } else {
+      // Fallback if skeleton doesn't exist
+      content.style.display = 'block';
+      content.offsetHeight;
+      content.classList.add('loaded');
+    }
     
     // Set title
     document.getElementById('event-title').textContent = event.title;
@@ -373,6 +499,9 @@ if (isDetailPage) {
     const button = document.getElementById('interest-button');
     const text = document.getElementById('interest-text');
     const icon = document.getElementById('interest-icon');
+    if (!button || !text || !icon) {
+      return;
+    }
     
     if (userInterested) {
       text.textContent = "I'm Interested ✓";
@@ -384,6 +513,9 @@ if (isDetailPage) {
       button.classList.add('btn-outline');
       button.classList.remove('btn-primary');
     }
+
+    button.dataset.initialInterested = userInterested ? 'true' : 'false';
+    button.setAttribute('aria-pressed', userInterested ? 'true' : 'false');
   }
 
   function setupDetailEventListeners() {
@@ -492,10 +624,33 @@ if (isDetailPage) {
   }
 
   function showError() {
-    document.getElementById('event-skeleton').style.display = 'none';
-    document.getElementById('event-content').style.display = 'none';
-    document.getElementById('event-error').style.display = 'block';
+    const skeleton = document.getElementById('event-skeleton');
+    const content = document.getElementById('event-content');
+    const error = document.getElementById('event-error');
+    
+    // Fade out skeleton
+    if (skeleton) {
+      skeleton.classList.remove('active');
+      
+      setTimeout(() => {
+        skeleton.style.display = 'none';
+        
+        // Show error with fade-in
+        error.style.display = 'block';
+        error.offsetHeight;
+        error.classList.add('active');
+      }, 300);
+    } else {
+      // Fallback
+      error.style.display = 'block';
+      error.offsetHeight;
+      error.classList.add('active');
+    }
+    
+    if (content) {
+      content.classList.remove('loaded');
+      content.style.display = 'none';
+    }
   }
-}
 
 })(); // End IIFE
