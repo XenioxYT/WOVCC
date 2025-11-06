@@ -770,6 +770,9 @@ def login():
             user = db.query(User).filter(User.email == data['email']).first()
             
             if not user:
+                # Perform a dummy password hash to mitigate timing attacks
+                verify_password('dummy_password_for_timing_attack_prevention', '$2b$12$DbmIZ/a5L5D2p0S21G9j5.UPX.z4wG1E.G8LCE123456789012345O')
+                logger.warning(f"[LOGIN] User not found: {data['email']}")
                 return jsonify({
                     'success': False,
                     'error': 'Invalid email or password'

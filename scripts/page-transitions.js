@@ -190,7 +190,7 @@ class PageTransitions {
                 href.startsWith('#') || 
                 href.startsWith('mailto:') ||
                 href.startsWith('tel:') ||
-                href.includes('?') ||  // Skip URLs with query params!
+                (href.includes('?success=true') || href.includes('?canceled=true')) || // Skip for Stripe redirect URLs
                 link.hasAttribute('target') ||
                 link.hasAttribute('download') ||
                 link.id === 'logout-btn') {

@@ -23,18 +23,21 @@ def cleanup_old_pending():
         cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
         
         # Find old pending registrations
-        old_pending = db.query(PendingRegistration).filter(
+        # Find old pending registrations
+        old_pending_query = db.query(PendingRegistration).filter(
             PendingRegistration.created_at < cutoff
-        ).all()
+        )
+        old_pending_list = old_pending_query.all()
         
-        if old_pending:
-            logger.info(f"Found {len(old_pending)} pending registrations older than 24 hours")
-            for pending in old_pending:
+        if old_pending_list:
+            logger.info(f"Found {len(old_pending_list)} pending registrations older than 24 hours")
+            for pending in old_pending_list:
                 logger.info(f"  Deleting: {pending.email} (created {pending.created_at})")
-                db.delete(pending)
             
+            # Perform a bulk delete for efficiency
+            deleted_count = old_pending_query.delete(synchronize_session=False)
             db.commit()
-            logger.info(f"✓ Deleted {len(old_pending)} old pending registrations")
+            logger.info(f"✓ Deleted {deleted_count} old pending registrations")
         else:
             logger.info("No old pending registrations to clean up")
             
