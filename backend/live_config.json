@@ -1,5 +1,5 @@
 {
-  "is_live": true,
+  "is_live": false,
   "livestream_url": "",
   "selected_match": {
     "away_team": "Wickersley Old Village CC-Vixens Softball 1",
@@ -12,5 +12,5 @@
     "team_name_scraping": "Vixens Softball 1",
     "time": "10:00"
   },
-  "last_updated": "2025-11-04T21:33:16.046953"
+  "last_updated": "2025-11-06T20:36:49.968251"
 }
