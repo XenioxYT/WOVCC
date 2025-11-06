@@ -15,6 +15,65 @@
   overflow: hidden;
 }
 
+/* Reusable Page Hero (matches, join, members, admin) */
+.hero.matches-hero,
+.hero.page-hero {
+  height: 200px;
+  min-height: 200px !important; /* Override main.css min-height:400px */
+  position: relative;
+  background: none !important;
+  display: flex; /* Ensure flex context retained after override */
+  align-items: center; /* Vertical centering */
+  justify-content: center; /* Horizontal centering */
+}
+
+.hero.matches-hero::before,
+.hero.page-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/assets/banner.webp');
+  background-size: cover;
+  background-position: center 90%;
+  filter: blur(8px);
+  transform: scale(1.1);
+  z-index: 0;
+}
+
+.hero.matches-hero::after,
+.hero.page-hero::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6));
+  z-index: 1;
+}
+
+.hero.matches-hero .hero-content,
+.hero.page-hero .hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px; /* Space between title and subtitle */
+}
+
+/* Remove asymmetric margins so visual center is true center */
+.hero.matches-hero h1,
+.hero.matches-hero p,
+.hero.page-hero h1,
+.hero.page-hero p {
+  margin: 0;
+}
+
 /* Removed hero::before overlay for cleaner banner appearance */
 
 .hero-content {
@@ -455,10 +514,14 @@
 
 /* --- Events Listing Page --- */
 .events-hero {
-  height: 280px;
+  height: 200px;
+  min-height: 200px !important; /* Match page hero height and override global min-height */
   position: relative;
   overflow: hidden;
   background: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .events-hero::before {
@@ -470,8 +533,8 @@
   bottom: 0;
   background-image: url('/assets/banner.webp');
   background-size: cover;
-  background-position: center;
-  filter: blur(20px);
+  background-position: center 90%;
+  filter: blur(8px);
   transform: scale(1.1);
   z-index: 0;
 }
@@ -490,6 +553,20 @@
 .hero-content {
   position: relative;
   z-index: 2;
+}
+
+/* Ensure events hero text is perfectly centered */
+.events-hero .hero-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.events-hero h1,
+.events-hero p {
+  margin: 0;
 }
 
 .events-filters-container {
@@ -1429,6 +1506,11 @@
 @media screen and (max-width: 768px) {
   .hero {
     height: 400px;
+  }
+  
+  .hero.matches-hero {
+    height: 120px;
+    min-height: 120px !important; /* Ensure smaller hero on mobile */
   }
   
   .hero h1 {
