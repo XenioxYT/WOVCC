@@ -34,25 +34,24 @@ let listenersInitialized = false;
 // Initialize listing page
 let eventsPageInitialized = false;
 
-function initializeListingPage() {
-  if (!isListingPage()) return;
+function initializeListingPage() {  
+  if (!isListingPage()) return;  
+
+  const runInitOnce = () => {  
+    if (!eventsPageInitialized) {  
+      eventsPageInitialized = true;  
+      initEventsPage();  
+    }  
+  };  
   
-  // Initialize immediately if DOM is already loaded, otherwise wait
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-      if (!eventsPageInitialized) {
-        eventsPageInitialized = true;
-        initEventsPage();
-      }
-    });
-  } else {
-    // DOM is already loaded (page transition scenario)
-    if (!eventsPageInitialized) {
-      eventsPageInitialized = true;
-      initEventsPage();
-    }
-  }
-}
+  // Initialize immediately if DOM is already loaded, otherwise wait  
+  if (document.readyState === 'loading') {  
+    document.addEventListener('DOMContentLoaded', runInitOnce);  
+  } else {  
+    // DOM is already loaded (page transition scenario)  
+    runInitOnce();  
+  }  
+}  
 
 // Listen for page transitions
 document.addEventListener('pageTransitionComplete', function(e) {

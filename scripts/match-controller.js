@@ -248,16 +248,16 @@
     };
     
     // Initialize immediately if DOM is already loaded, otherwise wait
-    if (document.readyState === 'loading') {
-        document.addEventListener("DOMContentLoaded", async function () {
-            await window.initializeMatchday();
-        });
-    } else {
-        // DOM is already loaded (page transition scenario)
-        (async () => {
-            await window.initializeMatchday();
-        })();
-    }
+    const init = async () => {  
+        await window.initializeMatchday();  
+    };  
+
+    if (document.readyState === 'loading') {  
+        document.addEventListener("DOMContentLoaded", init);  
+    } else {  
+        // DOM is already loaded (page transition scenario)  
+        init();  
+    }  
     
     // Re-initialize on page transitions
     document.addEventListener("pageTransitionComplete", async function(e) {

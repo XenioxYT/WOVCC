@@ -1508,10 +1508,11 @@
     height: 400px;
   }
   
-  .hero.matches-hero {
-    height: 120px;
-    min-height: 120px !important; /* Ensure smaller hero on mobile */
-  }
+  .hero.matches-hero,  
+  .hero.page-hero {  
+    height: 120px;  
+    min-height: 120px !important; /* Ensure smaller hero on mobile */  
+  } 
   
   .hero h1 {
     font-size: 2rem;
