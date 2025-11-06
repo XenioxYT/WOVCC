@@ -28,6 +28,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   
+  <!-- Preload critical scripts -->
+  <link rel="preload" href="/scripts/page-transitions.js" as="script">
+  
   <!-- Stylesheets -->
   <link rel="stylesheet" href="/styles/main.css">
   <link rel="stylesheet" href="/styles/pages.css">
@@ -152,6 +155,7 @@
   </footer>
 
   <!-- Scripts -->
+  <script src="/scripts/page-transitions.js"></script>
   <script src="/scripts/auth.js"></script>
   <script src="/scripts/main.js"></script>
   {% block extra_js %}{% endblock %}

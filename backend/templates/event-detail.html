@@ -8,7 +8,8 @@
 <script src="/scripts/api-client.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-  const EVENT_ID = {{ event_id }};
+  // Use window.EVENT_ID to avoid redeclaration errors during page transitions
+  window.EVENT_ID = {{ event_id }};
 </script>
 <script src="/scripts/events.js"></script>
 {% endblock %}
@@ -123,11 +124,11 @@
               </div>
               
               <!-- Interest Button -->
-              <button id="interest-button" class="btn btn-primary event-interest-btn">
+              <button id="interest-button" class="btn {{ 'btn-primary' if user_interested else 'btn-outline' }} event-interest-btn" data-initial-interested="{{ 'true' if user_interested else 'false' }}" aria-pressed="{{ 'true' if user_interested else 'false' }}">
                 <svg id="interest-icon" class="btn-icon" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
                 </svg>
-                <span id="interest-text">I'm Interested</span>
+                <span id="interest-text">{{ "I'm Interested ✓" if user_interested else "I'm Interested" }}</span>
               </button>
               
               <!-- Recurring Info -->

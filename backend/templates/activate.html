@@ -6,6 +6,7 @@
 
 {% block extra_js %}
 <script>
+(function() {
   document.addEventListener('DOMContentLoaded', async function() {
     const pendingEmail = sessionStorage.getItem('wovcc_pending_email');
     const pendingPassword = sessionStorage.getItem('wovcc_pending_password');
@@ -128,6 +129,7 @@
     `;
     actionsDiv.style.display = 'flex';
   }
+})(); // End IIFE
 </script>
 
 <style>

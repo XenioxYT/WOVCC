@@ -143,8 +143,22 @@
 
 {% block extra_js %}
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+  (function() {
+    // Initialize immediately if DOM is already loaded, otherwise wait
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function() {
+        checkAuthStatus();
+      });
+    } else {
+      // DOM is already loaded (page transition scenario)
       checkAuthStatus();
+    }
+    
+    // Also listen for page transitions
+    document.addEventListener('pageTransitionComplete', function(e) {
+      if (e.detail.path === '/members') {
+        checkAuthStatus();
+      }
     });
     
     async function checkAuthStatus() {
@@ -264,5 +278,6 @@
       window.WOVCCAuth.updateNavbar();
       window.scrollTo(0, 0);
     }
+  })(); // End IIFE
   </script>
 {% endblock %}

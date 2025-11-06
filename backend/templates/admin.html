@@ -10,13 +10,28 @@
 <script src="/scripts/admin-events.js"></script>
 
 <script>
+(function() {
   // Admin page controller
   let currentConfig = {};
   let allFixtures = [];
 
-  document.addEventListener('DOMContentLoaded', function() {
+  // Initialize immediately if DOM is already loaded, otherwise wait
+  function initAdminPageCheck() {
     checkAdminAccess();
     setupTabs();
+  }
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAdminPageCheck);
+  } else {
+    initAdminPageCheck();
+  }
+  
+  // Listen for page transitions
+  document.addEventListener('pageTransitionComplete', function(e) {
+    if (e.detail.path === '/admin') {
+      initAdminPageCheck();
+    }
   });
   
   function checkAdminAccess() {
@@ -280,6 +295,7 @@
       showNotification('Failed to clear configuration: ' + error.message, 'error');
     }
   }
+})(); // End IIFE
 </script>
 
 <!-- Toggle Switch CSS and Admin Styles -->
