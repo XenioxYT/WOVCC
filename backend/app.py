@@ -276,7 +276,26 @@ def events():
 def event_detail(event_id):
     """Event detail page"""
     start = time.time()
-    result = render_template('event-detail.html', event_id=event_id)
+
+    user_interested = False
+    current_user = get_current_user()
+
+    if current_user:
+        db = None
+        try:
+            db = next(get_db())
+            interest = db.query(EventInterest).filter(
+                EventInterest.event_id == event_id,
+                EventInterest.user_id == current_user.id
+            ).first()
+            user_interested = interest is not None
+        except Exception as exc:
+            logger.error(f"Failed to determine interest for event {event_id}: {exc}")
+        finally:
+            if db:
+                db.close()
+
+    result = render_template('event-detail.html', event_id=event_id, user_interested=user_interested)
     render_time = (time.time() - start) * 1000
     perf_logger.debug(f"Template 'event-detail.html' rendered in {render_time:.2f}ms")
     return result
