@@ -184,11 +184,13 @@ class PageTransitions {
             // - Special link (logout, etc)
             // - Download link
             // - Has target attribute
+            // - URL has query parameters (like success=true from Stripe)
             if (!href || 
                 href.startsWith('http') || 
                 href.startsWith('#') || 
                 href.startsWith('mailto:') ||
                 href.startsWith('tel:') ||
+                href.includes('?') ||  // Skip URLs with query params!
                 link.hasAttribute('target') ||
                 link.hasAttribute('download') ||
                 link.id === 'logout-btn') {
