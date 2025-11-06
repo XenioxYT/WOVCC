@@ -24,10 +24,6 @@
         return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
     }
 
-    function getRefreshToken() {
-        return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-    }
-
     function saveAuthData(accessToken, refreshToken, user) {
         localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
         localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
