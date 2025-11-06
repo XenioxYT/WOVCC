@@ -235,32 +235,35 @@
     }
     
     // Initialize function for page transitions
+    let matchdayInitialized = false;
+    
     window.initializeMatchday = async function() {
+        // Prevent double initialization
+        if (matchdayInitialized) return;
+        matchdayInitialized = true;
+        
         const controller = new MatchController();
         window.matchController = controller;
         await controller.init();
     };
     
     // Initialize immediately if DOM is already loaded, otherwise wait
-    if (document.readyState === 'loading') {
-        document.addEventListener("DOMContentLoaded", async function () {
-            setTimeout(async () => {
-                await window.initializeMatchday();
-            }, 100);
-        });
-    } else {
-        // DOM is already loaded (page transition scenario)
-        setTimeout(async () => {
-            await window.initializeMatchday();
-        }, 100);
-    }
+    const init = async () => {  
+        await window.initializeMatchday();  
+    };  
+
+    if (document.readyState === 'loading') {  
+        document.addEventListener("DOMContentLoaded", init);  
+    } else {  
+        // DOM is already loaded (page transition scenario)  
+        init();  
+    }  
     
     // Re-initialize on page transitions
     document.addEventListener("pageTransitionComplete", async function(e) {
         if (e.detail.path === '/') {
-            setTimeout(async () => {
-                await window.initializeMatchday();
-            }, 100);
+            matchdayInitialized = false; // Reset flag for new page load
+            await window.initializeMatchday();
         }
     });
     

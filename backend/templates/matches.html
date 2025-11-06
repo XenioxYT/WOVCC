@@ -21,9 +21,9 @@
     });
   } else {
     // DOM is already loaded (page transition scenario)
-    setTimeout(async () => {
+    (async () => {
       await initMatchesPage();
-    }, 50);
+    })();
   }
   
   // Also listen for page transitions
@@ -171,7 +171,7 @@
 
 {% block content %}
   <!-- Page Header -->
-  <section class="hero" style="background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/assets/banner.webp'); background-size: cover; background-position: center 40%; height: 300px;">
+  <section class="hero matches-hero">
     <div class="hero-content">
       <h1>Matches</h1>
       <p>Fixtures and Results</p>
