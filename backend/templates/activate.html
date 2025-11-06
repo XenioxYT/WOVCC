@@ -8,8 +8,9 @@
 <script>
 (function() {
   document.addEventListener('DOMContentLoaded', async function() {
-    const pendingEmail = sessionStorage.getItem('wovcc_pending_email');
-    const pendingPassword = sessionStorage.getItem('wovcc_pending_password');
+    // Use localStorage instead of sessionStorage (persists across Stripe redirect)
+    const pendingEmail = localStorage.getItem('wovcc_pending_email');
+    const pendingPassword = localStorage.getItem('wovcc_pending_password');
     
     if (!pendingEmail || !pendingPassword) {
       // No pending credentials, show error
@@ -28,7 +29,7 @@
         body: JSON.stringify({ email: pendingEmail })
       });
     } catch (e) {
-      console.log('Fallback activation attempt:', e);
+      // Expected to fail, continue
     }
     
     // Attempt to login (retry up to 10 times over 20 seconds)
@@ -42,9 +43,9 @@
         const result = await window.WOVCCAuth.login(pendingEmail, pendingPassword);
         
         if (result.success) {
-          // Clear pending credentials
-          sessionStorage.removeItem('wovcc_pending_email');
-          sessionStorage.removeItem('wovcc_pending_password');
+          // Clear pending credentials from localStorage
+          localStorage.removeItem('wovcc_pending_email');
+          localStorage.removeItem('wovcc_pending_password');
           
           // Show success
           updateStatus('success', 'Welcome to WOVCC!', 'Your membership is now active. Redirecting to your members area...');
@@ -60,7 +61,7 @@
           return;
         }
       } catch (e) {
-        console.log('Login attempt failed:', e);
+        // Continue to retry
       }
       
       // Wait 2 seconds before next attempt

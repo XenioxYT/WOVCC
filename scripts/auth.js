@@ -68,12 +68,15 @@
     }
     async function signup(name, email, password, newsletter = false) {
         try {
+            // Store credentials in localStorage (persists across redirects)
+            // These will be cleared after successful login
             try {
-                sessionStorage.setItem('wovcc_pending_email', email);
-                sessionStorage.setItem('wovcc_pending_password', password);
+                localStorage.setItem('wovcc_pending_email', email);
+                localStorage.setItem('wovcc_pending_password', password);
             } catch (e) {
                 debugAuth.warn('Could not store pending credentials:', e);
             }
+            
             const response = await fetch(`${API_BASE}/auth/pre-register`, {
                 method: 'POST',
                 headers: {
@@ -86,6 +89,7 @@
                     newsletter
                 })
             });
+            
             const data = await response.json();
             if (data.success && data.checkout_url) {
                 return {
@@ -99,7 +103,7 @@
                 message: data.error || 'Registration failed'
             };
         } catch (error) {
-            debugAuth.error('[Auth] Signup error:', error);
+            debugAuth.error('Signup error:', error);
             return {
                 success: false,
                 message: error.message || 'Failed to connect to server'
@@ -133,7 +137,7 @@
                 };
             }
         } catch (error) {
-            debugAuth.error('[Auth] Login error:', error);
+            debugAuth.error('Login error:', error);
             if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
                 return {
                     success: false,
@@ -227,8 +231,8 @@
             updateNavbar();
         }
         const urlParams = new URLSearchParams(window.location.search);
+        
         if (urlParams.get('success') === 'true') {
-            debugAuth.log('[Auth] Payment successful, redirecting to activation page');
             window.location.href = '/join/activate';
         } else if (urlParams.get('canceled') === 'true') {
             if (typeof showNotification === 'function') {

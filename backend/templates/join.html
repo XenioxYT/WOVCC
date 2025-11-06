@@ -11,6 +11,12 @@
   function initJoinPage() {
     const urlParams = new URLSearchParams(window.location.search);
     
+    // Handle successful payment - redirect to activation page
+    if (urlParams.get('success') === 'true') {
+      window.location.href = '/join/activate';
+      return; // Don't setup form, we're leaving this page
+    }
+    
     if (urlParams.get('canceled') === 'true') {
       if (typeof showNotification === 'function') {
         showNotification('Payment was canceled. Please try again if you\'d like to join.', 'warning');
@@ -39,7 +45,9 @@
   // Handle new member signup
   function setupSignupForm() {
     const form = document.getElementById('signup-form');
-    if (!form) return;
+    if (!form) {
+      return;
+    }
     
     // Remove any existing listener by cloning
     const newForm = form.cloneNode(true);
