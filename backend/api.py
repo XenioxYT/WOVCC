@@ -398,14 +398,25 @@ def pre_register():
             if existing_user:
                 return jsonify({'success': False, 'error': 'An account with this email already exists'}), 400
 
-            # Create pending registration
-            pending = PendingRegistration(
-                name=data['name'],
-                email=data['email'],
-                password_hash=hash_password(data['password']),
-                newsletter=data.get('newsletter', False)
-            )
-            db.add(pending)
+            # Check for existing pending registration and reuse/update it
+            pending = db.query(PendingRegistration).filter(PendingRegistration.email == data['email']).first()
+            if pending:
+                # Update existing pending registration with new data
+                pending.name = data['name']
+                pending.password_hash = hash_password(data['password'])
+                pending.newsletter = data.get('newsletter', False)
+                pending.created_at = datetime.now(timezone.utc)  # Update timestamp
+                logger.info(f"[PRE-REGISTER] Reusing existing pending registration ID: {pending.id}")
+            else:
+                # Create new pending registration
+                pending = PendingRegistration(
+                    name=data['name'],
+                    email=data['email'],
+                    password_hash=hash_password(data['password']),
+                    newsletter=data.get('newsletter', False)
+                )
+                db.add(pending)
+            
             db.commit()
             db.refresh(pending)
 
