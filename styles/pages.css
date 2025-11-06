@@ -777,6 +777,12 @@
 /* --- Event Detail Page --- */
 .event-detail-page {
   display: none;
+  opacity: 0;
+  transition: opacity 0.4s ease-in-out;
+}
+
+.event-detail-page.loaded {
+  opacity: 1;
 }
 
 .event-banner-container {
@@ -1169,6 +1175,12 @@
 /* Event Error */
 .event-error-container {
   display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.event-error-container.active {
+  opacity: 1;
 }
 
 .event-error-content {
@@ -1308,6 +1320,12 @@
 /* Event Skeleton Loader */
 .event-skeleton-container {
   display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.event-skeleton-container.active {
+  opacity: 1;
 }
 
 .event-skeleton-banner {
@@ -1527,6 +1545,123 @@
   
   .interest-modal-title {
     font-size: 1.3rem;
+  }
+}
+
+/* ===================================
+   Page Transition & Loading Improvements
+   =================================== */
+
+/* Prevent content jumping during async loads */
+.matchday-hub #upcoming-fixtures-container,
+.matchday-hub #recent-results-container {
+  min-height: 400px;
+  transition: min-height 0.3s ease;
+}
+
+.matchday-hub #upcoming-fixtures-container:has(.fixture-card),
+.matchday-hub #recent-results-container:has(.result-card) {
+  min-height: auto;
+}
+
+/* Smooth transitions for loading states */
+#live-match-section,
+#no-match-section {
+  opacity: 1;
+  transition: opacity 0.3s ease-in-out;
+}
+
+#live-match-section:empty,
+#no-match-section:empty {
+  opacity: 0;
+  min-height: 200px;
+}
+
+/* Prevent footer from jumping during page load */
+.newsletter-section {
+  position: relative;
+  z-index: 1;
+}
+
+.footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* Content wrapper min-height to prevent footer jumping */
+body > *:not(.navbar):not(.newsletter-section):not(.footer) {
+  min-height: 50vh;
+}
+
+/* Smooth fade for content appearing */
+.fixture-card,
+.result-card,
+.event-card {
+  animation: fadeInUp 0.4s ease-out;
+  animation-fill-mode: both;
+}
+
+.fixture-card:nth-child(1),
+.result-card:nth-child(1),
+.event-card:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.fixture-card:nth-child(2),
+.result-card:nth-child(2),
+.event-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.fixture-card:nth-child(3),
+.result-card:nth-child(3),
+.event-card:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+.fixture-card:nth-child(4),
+.result-card:nth-child(4),
+.event-card:nth-child(4) {
+  animation-delay: 0.2s;
+}
+
+.fixture-card:nth-child(5),
+.result-card:nth-child(5),
+.event-card:nth-child(5) {
+  animation-delay: 0.25s;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Skeleton loaders maintain proper height */
+.skeleton-card {
+  min-height: 120px;
+}
+
+/* Tab content transitions */
+.tab-content {
+  min-height: 400px;
+}
+
+.tab-content.active {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
