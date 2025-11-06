@@ -5,15 +5,9 @@
 {% block description %}Admin Panel - Manage live matches and configuration{% endblock %}
 
 {% block extra_js %}
-{% if is_production %}
-<script src="/scripts/api-client.min.js" defer></script>
+<script src="/scripts/api-client.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="/scripts/admin-events.min.js" defer></script>
-{% else %}
-<script src="/scripts/api-client.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="/scripts/admin-events.js" defer></script>
-{% endif %}
+<script src="/scripts/admin-events.js"></script>
 
 <script>
   // Admin page controller

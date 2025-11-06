@@ -43,18 +43,20 @@ def generate_unique_filename(original_filename):
     return f"{timestamp}_{unique_id}.{ext}"
 
 
-def process_and_save_image(file, upload_folder, max_width=MAX_WIDTH, max_height=MAX_HEIGHT):
+def process_and_save_image(file, upload_folder, max_width=MAX_WIDTH, max_height=MAX_HEIGHT, create_webp=True, create_responsive=True):
     """
-    Process and save an uploaded image - always converts to WebP only
+    Process and save an uploaded image as WebP only
     
     Args:
         file: FileStorage object from Flask request
         upload_folder: Directory to save the processed image
         max_width: Maximum width (default: 1920px)
         max_height: Maximum height (default: 1080px)
+        create_webp: Always True - only WebP format used
+        create_responsive: Create responsive image sizes (default: True)
     
     Returns:
-        str: Relative path to saved WebP image or None if error
+        str: Relative path to WebP image or None if error
     """
     try:
         # Validate file
@@ -75,11 +77,10 @@ def process_and_save_image(file, upload_folder, max_width=MAX_WIDTH, max_height=
         # Create upload folder if it doesn't exist
         os.makedirs(upload_folder, exist_ok=True)
         
-        # Generate base filename (without extension)
-        original_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'jpg'
+        # Generate base filename (always .webp)
         unique_id = str(uuid.uuid4())
         timestamp = datetime.now().strftime('%Y%m%d')
-        base_filename = f"{timestamp}_{unique_id}"
+        base_filename = f"{timestamp}_{unique_id}.webp"
         
         # Open and process image
         img = Image.open(file)
@@ -107,13 +108,37 @@ def process_and_save_image(file, upload_folder, max_width=MAX_WIDTH, max_height=
             
             img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
         
-        # Save only WebP version with high compression
-        webp_filename = f"{base_filename}.webp"
-        webp_filepath = os.path.join(upload_folder, webp_filename)
+        # Save main WebP version
+        webp_filepath = os.path.join(upload_folder, base_filename)
         img.save(webp_filepath, 'WebP', quality=WEBP_QUALITY, method=6)
+        result_path = f"/uploads/events/{base_filename}"
         
-        logger.info(f"Image processed and saved as WebP: {webp_filename}")
-        return f"/uploads/events/{webp_filename}"
+        # Create responsive versions in WebP
+        if create_responsive:
+            for size_config in RESPONSIVE_SIZES:
+                suffix = size_config['suffix']
+                target_width = size_config['width']
+                target_height = size_config['height']
+                
+                # Only create if original is larger
+                if img.width > target_width or img.height > target_height:
+                    # Calculate new dimensions maintaining aspect ratio
+                    if aspect_ratio > 1:
+                        new_w = min(target_width, img.width)
+                        new_h = int(new_w / aspect_ratio)
+                    else:
+                        new_h = min(target_height, img.height)
+                        new_w = int(new_h * aspect_ratio)
+                    
+                    resized = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+                    
+                    # Save WebP version
+                    responsive_filename = f"{timestamp}_{unique_id}{suffix}.webp"
+                    responsive_filepath = os.path.join(upload_folder, responsive_filename)
+                    resized.save(responsive_filepath, 'WebP', quality=WEBP_QUALITY, method=6)
+        
+        logger.info(f"Image processed successfully as WebP: {base_filename}")
+        return result_path
         
     except Exception as e:
         logger.error(f"Error processing image: {e}", exc_info=True)
@@ -122,10 +147,10 @@ def process_and_save_image(file, upload_folder, max_width=MAX_WIDTH, max_height=
 
 def delete_image(image_path, base_upload_folder):
     """
-    Delete an image file
+    Delete an image file and all its responsive versions
     
     Args:
-        image_path: Relative path to image (e.g., /uploads/events/image.jpg)
+        image_path: Relative path to image (e.g., /uploads/events/image.webp)
         base_upload_folder: Base upload directory (e.g., backend/uploads)
     
     Returns:
@@ -140,14 +165,30 @@ def delete_image(image_path, base_upload_folder):
         filename = image_path.replace('/uploads/events/', '')
         full_path = os.path.join(base_upload_folder, 'events', filename)
         
+        deleted = False
+        
+        # Delete main image
         if os.path.exists(full_path):
             os.remove(full_path)
-            return True
+            logger.info(f"Deleted main image: {filename}")
+            deleted = True
         
-        return False
+        # Delete responsive versions if they exist
+        base_name = os.path.splitext(filename)[0]
+        for size_config in RESPONSIVE_SIZES:
+            suffix = size_config['suffix']
+            responsive_filename = f"{base_name}{suffix}.webp"
+            responsive_path = os.path.join(base_upload_folder, 'events', responsive_filename)
+            
+            if os.path.exists(responsive_path):
+                os.remove(responsive_path)
+                logger.info(f"Deleted responsive image: {responsive_filename}")
+                deleted = True
+        
+        return deleted
         
     except Exception as e:
-        print(f"Error deleting image: {e}")
+        logger.error(f"Error deleting image: {e}")
         return False
 
 

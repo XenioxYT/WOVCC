@@ -5,11 +5,7 @@
 {% block description %}View upcoming fixtures and recent match results{% endblock %}
 
 {% block extra_js %}
-{% if is_production %}
-<script src="/scripts/api-client.min.js" defer></script>
-{% else %}
-<script src="/scripts/api-client.js" defer></script>
-{% endif %}
+<script src="/scripts/api-client.js"></script>
 
 <script>
   // Matches page controller

@@ -9,8 +9,8 @@ import sys
 
 WEBP_QUALITY = 80
 
-def convert_to_webp(image_path, output_path=None, quality=WEBP_QUALITY, delete_original=True):
-    """Convert an image to WebP format and optionally delete original"""
+def convert_to_webp(image_path, output_path=None, quality=WEBP_QUALITY):
+    """Convert an image to WebP format"""
     try:
         if output_path is None:
             output_path = os.path.splitext(image_path)[0] + '.webp'
@@ -38,14 +38,7 @@ def convert_to_webp(image_path, output_path=None, quality=WEBP_QUALITY, delete_o
             print(f"✓ {os.path.basename(image_path)}")
             print(f"  Original: {original_size / 1024:.1f} KB")
             print(f"  WebP: {webp_size / 1024:.1f} KB")
-            print(f"  Savings: {savings:.1f}%")
-            
-            # Delete original file
-            if delete_original:
-                os.remove(image_path)
-                print(f"  🗑️  Deleted original file\n")
-            else:
-                print()
+            print(f"  Savings: {savings:.1f}%\n")
             
             return True
     except Exception as e:

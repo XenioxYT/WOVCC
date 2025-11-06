@@ -5,13 +5,8 @@
 {% block description %}Upcoming events and activities at Wickersley Old Village Cricket Club{% endblock %}
 
 {% block extra_js %}
-{% if is_production %}
-<script src="/scripts/api-client.min.js" defer></script>
-<script src="/scripts/events.min.js" defer></script>
-{% else %}
-<script src="/scripts/api-client.js" defer></script>
-<script src="/scripts/events.js" defer></script>
-{% endif %}
+<script src="/scripts/api-client.js"></script>
+<script src="/scripts/events.js"></script>
 {% endblock %}
 
 {% block content %}

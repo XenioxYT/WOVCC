@@ -1,6 +1,5 @@
 flask==3.0.0
 flask-cors==4.0.0
-flask-minify==0.46
 beautifulsoup4==4.12.2
 requests==2.31.0
 python-dateutil==2.8.2
@@ -9,4 +8,4 @@ bcrypt==4.1.2
 pyjwt==2.8.0
 stripe
 python-dotenv==1.0.0
-Pillow
+

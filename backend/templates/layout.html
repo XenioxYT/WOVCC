@@ -28,30 +28,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   
-  <!-- Critical CSS inline (minimal styles for initial render) -->
-  <style>
-    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
-    .navbar { background: #1a472a; height: 60px; }
-    .hero { min-height: 400px; background: #1a472a; }
-    main { min-height: calc(100vh - 200px); }
-  </style>
-  
-  <!-- Defer non-critical CSS -->
-  {% if is_production %}
-  <link rel="preload" href="/styles/main.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <link rel="preload" href="/styles/pages.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript>
-    <link rel="stylesheet" href="/styles/main.min.css">
-    <link rel="stylesheet" href="/styles/pages.min.css">
-  </noscript>
-  {% else %}
-  <link rel="preload" href="/styles/main.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <link rel="preload" href="/styles/pages.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript>
-    <link rel="stylesheet" href="/styles/main.css">
-    <link rel="stylesheet" href="/styles/pages.css">
-  </noscript>
-  {% endif %}
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="/styles/pages.css">
   {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -173,13 +152,8 @@
   </footer>
 
   <!-- Scripts -->
-  {% if is_production %}
-  <script src="/scripts/auth.min.js" defer></script>
-  <script src="/scripts/main.min.js" defer></script>
-  {% else %}
-  <script src="/scripts/auth.js" defer></script>
-  <script src="/scripts/main.js" defer></script>
-  {% endif %}
+  <script src="/scripts/auth.js"></script>
+  <script src="/scripts/main.js"></script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>

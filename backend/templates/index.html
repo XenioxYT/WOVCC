@@ -5,13 +5,8 @@
 {% block description %}Wickersley Old Village Cricket Club - Community cricket in Rotherham{% endblock %}
 
 {% block extra_js %}
-{% if is_production %}
-<script src="/scripts/api-client.min.js" defer></script>
-<script src="/scripts/match-controller.min.js" defer></script>
-{% else %}
-<script src="/scripts/api-client.js" defer></script>
-<script src="/scripts/match-controller.js" defer></script>
-{% endif %}
+<script src="/scripts/api-client.js"></script>
+<script src="/scripts/match-controller.js"></script>
 {% endblock %}
 
 {% block content %}
