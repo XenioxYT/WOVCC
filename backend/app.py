@@ -11,6 +11,7 @@ load_dotenv()
 
 from flask import Flask, render_template, send_from_directory, jsonify, request
 from flask_cors import CORS
+from flask_minify import Minify
 import os
 import json
 import logging
@@ -44,9 +45,32 @@ perf_logger.setLevel(logging.INFO)
 app = Flask(__name__)
 CORS(app)  # Enable CORS for API access
 
+# Initialize minification (only minify HTML responses, not API JSON)
+Minify(
+    app=app,
+    html=True,
+    js=False,  # Don't minify JS in responses (we serve static files)
+    cssless=False,  # Don't minify CSS in responses (we serve static files)
+    fail_safe=True,  # Don't break if minification fails
+    bypass=['/api/'],  # Don't minify API endpoints
+    bypass_caching=['/api/'],
+    caching_limit=1,  # Cache only 1 minified response (to save memory)
+    passive=True  # Only minify explicit responses
+)
+
 # Configuration
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 PORT = int(os.environ.get('PORT', 5000))
+IS_PRODUCTION = not DEBUG
+
+# Make production flag available to templates
+@app.context_processor
+def inject_config():
+    """Inject configuration variables into all templates"""
+    return {
+        'is_production': IS_PRODUCTION,
+        'debug': DEBUG
+    }
 
 # Initialize database on startup
 init_db()

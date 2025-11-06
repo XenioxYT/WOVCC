@@ -43,24 +43,18 @@ def generate_unique_filename(original_filename):
     return f"{timestamp}_{unique_id}.{ext}"
 
 
-def process_and_save_image(file, upload_folder, max_width=MAX_WIDTH, max_height=MAX_HEIGHT, create_webp=True, create_responsive=True):
+def process_and_save_image(file, upload_folder, max_width=MAX_WIDTH, max_height=MAX_HEIGHT):
     """
-    Process and save an uploaded image with WebP conversion and responsive sizes
+    Process and save an uploaded image - always converts to WebP only
     
     Args:
         file: FileStorage object from Flask request
         upload_folder: Directory to save the processed image
         max_width: Maximum width (default: 1920px)
         max_height: Maximum height (default: 1080px)
-        create_webp: Create WebP version for better compression (default: True)
-        create_responsive: Create responsive image sizes (default: True)
     
     Returns:
-        dict: {
-            'original': str (relative path to original/main image),
-            'webp': str (relative path to WebP version),
-            'responsive': dict (paths to responsive versions)
-        } or None if error
+        str: Relative path to saved WebP image or None if error
     """
     try:
         # Validate file
@@ -113,55 +107,13 @@ def process_and_save_image(file, upload_folder, max_width=MAX_WIDTH, max_height=
             
             img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
         
-        result = {}
-        
-        # Save main WebP version (primary format)
+        # Save only WebP version with high compression
         webp_filename = f"{base_filename}.webp"
         webp_filepath = os.path.join(upload_folder, webp_filename)
         img.save(webp_filepath, 'WebP', quality=WEBP_QUALITY, method=6)
-        result['webp'] = f"/uploads/events/{webp_filename}"
-        result['original'] = result['webp']  # Use WebP as primary
         
-        # Save fallback format if original wasn't WebP
-        if original_ext != 'webp':
-            fallback_filename = f"{base_filename}.{original_ext}"
-            fallback_filepath = os.path.join(upload_folder, fallback_filename)
-            
-            if original_ext == 'png':
-                img.save(fallback_filepath, 'PNG', optimize=True)
-            else:
-                img.save(fallback_filepath, 'JPEG', quality=QUALITY, optimize=True)
-            
-            result['fallback'] = f"/uploads/events/{fallback_filename}"
-        
-        # Create responsive versions in WebP
-        if create_responsive:
-            result['responsive'] = {}
-            for size_config in RESPONSIVE_SIZES:
-                suffix = size_config['suffix']
-                target_width = size_config['width']
-                target_height = size_config['height']
-                
-                # Only create if original is larger
-                if img.width > target_width or img.height > target_height:
-                    # Calculate new dimensions maintaining aspect ratio
-                    if aspect_ratio > 1:
-                        new_w = min(target_width, img.width)
-                        new_h = int(new_w / aspect_ratio)
-                    else:
-                        new_h = min(target_height, img.height)
-                        new_w = int(new_h * aspect_ratio)
-                    
-                    resized = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
-                    
-                    # Save WebP version
-                    responsive_filename = f"{base_filename}{suffix}.webp"
-                    responsive_filepath = os.path.join(upload_folder, responsive_filename)
-                    resized.save(responsive_filepath, 'WebP', quality=WEBP_QUALITY, method=6)
-                    result['responsive'][suffix] = f"/uploads/events/{responsive_filename}"
-        
-        logger.info(f"Image processed successfully: {base_filename}")
-        return result
+        logger.info(f"Image processed and saved as WebP: {webp_filename}")
+        return f"/uploads/events/{webp_filename}"
         
     except Exception as e:
         logger.error(f"Error processing image: {e}", exc_info=True)

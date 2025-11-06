@@ -7,30 +7,51 @@
   <title>{% block title %}WOVCC | Wickersley Old Village Cricket Club{% endblock %}</title>
   
   <!-- Favicons -->
-  <link rel="icon" type="image/png" href="/assets/logo.png">
-  <link rel="apple-touch-icon" href="/assets/logo.png">
+  <link rel="icon" type="image/webp" href="/assets/logo.webp">
+  <link rel="apple-touch-icon" href="/assets/logo.webp">
   
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="{{ request.url }}">
   <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
   <meta property="og:description" content="{% block og_description %}{{ self.description() }}{% endblock %}">
-  <meta property="og:image" content="{{ request.url_root }}assets/logo.png">
+  <meta property="og:image" content="{{ request.url_root }}assets/logo.webp">
   
   <!-- Twitter -->
   <meta name="twitter:card" content="summary">
   <meta name="twitter:site" content="@wickersleyovcc">
   <meta name="twitter:title" content="{% block twitter_title %}{{ self.title() }}{% endblock %}">
   <meta name="twitter:description" content="{% block twitter_description %}{{ self.description() }}{% endblock %}">
-  <meta name="twitter:image" content="{{ request.url_root }}assets/logo.png">
+  <meta name="twitter:image" content="{{ request.url_root }}assets/logo.webp">
   
   <!-- Preconnect to external domains -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   
-  <!-- Stylesheets -->
-  <link rel="stylesheet" href="/styles/main.css">
-  <link rel="stylesheet" href="/styles/pages.css">
+  <!-- Critical CSS inline (minimal styles for initial render) -->
+  <style>
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+    .navbar { background: #1a472a; height: 60px; }
+    .hero { min-height: 400px; background: #1a472a; }
+    main { min-height: calc(100vh - 200px); }
+  </style>
+  
+  <!-- Defer non-critical CSS -->
+  {% if is_production %}
+  <link rel="preload" href="/styles/main.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="/styles/pages.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript>
+    <link rel="stylesheet" href="/styles/main.min.css">
+    <link rel="stylesheet" href="/styles/pages.min.css">
+  </noscript>
+  {% else %}
+  <link rel="preload" href="/styles/main.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="/styles/pages.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/pages.css">
+  </noscript>
+  {% endif %}
   {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -38,7 +59,7 @@
   <nav class="navbar">
     <div class="container">
       <a href="/" class="navbar-brand">
-        <img src="/assets/logo.png" alt="WOVCC Logo" width="40" height="40">
+        <img src="/assets/logo.webp" alt="WOVCC Logo" width="40" height="40">
         <span>WOVCC</span>
       </a>
       
@@ -99,7 +120,7 @@
           <p>
             Community cricket in Wickersley. All ages and abilities welcome.
           </p>
-          <img src="/assets/logo.png" alt="WOVCC Logo" loading="lazy" width="80" height="80" style="margin-top: 15px; border-radius: 50%;">
+          <img src="/assets/logo.webp" alt="WOVCC Logo" loading="lazy" width="80" height="80" style="margin-top: 15px; border-radius: 50%;">
         </div>
         
         <!-- Opening Hours -->
@@ -152,8 +173,13 @@
   </footer>
 
   <!-- Scripts -->
-  <script src="/scripts/auth.js"></script>
-  <script src="/scripts/main.js"></script>
+  {% if is_production %}
+  <script src="/scripts/auth.min.js" defer></script>
+  <script src="/scripts/main.min.js" defer></script>
+  {% else %}
+  <script src="/scripts/auth.js" defer></script>
+  <script src="/scripts/main.js" defer></script>
+  {% endif %}
   {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -106,7 +106,7 @@ if (isListingPage) {
 
   function createEventCard(event) {
     const hasImage = event.image_url && event.image_url.trim() !== '';
-    const imageUrl = hasImage ? event.image_url : '/assets/logo.png';
+    const imageUrl = hasImage ? event.image_url : '/assets/logo.webp';
     const categoryBadge = event.category ? `<div class="event-card-category">${event.category}</div>` : '';
     
     // Format date
@@ -140,7 +140,7 @@ if (isListingPage) {
     return `
       <div class="event-card" onclick="window.location.href='/events/${event.id}'">
         <div class="event-card-image-container ${hasImage ? 'has-image' : ''}" style="${hasImage ? `--card-image: url('${imageUrl}');` : ''}">
-          <img src="${imageUrl}" alt="${event.title}" class="event-card-image" onerror="this.src='/assets/logo.png'">
+          <img src="${imageUrl}" alt="${event.title}" class="event-card-image" onerror="this.src='/assets/logo.webp'">
         </div>
         <div class="event-card-body">
           ${categoryBadge}
