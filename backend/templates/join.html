@@ -21,11 +21,8 @@
     console.log('[Join] success param check:', urlParams.get('success') === 'true');
     
     // Also check directly in URL string as backup
-    const hasSuccessParam = window.location.search.includes('success=true') || window.location.href.includes('success=true');
-    console.log('[Join] Direct URL check for success=true:', hasSuccessParam);
-    
     // Handle successful payment - redirect to activation page
-    if (urlParams.get('success') === 'true' || hasSuccessParam) {
+    if (urlParams.get('success') === 'true') {
       console.log('[Join] ✅ SUCCESS=TRUE DETECTED! Redirecting to activation...');
       console.log('[Join] Checking localStorage for credentials...');
       console.log('[Join] - pending_email:', localStorage.getItem('wovcc_pending_email'));
