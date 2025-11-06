@@ -28,17 +28,13 @@ from sqlalchemy import or_
 import time
 from functools import wraps
 
-# Configure logging with more detail for performance tracking
+# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 logger = logging.getLogger(__name__)
-
-# Performance logger specifically for timing
-perf_logger = logging.getLogger('performance')
-perf_logger.setLevel(logging.INFO)
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -53,72 +49,6 @@ init_db()
 
 
 # ========================================
-# PERFORMANCE MONITORING MIDDLEWARE
-# ========================================
-
-@app.before_request
-def start_timer():
-    """Start timing the request"""
-    request.start_time = time.time()
-    request.db_query_count = 0
-    request.db_query_time = 0
-
-
-@app.after_request
-def log_request_performance(response):
-    """Log detailed performance metrics for each request"""
-    if hasattr(request, 'start_time'):
-        elapsed_time = (time.time() - request.start_time) * 1000  # Convert to ms
-        
-        # Get query stats if available
-        db_queries = getattr(request, 'db_query_count', 0)
-        db_time = getattr(request, 'db_query_time', 0) * 1000  # Convert to ms
-        
-        # Determine if this is slow
-        is_slow = elapsed_time > 500  # Flag requests over 500ms
-        
-        # Calculate breakdown
-        app_time = elapsed_time - db_time
-        
-        # Log with different levels based on performance
-        log_level = logging.WARNING if is_slow else logging.INFO
-        
-        perf_logger.log(
-            log_level,
-            f"{request.method} {request.path} | "
-            f"Total: {elapsed_time:.2f}ms | "
-            f"App: {app_time:.2f}ms | "
-            f"DB: {db_time:.2f}ms ({db_queries} queries) | "
-            f"Status: {response.status_code}"
-            f"{' ⚠️ SLOW REQUEST' if is_slow else ''}"
-        )
-        
-        # Add performance headers for debugging
-        response.headers['X-Response-Time'] = f"{elapsed_time:.2f}ms"
-        response.headers['X-DB-Queries'] = str(db_queries)
-        response.headers['X-DB-Time'] = f"{db_time:.2f}ms"
-    
-    return response
-
-
-def track_db_time(func):
-    """Decorator to track database query time"""
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if hasattr(request, 'db_query_count'):
-            request.db_query_count += 1
-        
-        start = time.time()
-        result = func(*args, **kwargs)
-        elapsed = time.time() - start
-        
-        if hasattr(request, 'db_query_time'):
-            request.db_query_time += elapsed
-        
-        return result
-    return wrapper
-
-
 # Security headers middleware
 @app.after_request
 def add_security_headers(response):
@@ -826,13 +756,10 @@ def login():
             "password": string
         }
     """
-    logger.info("[LOGIN] Login attempt started")
     try:
         data = request.get_json()
-        logger.info(f"[LOGIN] Email: {data.get('email') if data else 'NO DATA'}")
         
         if not data or not data.get('email') or not data.get('password'):
-            logger.error("[LOGIN] Missing email or password")
             return jsonify({
                 'success': False,
                 'error': 'Email and password are required'
@@ -840,29 +767,22 @@ def login():
         
         db = next(get_db())
         try:
-            logger.info(f"[LOGIN] Querying database for user: {data['email']}")
             user = db.query(User).filter(User.email == data['email']).first()
             
             if not user:
-                logger.warning(f"[LOGIN] User not found: {data['email']}")
                 return jsonify({
                     'success': False,
                     'error': 'Invalid email or password'
                 }), 401
-            
-            logger.info(f"[LOGIN] User found: {user.name} (ID: {user.id}, is_member: {user.is_member})")
             
             if not verify_password(data['password'], user.password_hash):
-                logger.warning(f"[LOGIN] Invalid password for: {data['email']}")
                 return jsonify({
                     'success': False,
                     'error': 'Invalid email or password'
                 }), 401
             
-            logger.info("[LOGIN] Password verified, generating tokens...")
             # Generate tokens
             tokens = generate_token(user.id, user.email, user.is_admin)
-            logger.info(f"[LOGIN] SUCCESS - User {user.email} logged in")
             
             return jsonify({
                 'success': True,
@@ -875,7 +795,7 @@ def login():
             db.close()
             
     except Exception as e:
-        logger.error(f"[LOGIN] ERROR: {e}", exc_info=True)
+        logger.error(f"Login error: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -1642,34 +1562,29 @@ def stripe_webhook():
     payload = request.data
     sig_header = request.headers.get('Stripe-Signature')
     
-    logger.info("[WEBHOOK] Received event from Stripe")
-    
     # Verify webhook signature
     event = verify_webhook_signature(payload, sig_header)
     if not event:
         # If verification fails but webhook secret is set, reject the request
         from stripe_config import STRIPE_WEBHOOK_SECRET
         if STRIPE_WEBHOOK_SECRET:
-            logger.error("[WEBHOOK] Signature verification failed!")
             return jsonify({
                 'success': False,
                 'error': 'Invalid webhook signature'
             }), 400
         else:
             # If no webhook secret is set, parse the payload directly (development only!)
-            logger.warning("[WEBHOOK] Webhook signature verification is disabled!")
             try:
                 import json as json_module
                 event = json_module.loads(payload)
             except Exception as e:
-                logger.error(f"[WEBHOOK] Failed to parse payload: {e}")
+                logger.error(f"Failed to parse webhook payload: {e}")
                 return jsonify({
                     'success': False,
                     'error': 'Invalid payload'
                 }), 400
     
     event_type = event.get('type', 'unknown')
-    logger.info(f"[WEBHOOK] Event type: {event_type}")
     
     try:
         # Handle checkout session completed
@@ -1678,17 +1593,12 @@ def stripe_webhook():
             session_id = session.get('id')
             payment_status = session.get('payment_status')
             pending_id_str = session.get('metadata', {}).get('pending_id')
-            
-            logger.info(f"[WEBHOOK] Session ID: {session_id}")
-            logger.info(f"[WEBHOOK] Payment status: {payment_status}")
-            logger.info(f"[WEBHOOK] Pending ID from metadata: {pending_id_str}")
 
             # Create user account after successful payment
             if payment_status == 'paid' and pending_id_str:
                 try:
                     pending_id = int(pending_id_str)
                 except (ValueError, TypeError):
-                    logger.error(f"[WEBHOOK] Invalid pending_id in metadata: {pending_id_str}")
                     return jsonify({'success': False, 'error': 'Invalid pending_id'}), 400
 
                 db = next(get_db())
@@ -1708,7 +1618,6 @@ def stripe_webhook():
                             existing_user.membership_start_date = now
                             existing_user.membership_expiry_date = expiry
                             existing_user.updated_at = now
-                            logger.info(f"[WEBHOOK] Existing user {existing_user.id} ({existing_user.email}) activated, membership until {expiry}")
                         else:
                             # Create new user account
                             new_user = User(
@@ -1724,29 +1633,22 @@ def stripe_webhook():
                                 membership_expiry_date=expiry
                             )
                             db.add(new_user)
-                            logger.info(f"[WEBHOOK] Created new user: {pending.email}, membership until {expiry}")
 
                         # Remove pending registration
                         db.delete(pending)
                         db.commit()
-                    else:
-                        logger.error(f"[WEBHOOK] Pending registration {pending_id} not found")
                 finally:
                     db.close()
-            else:
-                logger.warning("[WEBHOOK] Payment not completed or no pending_id in metadata")
         
         # Handle payment intent succeeded (alternative)
         elif event_type == 'payment_intent.succeeded':
-            logger.info("[WEBHOOK] Payment intent succeeded (no action needed for Checkout mode)")
+            pass  # No action needed for Checkout mode
         
         # Handle checkout session expired
         elif event_type == 'checkout.session.expired':
             session = event['data']['object']
             session_id = session.get('id')
             pending_id_str = session.get('metadata', {}).get('pending_id')
-            
-            logger.warning(f"[WEBHOOK] Checkout session expired: {session_id}")
             
             # Clean up expired pending registration
             if pending_id_str:
@@ -1756,24 +1658,17 @@ def stripe_webhook():
                     try:
                         pending = db.query(PendingRegistration).filter(PendingRegistration.id == pending_id).first()
                         if pending:
-                            logger.info(f"[WEBHOOK] Deleting expired pending registration: {pending.email} (ID: {pending_id})")
                             db.delete(pending)
                             db.commit()
-                        else:
-                            logger.warning(f"[WEBHOOK] Pending registration {pending_id} not found (already cleaned up?)")
                     finally:
                         db.close()
                 except (ValueError, TypeError) as e:
-                    logger.error(f"[WEBHOOK] Invalid pending_id in expired session metadata: {pending_id_str}, error: {e}")
-        
-        # Handle other events
-        else:
-            logger.info(f"[WEBHOOK] Unhandled event type: {event_type}")
+                    logger.error(f"Invalid pending_id in expired session metadata: {pending_id_str}, error: {e}")
         
         return jsonify({'success': True, 'received': True})
         
     except Exception as e:
-        logger.error(f"[WEBHOOK] Error processing webhook: {type(e).__name__}: {e}", exc_info=True)
+        logger.error(f"Error processing webhook: {type(e).__name__}: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
