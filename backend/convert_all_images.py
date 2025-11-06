@@ -57,7 +57,7 @@ def convert_to_webp(input_path, output_path, delete_original=True):
         
         return True, original_size, webp_size, saved_bytes, saved_percent
         
-    except Exception as e:
+    except (IOError, Image.UnidentifiedImageError) as e:
         logger.error(f"✗ Failed to convert {input_path}: {e}")
         return False, 0, 0, 0, 0
 
