@@ -406,7 +406,6 @@ def pre_register():
                 pending.password_hash = hash_password(data['password'])
                 pending.newsletter = data.get('newsletter', False)
                 pending.created_at = datetime.now(timezone.utc)  # Update timestamp
-                logger.info(f"[PRE-REGISTER] Reusing existing pending registration ID: {pending.id}")
             else:
                 # Create new pending registration
                 pending = PendingRegistration(
@@ -632,34 +631,29 @@ def stripe_webhook():
     payload = request.data
     sig_header = request.headers.get('Stripe-Signature')
     
-    logger.info("[WEBHOOK] Received event from Stripe")
-    
     # Verify webhook signature
     event = verify_webhook_signature(payload, sig_header)
     if not event:
         # If verification fails but webhook secret is set, reject the request
         from stripe_config import STRIPE_WEBHOOK_SECRET
         if STRIPE_WEBHOOK_SECRET:
-            logger.error("[WEBHOOK] Signature verification failed!")
             return jsonify({
                 'success': False,
                 'error': 'Invalid webhook signature'
             }), 400
         else:
             # If no webhook secret is set, parse the payload directly (development only!)
-            logger.warning("[WEBHOOK] Webhook signature verification is disabled!")
             try:
                 import json as json_module
                 event = json_module.loads(payload)
             except Exception as e:
-                logger.error(f"[WEBHOOK] Failed to parse payload: {e}")
+                logger.error(f"Failed to parse webhook payload: {e}")
                 return jsonify({
                     'success': False,
                     'error': 'Invalid payload'
                 }), 400
     
     event_type = event.get('type', 'unknown')
-    logger.info(f"[WEBHOOK] Event type: {event_type}")
     
     try:
         # Handle checkout session completed
@@ -668,17 +662,12 @@ def stripe_webhook():
             session_id = session.get('id')
             payment_status = session.get('payment_status')
             pending_id_str = session.get('metadata', {}).get('pending_id')
-            
-            logger.info(f"[WEBHOOK] Session ID: {session_id}")
-            logger.info(f"[WEBHOOK] Payment status: {payment_status}")
-            logger.info(f"[WEBHOOK] Pending ID from metadata: {pending_id_str}")
 
             # Create user account after successful payment
             if payment_status == 'paid' and pending_id_str:
                 try:
                     pending_id = int(pending_id_str)
                 except (ValueError, TypeError):
-                    logger.error(f"[WEBHOOK] Invalid pending_id in metadata: {pending_id_str}")
                     return jsonify({'success': False, 'error': 'Invalid pending_id'}), 400
 
                 db = next(get_db())
@@ -698,7 +687,6 @@ def stripe_webhook():
                             existing_user.membership_start_date = now
                             existing_user.membership_expiry_date = expiry
                             existing_user.updated_at = now
-                            logger.info(f"[WEBHOOK] Existing user {existing_user.id} ({existing_user.email}) activated, membership until {expiry}")
                         else:
                             # Create new user account
                             new_user = User(
@@ -714,30 +702,20 @@ def stripe_webhook():
                                 membership_expiry_date=expiry
                             )
                             db.add(new_user)
-                            logger.info(f"[WEBHOOK] Created new user: {pending.email}, membership until {expiry}")
 
                         # Remove pending registration
                         db.delete(pending)
                         db.commit()
-                    else:
-                        logger.error(f"[WEBHOOK] Pending registration {pending_id} not found")
                 finally:
                     db.close()
-            else:
-                logger.warning("[WEBHOOK] Payment not completed or no pending_id in metadata")
         
         # Handle payment intent succeeded (alternative)
         elif event_type == 'payment_intent.succeeded':
-            logger.info("[WEBHOOK] Payment intent succeeded (no action needed for Checkout mode)")
+            pass  # No action needed for Checkout mode
         
         # Handle checkout session expired
         elif event_type == 'checkout.session.expired':
-            session_id = event['data']['object'].get('id')
-            logger.warning(f"[WEBHOOK] Checkout session expired: {session_id}")
-        
-        # Handle other events
-        else:
-            logger.info(f"[WEBHOOK] Unhandled event type: {event_type}")
+            pass  # Could implement cleanup here
         
         return jsonify({'success': True, 'received': True})
         
