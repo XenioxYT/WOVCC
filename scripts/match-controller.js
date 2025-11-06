@@ -68,7 +68,7 @@
                 this.teamSelector.style.opacity = "1";
                 this.teamSelector.disabled = false;
             } catch (error) {
-                debugMatch.error("Failed to setup team selector:", error);
+                debugMatch.error("Failed to setup team selector: ", error);
                 this.teamSelector.style.opacity = "1";
                 this.teamSelector.disabled = false;
             }
@@ -108,7 +108,7 @@
                 const todaysMatches = fixtures.filter((f) => f.date_iso === today);
                 return todaysMatches;
             } catch (error) {
-                debugMatch.error("Failed to get todays matches:", error);
+                debugMatch.error("Failed to get todays matches: ", error);
                 return [];
             }
         }
@@ -126,7 +126,7 @@
                 widgetWrapper.style.cssText = "margin-bottom:30px;";
                 const matchTitle = document.createElement("h4");
                 matchTitle.style.cssText = "color:var(--primary-color);margin-bottom:15px;font-size:1.1rem;";
-                matchTitle.textContent = `${match.team_name_scraping}-${match.home_team}vs ${match.away_team}`;
+                matchTitle.textContent = `${match.team_name_scraping} - ${match.home_team} vs ${match.away_team}`;
                 widgetWrapper.appendChild(matchTitle);
                 const widgetHTML = `<a style="display:none;" class="lsw" href="https://www.play-cricket.com/embed_widget/live_scorer_widgets?team_id=${teamId}&days=0" id="${linkId}"></a><div class="lsw-col-12 lsw_tile" id="${containerId}"></div>`;
                 const widgetDiv = document.createElement("div");
