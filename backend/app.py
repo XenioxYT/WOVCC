@@ -64,16 +64,16 @@ def add_security_headers(response):
     # Prevent clickjacking
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     # Enable XSS protection
-# response.headers['X-XSS-Protection'] = '1; mode=block'
-# Add a basic Content-Security-Policy for better XSS protection.
+    # Add a basic Content-Security-Policy for better XSS protection.
     csp = (
         "default-src 'self'; "
         "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com http://fonts.googleapis.com; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; "
         "connect-src 'self' http://localhost:5000 http://127.0.0.1:5000; "
         "img-src 'self' data: https://maps.googleapis.com https://*.googleapis.com; "
         "frame-src https://www.google.com https://maps.google.com;"
+        "object-src 'none';"
     )
     response.headers['Content-Security-Policy'] = csp
     # HSTS (only in production with HTTPS)
@@ -183,25 +183,7 @@ def events():
 @app.route('/events/<int:event_id>')
 def event_detail(event_id):
     """Event detail page"""
-    user_interested = False
-    current_user = get_current_user()
-
-    if current_user:
-        db = None
-        try:
-            db = next(get_db())
-            interest = db.query(EventInterest).filter(
-                EventInterest.event_id == event_id,
-                EventInterest.user_id == current_user.id
-            ).first()
-            user_interested = interest is not None
-        except Exception as exc:
-            logger.error(f"Failed to determine interest for event {event_id}: {exc}")
-        finally:
-            if db:
-                db.close()
-
-    return render_template('event-detail.html', event_id=event_id, user_interested=user_interested)
+    return render_template('event-detail.html', event_id=event_id)
 
 
 # SEO and utility routes
@@ -266,9 +248,6 @@ def get_teams():
             'teams': teams,
             'count': len(teams)
         })
-        # Cache for 10 minutes (teams rarely change)
-        resp.cache_control.max_age = 600
-        resp.cache_control.public = True
         return resp
     except Exception as e:
         return jsonify({
@@ -296,9 +275,6 @@ def get_fixtures():
             'fixtures': fixtures,
             'count': len(fixtures)
         })
-        # Cache for 5 minutes (fixtures can change)
-        resp.cache_control.max_age = 300
-        resp.cache_control.public = True
         return resp
     except Exception as e:
         return jsonify({
@@ -328,9 +304,6 @@ def get_results():
             'results': results,
             'count': len(results)
         })
-        # Cache for 5 minutes (results update frequently)
-        resp.cache_control.max_age = 300
-        resp.cache_control.public = True
         return resp
     except Exception as e:
         return jsonify({
@@ -379,9 +352,6 @@ def get_all_data():
                     'fixtures': fixtures,
                     'results': results
                 })
-                # Cache file responses for 5 minutes
-                resp.cache_control.max_age = 300
-                resp.cache_control.public = True
                 return resp
             # If file not present, fall through to live scrape
 
@@ -397,9 +367,6 @@ def get_all_data():
             'fixtures': fixtures,
             'results': results
         })
-        # Cache for 5 minutes
-        resp.cache_control.max_age = 300
-        resp.cache_control.public = True
         return resp
         
     except Exception as e:
@@ -418,9 +385,6 @@ def match_status():
             'success': True,
             'has_matches_today': has_matches
         })
-        # Cache for 2 minutes (checked frequently but doesn't change often)
-        resp.cache_control.max_age = 120
-        resp.cache_control.public = True
         return resp
     except Exception as e:
         return jsonify({
@@ -451,9 +415,6 @@ def get_live_config():
             'success': True,
             'config': config
         })
-        # Cache for 1 minute (needs to be relatively fresh for live updates)
-        resp.cache_control.max_age = 60
-        resp.cache_control.public = True
         return resp
     except Exception as e:
         return jsonify({
@@ -826,9 +787,7 @@ def get_profile(user):
         'success': True,
         'user': user.to_dict()
     })
-    # Private cache only (no shared cache for user data)
-    resp.cache_control.private = True
-    resp.cache_control.max_age = 60
+    # No caching for user profile to prevent stale data
     resp.headers['Vary'] = 'Authorization'
     return resp
 
@@ -984,10 +943,6 @@ def get_events():
                 'count': len(events)
             })
             
-            # Cache for 60 seconds to enable bfcache
-            resp.cache_control.max_age = 60
-            resp.cache_control.private = True
-            
             return resp
             
         finally:
@@ -1041,9 +996,6 @@ def get_event(event_id):
                 'success': True,
                 'event': event_data
             })
-            
-            # Cache for 5 minutes
-            resp.cache_control.max_age = 300
             
             return resp
             

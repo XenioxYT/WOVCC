@@ -274,29 +274,40 @@ class PageTransitions {
     }
 
     async fetchPage(path) {
-        // Check cache first
-        if (this.cache.has(path)) {
+        const noCachePaths = ['/events', '/admin'];
+        const isUncacheable = noCachePaths.some(p => path.startsWith(p));
+
+        // Use cache only for cacheable paths
+        if (!isUncacheable && this.cache.has(path)) {
             return this.cache.get(path);
         }
 
-        const response = await fetch(path, {
+        const fetchOptions = {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
             }
-        });
+        };
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        // For uncacheable paths, bypass browser cache
+        if (isUncacheable) {
+            fetchOptions.headers['Cache-Control'] = 'no-cache';
+        }
+
+        const response = await fetch(path, fetchOptions);
+
+        if (!response.ok) {            throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const html = await response.text();
         
-        // Cache the response (limit cache size)
-        if (this.cache.size > 10) {
-            const firstKey = this.cache.keys().next().value;
-            this.cache.delete(firstKey);
+        // Cache the response only for cacheable paths
+        if (!isUncacheable) {
+            if (this.cache.size > 10) {
+                const firstKey = this.cache.keys().next().value;
+                this.cache.delete(firstKey);
+            }
+            this.cache.set(path, html);
         }
-        this.cache.set(path, html);
 
         return html;
     }

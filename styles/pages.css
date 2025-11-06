@@ -367,7 +367,6 @@
   background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
   color: var(--white);
   padding: 30px;
-  border-radius: 8px;
   margin-bottom: 30px;
   display: flex;
   justify-content: space-between;
