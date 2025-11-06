@@ -21,9 +21,9 @@
     });
   } else {
     // DOM is already loaded (page transition scenario)
-    setTimeout(async () => {
+    (async () => {
       await initMatchesPage();
-    }, 50);
+    })();
   }
   
   // Also listen for page transitions
