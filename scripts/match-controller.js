@@ -235,7 +235,13 @@
     }
     
     // Initialize function for page transitions
+    let matchdayInitialized = false;
+    
     window.initializeMatchday = async function() {
+        // Prevent double initialization
+        if (matchdayInitialized) return;
+        matchdayInitialized = true;
+        
         const controller = new MatchController();
         window.matchController = controller;
         await controller.init();
@@ -244,23 +250,20 @@
     // Initialize immediately if DOM is already loaded, otherwise wait
     if (document.readyState === 'loading') {
         document.addEventListener("DOMContentLoaded", async function () {
-            setTimeout(async () => {
-                await window.initializeMatchday();
-            }, 100);
+            await window.initializeMatchday();
         });
     } else {
         // DOM is already loaded (page transition scenario)
-        setTimeout(async () => {
+        (async () => {
             await window.initializeMatchday();
-        }, 100);
+        })();
     }
     
     // Re-initialize on page transitions
     document.addEventListener("pageTransitionComplete", async function(e) {
         if (e.detail.path === '/') {
-            setTimeout(async () => {
-                await window.initializeMatchday();
-            }, 100);
+            matchdayInitialized = false; // Reset flag for new page load
+            await window.initializeMatchday();
         }
     });
     
