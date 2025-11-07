@@ -338,35 +338,65 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 10000;
     padding: 20px;
     overflow-y: auto;
+    animation: fadeIn 0.2s ease-in;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideUp {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
   }
   
   .modal-content {
     background: white;
     border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     width: 100%;
     max-height: 90vh;
     overflow-y: auto;
     margin: auto;
+    animation: slideUp 0.3s ease-out;
   }
   
   .modal-header {
-    padding: 20px 25px;
-    border-bottom: 1px solid var(--border-color);
+    padding: 24px 28px;
+    border-bottom: 2px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    background: linear-gradient(to bottom, var(--secondary-bg), white);
+  }
+  
+  .modal-header h3 {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    font-weight: 600;
   }
   
   .modal-body {
-    padding: 25px;
+    padding: 28px;
   }
   
   .modal-close {
@@ -376,8 +406,8 @@
     color: var(--text-light);
     cursor: pointer;
     padding: 0;
-    width: 30px;
-    height: 30px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -386,8 +416,9 @@
   }
   
   .modal-close:hover {
-    background: var(--secondary-bg);
-    color: var(--text-dark);
+    background: var(--accent-color);
+    color: white;
+    transform: rotate(90deg);
   }
   
   /* Button Icons */
@@ -422,6 +453,49 @@
     background: #dc3545;
     border-color: #dc3545;
     box-shadow: 0 4px 8px rgba(220, 53, 69, 0.2);
+  }
+  
+  /* Modal Form Styles */
+  .modal-body .form-group {
+    margin-bottom: 22px;
+  }
+  
+  .modal-body .form-label {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+  }
+  
+  .modal-body .form-input,
+  .modal-body select.form-input {
+    background: white;
+    border: 2px solid var(--border-color);
+    padding: 12px 15px;
+    font-size: 0.95rem;
+    transition: var(--transition);
+  }
+  
+  .modal-body .form-input:hover {
+    border-color: var(--primary-light);
+  }
+  
+  .modal-body .form-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(26, 95, 95, 0.1);
+  }
+  
+  .modal-body textarea.form-input {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.6;
+  }
+  
+  .modal-body input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
   }
   
   /* Toggle Switch */
@@ -660,22 +734,18 @@
           <div class="form-group">
             <label class="form-label" for="event-long-description">
               Long Description * (Markdown supported)
-              <button type="button" onclick="window.AdminEvents.updateMarkdownPreview()" class="btn btn-outline" style="float: right; padding: 4px 12px; font-size: 0.85rem;">Preview</button>
+              <button type="button" onclick="window.AdminEvents.toggleMarkdownPreview()" class="btn btn-outline" style="float: right; padding: 4px 12px; font-size: 0.85rem;" id="markdown-preview-btn">Preview</button>
             </label>
             <textarea id="event-long-description" class="form-input" rows="6" required></textarea>
-            <div id="markdown-preview" style="margin-top: 10px; padding: 15px; background: var(--secondary-bg); border-radius: 8px; display: none; min-height: 50px; line-height: 1.6;"></div>
+            <div id="markdown-preview" style="margin-top: 10px; padding: 15px; background: var(--secondary-bg); border-radius: 8px; border-left: 3px solid var(--primary-color); display: none; min-height: 50px; line-height: 1.6; color: var(--text-dark);"></div>
           </div>
           
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <div class="form-group">
-              <label class="form-label" for="event-date">Date & Time *</label>
-              <input type="datetime-local" id="event-date" class="form-input" required>
-            </div>
-            
-            <div class="form-group">
-              <label class="form-label" for="event-time">Time (optional, e.g., "2:00 PM")</label>
-              <input type="text" id="event-time" class="form-input" placeholder="2:00 PM">
-            </div>
+          <div class="form-group">
+            <label class="form-label" for="event-date">Date & Time *</label>
+            <input type="datetime-local" id="event-date" class="form-input" required>
+            <p style="margin-top: 8px; font-size: 0.85rem; color: var(--text-light);">
+              Select the date and time for this event
+            </p>
           </div>
           
           <div class="form-group">
@@ -711,11 +781,11 @@
             </label>
           </div>
           
-          <div id="recurring-options" style="display: none; padding: 15px; background: var(--secondary-bg); border-radius: 8px; margin-bottom: 20px;">
+          <div id="recurring-options" style="display: none; padding: 20px; background: var(--secondary-bg); border-radius: 8px; margin-bottom: 20px; border-left: 3px solid var(--primary-color);">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
               <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" for="event-recurrence-pattern">Pattern</label>
-                <select id="event-recurrence-pattern" class="form-input">
+                <label class="form-label" for="event-recurrence-pattern">Recurrence Pattern</label>
+                <select id="event-recurrence-pattern" class="form-input" onchange="window.AdminEvents.handleRecurrencePatternChange()">
                   <option value="daily">Daily</option>
                   <option value="weekly" selected>Weekly</option>
                   <option value="monthly">Monthly</option>
@@ -723,12 +793,12 @@
               </div>
               
               <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" for="event-recurrence-end-date">End Date</label>
+                <label class="form-label" for="event-recurrence-end-date">Recurrence End Date</label>
                 <input type="date" id="event-recurrence-end-date" class="form-input">
               </div>
             </div>
-            <p style="margin-top: 10px; font-size: 0.85rem; color: var(--text-light);">
-              ℹ️ Will generate up to 12 occurrences of this event.
+            <p style="margin-top: 15px; padding: 10px; background: #e7f3ff; border-radius: 6px; font-size: 0.85rem; color: #0c5460; border-left: 3px solid var(--primary-color);">
+              <strong>ℹ️ Note:</strong> The event date above will be used as the starting point. The system will generate up to 12 occurrences following the selected pattern until the end date.
             </p>
           </div>
           
