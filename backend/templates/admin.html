@@ -8,6 +8,7 @@
 <script src="/scripts/api-client.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="/scripts/admin-events.js"></script>
+<script src="/scripts/admin-users.js"></script>
 
 <script>
 (function() {
@@ -579,6 +580,7 @@
         <!-- Admin Tabs -->
         <div class="admin-tabs" style="margin-bottom: 30px;">
           <button class="admin-tab active" data-tab="live-matches">Live Matches</button>
+          <button class="admin-tab" data-tab="users" id="users-tab">User Management</button>
           <button class="admin-tab" data-tab="events" id="events-tab">Events</button>
         </div>
         
@@ -686,6 +688,61 @@
           </div>
         </div>
         </div> <!-- End live-matches-tab-content -->
+        
+        <!-- Users Tab Content -->
+        <div id="users-tab-content" class="tab-content" style="display: none;">
+          <!-- Stats Cards -->
+          <div id="admin-stats-cards" style="margin-bottom: 30px;">
+            <!-- Stats will be loaded here -->
+          </div>
+          
+          <div class="card" style="margin-bottom: 30px;">
+            <div class="card-body">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
+                <h3 style="color: var(--primary-color); margin: 0;">User Management</h3>
+                
+                <!-- Search -->
+                <div style="flex: 1; max-width: 400px;">
+                  <input 
+                    type="text" 
+                    id="user-search" 
+                    class="form-input" 
+                    placeholder="Search by name or email..."
+                    style="margin: 0;"
+                    onkeyup="if(event.key==='Enter') window.AdminUsers.applySearch(this.value)"
+                  >
+                </div>
+              </div>
+              
+              <!-- Filters -->
+              <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                <button class="filter-btn active" data-filter="all" onclick="window.AdminUsers.applyFilter('all')">
+                  All Users
+                </button>
+                <button class="filter-btn" data-filter="members" onclick="window.AdminUsers.applyFilter('members')">
+                  Members
+                </button>
+                <button class="filter-btn" data-filter="active" onclick="window.AdminUsers.applyFilter('active')">
+                  Active
+                </button>
+                <button class="filter-btn" data-filter="expired" onclick="window.AdminUsers.applyFilter('expired')">
+                  Expired
+                </button>
+                <button class="filter-btn" data-filter="admins" onclick="window.AdminUsers.applyFilter('admins')">
+                  Admins
+                </button>
+                <button class="filter-btn" data-filter="non-members" onclick="window.AdminUsers.applyFilter('non-members')">
+                  Non-Members
+                </button>
+              </div>
+              
+              <!-- Users Table -->
+              <div id="admin-users-list">
+                <!-- Users list will be loaded here -->
+              </div>
+            </div>
+          </div>
+        </div> <!-- End users-tab-content -->
         
         <!-- Events Tab Content -->
         <div id="events-tab-content" class="tab-content" style="display: none;">
@@ -832,4 +889,178 @@
       </div>
     </div>
   </div>
+  
+  <!-- User Edit Modal -->
+  <div id="user-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 700px;">
+      <div class="modal-header">
+        <h3 id="user-modal-title" style="margin: 0;">Edit User</h3>
+        <button class="modal-close" onclick="window.AdminUsers.closeUserModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="user-form" onsubmit="window.AdminUsers.handleUserSubmit(event)">
+          <div class="form-group">
+            <label class="form-label" for="user-name">Name *</label>
+            <input type="text" id="user-name" class="form-input" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="user-email">Email *</label>
+            <input type="email" id="user-email" class="form-input" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="user-membership-tier">Membership Tier</label>
+            <select id="user-membership-tier" class="form-input">
+              <option value="Annual Member">Annual Member</option>
+              <option value="Social Member">Social Member</option>
+              <option value="Junior Member">Junior Member</option>
+              <option value="Honorary Member">Honorary Member</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="user-payment-status">Payment Status</label>
+            <select id="user-payment-status" class="form-input">
+              <option value="pending">Pending</option>
+              <option value="active">Active</option>
+              <option value="expired">Expired</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="user-expiry-date">Membership Expiry Date</label>
+            <input type="date" id="user-expiry-date" class="form-input">
+          </div>
+          
+          <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+              <input type="checkbox" id="user-is-member">
+              <span class="form-label" style="margin: 0;">Is Member</span>
+            </label>
+          </div>
+          
+          <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+              <input type="checkbox" id="user-is-admin">
+              <span class="form-label" style="margin: 0;">Is Admin</span>
+            </label>
+          </div>
+          
+          <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+              <input type="checkbox" id="user-newsletter">
+              <span class="form-label" style="margin: 0;">Newsletter Subscriber</span>
+            </label>
+          </div>
+          
+          <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+            <button type="button" class="btn btn-outline" onclick="window.AdminUsers.closeUserModal()">Cancel</button>
+            <button type="submit" id="user-submit-btn" class="btn btn-primary">Update User</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .stat-card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      transition: var(--transition);
+    }
+    
+    .stat-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+    
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .stat-content {
+      flex: 1;
+    }
+    
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-light);
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+    
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      line-height: 1;
+    }
+    
+    .stat-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-light);
+      margin-top: 4px;
+    }
+    
+    /* Filter Buttons */
+    .filter-btn {
+      background: var(--secondary-bg);
+      border: 1px solid var(--border-color);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: var(--transition);
+      font-weight: 500;
+      color: var(--text-dark);
+      font-size: 0.9rem;
+    }
+    
+    .filter-btn:hover {
+      background: var(--primary-light);
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+    }
+    
+    .filter-btn.active {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+      color: white;
+    }
+    
+    /* Loading Spinner */
+    .skeleton-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid var(--secondary-bg);
+      border-top-color: var(--primary-color);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 {% endblock %}
