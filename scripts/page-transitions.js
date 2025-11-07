@@ -237,6 +237,12 @@ class PageTransitions {
         this.isTransitioning = true;
         document.body.classList.add('page-transitioning');
 
+        // Dispatch event to notify other components that transition is starting
+        const startEvent = new CustomEvent('pageTransitionStart', {
+            detail: { path }
+        });
+        document.dispatchEvent(startEvent);
+
         try {
             // Fetch new page content
             const html = await this.fetchPage(path);
