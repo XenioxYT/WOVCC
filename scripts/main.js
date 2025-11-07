@@ -58,15 +58,57 @@ function setupNewsletterForm() {
     const forms = document.querySelectorAll(".newsletter-form,.newsletter-form-main");
     forms.forEach((form) => {
         if (form) {
-            form.addEventListener("submit", function (e) {
+            form.addEventListener("submit", async function (e) {
                 e.preventDefault();
                 const emailInput = form.querySelector('input[type="email"]');
                 const email = emailInput.value.trim();
-                if (email) {
-                    showNotification("Thank you for subscribing to our newsletter!", "success");
-                    emailInput.value = "";
-                } else {
+                
+                if (!email) {
                     showNotification("Please enter a valid email address.", "error");
+                    return;
+                }
+                
+                // Get the button for loading state
+                const submitButton = form.querySelector('button[type="submit"]');
+                const originalButtonText = submitButton ? submitButton.textContent : '';
+                
+                try {
+                    // Show loading state
+                    if (submitButton) {
+                        submitButton.disabled = true;
+                        submitButton.textContent = 'Subscribing...';
+                    }
+                    
+                    // Call the newsletter subscription API
+                    const response = await fetch('/api/newsletter/subscribe', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ email: email })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        if (result.already_subscribed) {
+                            showNotification("You're already subscribed to our newsletter!", "info");
+                        } else {
+                            showNotification("Thank you for subscribing to our newsletter!", "success");
+                        }
+                        emailInput.value = "";
+                    } else {
+                        showNotification(result.error || "Failed to subscribe. Please try again.", "error");
+                    }
+                } catch (error) {
+                    console.error('Newsletter subscription error:', error);
+                    showNotification("An error occurred. Please try again later.", "error");
+                } finally {
+                    // Restore button state
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.textContent = originalButtonText;
+                    }
                 }
             });
         }

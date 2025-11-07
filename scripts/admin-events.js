@@ -96,7 +96,14 @@
         document.getElementById('event-submit-btn').textContent = 'Create Event';
         document.getElementById('image-preview-container').style.display = 'none';
         document.getElementById('recurring-options').style.display = 'none';
-        document.getElementById('markdown-preview').innerHTML = '';
+        
+        // Reset markdown preview
+        const preview = document.getElementById('markdown-preview');
+        const btn = document.getElementById('markdown-preview-btn');
+        preview.innerHTML = '';
+        preview.style.display = 'none';
+        btn.textContent = 'Preview';
+        
         modal.style.display = 'flex';
     }
 
@@ -110,7 +117,6 @@
         document.getElementById('event-short-description').value = event.short_description;
         document.getElementById('event-long-description').value = event.long_description;
         document.getElementById('event-date').value = new Date(event.date).toISOString().slice(0, 16);
-        document.getElementById('event-time').value = event.time || '';
         document.getElementById('event-location').value = event.location || '';
         document.getElementById('event-category').value = event.category || '';
         document.getElementById('event-is-recurring').checked = event.is_recurring || false;
@@ -120,9 +126,17 @@
         if (imagePreviewUrl) {
             document.getElementById('image-preview').src = imagePreviewUrl;
             document.getElementById('image-preview-container').style.display = 'block';
+        } else {
+            document.getElementById('image-preview-container').style.display = 'none';
         }
         document.getElementById('recurring-options').style.display = event.is_recurring ? 'block' : 'none';
-        updateMarkdownPreview();
+        
+        // Hide markdown preview on edit
+        const preview = document.getElementById('markdown-preview');
+        const btn = document.getElementById('markdown-preview-btn');
+        preview.style.display = 'none';
+        btn.textContent = 'Preview';
+        
         document.getElementById('event-modal-title').textContent = 'Edit Event';
         document.getElementById('event-submit-btn').textContent = 'Update Event';
         modal.style.display = 'flex';
@@ -139,15 +153,36 @@
     }
     async function handleEventSubmit(e) {
         e.preventDefault();
+        
+        // Validate recurring event if enabled
+        const isRecurring = document.getElementById('event-is-recurring').checked;
+        if (isRecurring) {
+            const endDate = document.getElementById('event-recurrence-end-date').value;
+            const startDate = document.getElementById('event-date').value;
+            
+            if (!endDate) {
+                if (typeof showNotification === 'function') {
+                    showNotification('Please select an end date for the recurring event', 'error');
+                }
+                return;
+            }
+            
+            if (new Date(endDate) <= new Date(startDate)) {
+                if (typeof showNotification === 'function') {
+                    showNotification('Recurrence end date must be after the start date', 'error');
+                }
+                return;
+            }
+        }
+        
         const formData = new FormData();
         formData.append('title', document.getElementById('event-title').value);
         formData.append('short_description', document.getElementById('event-short-description').value);
         formData.append('long_description', document.getElementById('event-long-description').value);
         formData.append('date', document.getElementById('event-date').value);
-        formData.append('time', document.getElementById('event-time').value);
         formData.append('location', document.getElementById('event-location').value);
         formData.append('category', document.getElementById('event-category').value);
-        formData.append('is_recurring', document.getElementById('event-is-recurring').checked);
+        formData.append('is_recurring', isRecurring);
         formData.append('recurrence_pattern', document.getElementById('event-recurrence-pattern').value);
         formData.append('recurrence_end_date', document.getElementById('event-recurrence-end-date').value);
         formData.append('is_published', document.getElementById('event-is-published').checked);
@@ -286,15 +321,49 @@
         document.getElementById('recurring-options').style.display = isRecurring ? 'block' : 'none';
     }
 
-    function updateMarkdownPreview() {
+    function toggleMarkdownPreview() {
         const longDescription = document.getElementById('event-long-description').value;
         const preview = document.getElementById('markdown-preview');
-        if (typeof marked !== 'undefined') {
-            preview.innerHTML = marked.parse(longDescription);
+        const btn = document.getElementById('markdown-preview-btn');
+        
+        if (preview.style.display === 'none' || preview.style.display === '') {
+            // Show preview
+            if (typeof marked !== 'undefined') {
+                preview.innerHTML = marked.parse(longDescription);
+            } else {
+                preview.innerHTML = longDescription.replace(/\n/g, '<br>');
+            }
+            preview.style.display = 'block';
+            btn.textContent = 'Edit';
         } else {
-            preview.textContent = longDescription;
+            // Hide preview
+            preview.style.display = 'none';
+            btn.textContent = 'Preview';
         }
     }
+
+    function handleRecurrencePatternChange() {
+        const pattern = document.getElementById('event-recurrence-pattern').value;
+        
+        
+        // Show info about the pattern
+        if (typeof showNotification === 'function') {
+            let message = '';
+            switch(pattern) {
+                case 'daily':
+                    message = 'Event will repeat every day';
+                    break;
+                case 'weekly':
+                    message = 'Event will repeat on the same day each week';
+                    break;
+                case 'monthly':
+                    message = 'Event will repeat on the same date each month';
+                    break;
+            }
+            showNotification(message, 'info');
+        }
+    }
+    
     window.AdminEvents = {
         loadAdminEvents,
         openCreateEventModal,
@@ -304,6 +373,7 @@
         handleImageSelect,
         removeImage,
         toggleRecurringOptions,
-        updateMarkdownPreview
+        toggleMarkdownPreview,
+        handleRecurrencePatternChange
     };
 })();

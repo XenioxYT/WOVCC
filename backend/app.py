@@ -22,6 +22,7 @@ from database import init_db, get_db, User, PendingRegistration, Event, EventInt
 from auth import hash_password, verify_password, generate_token, require_auth, require_admin, get_current_user
 from stripe_config import create_checkout_session, create_or_get_customer, verify_webhook_signature, STRIPE_SECRET_KEY
 from image_utils import process_and_save_image, delete_image, allowed_file
+from mailchimp import subscribe_to_newsletter, check_subscription_status, unsubscribe_from_newsletter, is_mailchimp_configured
 from werkzeug.utils import secure_filename
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import or_
@@ -556,6 +557,15 @@ def register():
             db.commit()
             db.refresh(new_user)
 
+            # Subscribe to newsletter if requested
+            if data.get('newsletter', False):
+                try:
+                    subscribe_to_newsletter(new_user.email, new_user.name)
+                    logger.info(f"Subscribed {new_user.email} to newsletter during registration")
+                except Exception as e:
+                    logger.error(f"Failed to subscribe {new_user.email} to newsletter: {e}")
+                    # Don't fail registration if newsletter subscription fails
+
             # Generate tokens
             tokens = generate_token(new_user.id, new_user.email, new_user.is_admin)
 
@@ -826,6 +836,462 @@ def update_profile(user):
             db.close()
             
     except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+# ----- Newsletter API -----
+
+@app.route('/api/newsletter/subscribe', methods=['POST'])
+def newsletter_subscribe():
+    """Subscribe an email to the newsletter
+    
+    Request body:
+        {
+            "email": string (required),
+            "name": string (optional)
+        }
+    """
+    try:
+        data = request.get_json()
+        
+        if not data or not data.get('email'):
+            return jsonify({
+                'success': False,
+                'error': 'Email address is required'
+            }), 400
+        
+        email = data['email']
+        name = data.get('name')
+        
+        # Check if Mailchimp is configured
+        if not is_mailchimp_configured():
+            return jsonify({
+                'success': False,
+                'error': 'Newsletter service is not currently configured'
+            }), 503
+        
+        # Check if already subscribed (to avoid showing error to user)
+        status = check_subscription_status(email)
+        if status.get('subscribed'):
+            return jsonify({
+                'success': True,
+                'message': 'You are already subscribed to our newsletter!',
+                'already_subscribed': True
+            })
+        
+        # Subscribe to Mailchimp
+        result = subscribe_to_newsletter(email, name)
+        
+        if result.get('success'):
+            return jsonify({
+                'success': True,
+                'message': result.get('message', 'Successfully subscribed to newsletter!'),
+                'already_subscribed': result.get('already_subscribed', False)
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('message', 'Failed to subscribe to newsletter')
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"Newsletter subscription error: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'An unexpected error occurred'
+        }), 500
+
+
+@app.route('/api/newsletter/status', methods=['GET'])
+def newsletter_status():
+    """Check if an email is subscribed to the newsletter
+    
+    Query params:
+        email: Email address to check
+    """
+    try:
+        email = request.args.get('email')
+        
+        if not email:
+            return jsonify({
+                'success': False,
+                'error': 'Email address is required'
+            }), 400
+        
+        if not is_mailchimp_configured():
+            return jsonify({
+                'success': False,
+                'subscribed': False,
+                'error': 'Newsletter service is not currently configured'
+            })
+        
+        status = check_subscription_status(email)
+        
+        return jsonify({
+            'success': True,
+            'subscribed': status.get('subscribed', False),
+            'status': status.get('status', 'unknown')
+        })
+        
+    except Exception as e:
+        logger.error(f"Newsletter status check error: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'An unexpected error occurred'
+        }), 500
+
+
+@app.route('/api/newsletter/unsubscribe', methods=['POST'])
+def newsletter_unsubscribe():
+    """Unsubscribe an email from the newsletter
+    
+    Request body:
+        {
+            "email": string (required)
+        }
+    """
+    try:
+        data = request.get_json()
+        
+        if not data or not data.get('email'):
+            return jsonify({
+                'success': False,
+                'error': 'Email address is required'
+            }), 400
+        
+        email = data['email']
+        
+        if not is_mailchimp_configured():
+            return jsonify({
+                'success': False,
+                'error': 'Newsletter service is not currently configured'
+            }), 503
+        
+        result = unsubscribe_from_newsletter(email)
+        
+        if result.get('success'):
+            return jsonify({
+                'success': True,
+                'message': result.get('message', 'Successfully unsubscribed from newsletter')
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('message', 'Failed to unsubscribe from newsletter')
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"Newsletter unsubscribe error: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'An unexpected error occurred'
+        }), 500
+
+
+# ----- Admin User Management API -----
+
+@app.route('/api/admin/stats', methods=['GET'])
+@require_admin
+def get_admin_stats(user):
+    """Get member statistics for admin dashboard"""
+    try:
+        db = next(get_db())
+        try:
+            from sqlalchemy import func
+            from datetime import timedelta
+            
+            # Total members
+            total_members = db.query(User).filter(User.is_member == True).count()
+            
+            # Active members (not expired)
+            now = datetime.now(timezone.utc)
+            active_members = db.query(User).filter(
+                User.is_member == True,
+                User.payment_status == 'active',
+                or_(User.membership_expiry_date.is_(None), User.membership_expiry_date > now)
+            ).count()
+            
+            # Expired members
+            expired_members = db.query(User).filter(
+                User.is_member == True,
+                User.membership_expiry_date < now
+            ).count()
+            
+            # New members this month
+            first_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            new_members_this_month = db.query(User).filter(
+                User.join_date >= first_of_month
+            ).count()
+            
+            # Payment status breakdown
+            payment_status_counts = db.query(
+                User.payment_status,
+                func.count(User.id)
+            ).group_by(User.payment_status).all()
+            
+            payment_status_breakdown = {status: count for status, count in payment_status_counts}
+            
+            # Newsletter subscribers
+            newsletter_subscribers = db.query(User).filter(User.newsletter == True).count()
+            
+            # Recent signups (last 10)
+            recent_signups = db.query(User).order_by(User.created_at.desc()).limit(10).all()
+            
+            # Members expiring soon (within 30 days)
+            thirty_days_from_now = now + timedelta(days=30)
+            expiring_soon = db.query(User).filter(
+                User.is_member == True,
+                User.membership_expiry_date.isnot(None),
+                User.membership_expiry_date > now,
+                User.membership_expiry_date <= thirty_days_from_now
+            ).count()
+            
+            return jsonify({
+                'success': True,
+                'stats': {
+                    'total_members': total_members,
+                    'active_members': active_members,
+                    'expired_members': expired_members,
+                    'new_members_this_month': new_members_this_month,
+                    'newsletter_subscribers': newsletter_subscribers,
+                    'expiring_soon': expiring_soon,
+                    'payment_status_breakdown': payment_status_breakdown,
+                    'recent_signups': [u.to_dict() for u in recent_signups]
+                }
+            })
+            
+        finally:
+            db.close()
+            
+    except Exception as e:
+        logger.error(f"Error fetching admin stats: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/admin/users', methods=['GET'])
+@require_admin
+def get_all_users(user):
+    """Get all users with filtering and pagination
+    
+    Query params:
+        search: Search term for name or email
+        filter: 'all', 'members', 'non-members', 'active', 'expired', 'admins'
+        sort: 'name', 'email', 'join_date', 'expiry_date'
+        order: 'asc', 'desc'
+        page: Page number (default: 1)
+        per_page: Results per page (default: 50)
+    """
+    try:
+        search = request.args.get('search', '').strip()
+        filter_type = request.args.get('filter', 'all')
+        sort = request.args.get('sort', 'join_date')
+        order = request.args.get('order', 'desc')
+        try:
+            page = int(request.args.get('page', 1))
+            per_page = int(request.args.get('per_page', 50))
+        except ValueError:
+            return jsonify({'success': False, 'error': 'Invalid page or per_page parameters.'}), 400
+        
+        db = next(get_db())
+        try:
+            query = db.query(User)
+            
+            # Apply search filter
+            if search:
+                search_term = f"%{search}%"
+                query = query.filter(
+                    or_(
+                        User.name.ilike(search_term),
+                        User.email.ilike(search_term)
+                    )
+                )
+            
+            # Apply type filter
+            now = datetime.now(timezone.utc)
+            if filter_type == 'members':
+                query = query.filter(User.is_member == True)
+            elif filter_type == 'non-members':
+                query = query.filter(User.is_member == False)
+            elif filter_type == 'active':
+                query = query.filter(
+                    User.is_member == True,
+                    User.payment_status == 'active',
+                    or_(User.membership_expiry_date.is_(None), User.membership_expiry_date > now)
+                )
+            elif filter_type == 'expired':
+                query = query.filter(
+                    User.is_member == True,
+                    User.membership_expiry_date < now
+                )
+            elif filter_type == 'admins':
+                query = query.filter(User.is_admin == True)
+            
+            # Apply sorting
+            if sort == 'name':
+                query = query.order_by(User.name.desc() if order == 'desc' else User.name.asc())
+            elif sort == 'email':
+                query = query.order_by(User.email.desc() if order == 'desc' else User.email.asc())
+            elif sort == 'join_date':
+                query = query.order_by(User.join_date.desc() if order == 'desc' else User.join_date.asc())
+            elif sort == 'expiry_date':
+                query = query.order_by(User.membership_expiry_date.desc() if order == 'desc' else User.membership_expiry_date.asc())
+            
+            # Get total count
+            total = query.count()
+            
+            # Apply pagination
+            offset = (page - 1) * per_page
+            users = query.offset(offset).limit(per_page).all()
+            
+            return jsonify({
+                'success': True,
+                'users': [u.to_dict(include_sensitive=True) for u in users],
+                'pagination': {
+                    'page': page,
+                    'per_page': per_page,
+                    'total': total,
+                    'pages': (total + per_page - 1) // per_page
+                }
+            })
+            
+        finally:
+            db.close()
+            
+    except Exception as e:
+        logger.error(f"Error fetching users: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/admin/users/<int:user_id>', methods=['PUT'])
+@require_admin
+def update_user(admin_user, user_id):
+    """Update user details (admin only)
+    
+    Request body:
+        {
+            "name": string (optional),
+            "email": string (optional),
+            "is_member": boolean (optional),
+            "is_admin": boolean (optional),
+            "newsletter": boolean (optional),
+            "payment_status": string (optional),
+            "membership_tier": string (optional),
+            "membership_expiry_date": ISO datetime (optional)
+        }
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'No data provided'
+            }), 400
+        
+        db = next(get_db())
+        try:
+            user = db.query(User).filter(User.id == user_id).first()
+            
+            if not user:
+                return jsonify({
+                    'success': False,
+                    'error': 'User not found'
+                }), 404
+            
+            # Update fields
+            if 'name' in data:
+                user.name = data['name']
+            if 'email' in data:
+                # Check if email is already taken
+                existing = db.query(User).filter(User.email == data['email'], User.id != user_id).first()
+                if existing:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Email already in use'
+                    }), 400
+                user.email = data['email']
+            if 'is_member' in data:
+                user.is_member = data['is_member']
+            if 'is_admin' in data:
+                user.is_admin = data['is_admin']
+            if 'newsletter' in data:
+                user.newsletter = data['newsletter']
+            if 'payment_status' in data:
+                user.payment_status = data['payment_status']
+            if 'membership_tier' in data:
+                user.membership_tier = data['membership_tier']
+            if 'membership_expiry_date' in data:
+                if data['membership_expiry_date']:
+                    from dateutil import parser
+                    user.membership_expiry_date = parser.parse(data['membership_expiry_date'])
+                else:
+                    user.membership_expiry_date = None
+            
+            user.updated_at = datetime.now(timezone.utc)
+            db.commit()
+            db.refresh(user)
+            
+            return jsonify({
+                'success': True,
+                'message': 'User updated successfully',
+                'user': user.to_dict(include_sensitive=True)
+            })
+            
+        finally:
+            db.close()
+            
+    except Exception as e:
+        logger.error(f"Error updating user {user_id}: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/admin/users/<int:user_id>', methods=['DELETE'])
+@require_admin
+def delete_user(admin_user, user_id):
+    """Delete a user (admin only)"""
+    try:
+        # Prevent deleting yourself
+        if admin_user.id == user_id:
+            return jsonify({
+                'success': False,
+                'error': 'Cannot delete your own account'
+            }), 400
+        
+        db = next(get_db())
+        try:
+            user = db.query(User).filter(User.id == user_id).first()
+            
+            if not user:
+                return jsonify({
+                    'success': False,
+                    'error': 'User not found'
+                }), 404
+            
+            db.delete(user)
+            db.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': 'User deleted successfully'
+            })
+            
+        finally:
+            db.close()
+            
+    except Exception as e:
+        logger.error(f"Error deleting user {user_id}: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -1366,23 +1832,27 @@ def get_interested_users(user, event_id):
     try:
         db = next(get_db())
         try:
-            results = (
-                db.query(EventInterest, User)
-                .outerjoin(User, EventInterest.user_id == User.id)
-                .filter(EventInterest.event_id == event_id)
-                .all()
-            )
+            # Use ORM relationships instead of manual outerjoin
+            event = db.query(Event).filter(Event.id == event_id).first()
+            
+            if not event:
+                return jsonify({
+                    'success': False,
+                    'error': 'Event not found'
+                }), 404
             
             users_list = []
-            for interest, user_obj in results:
-                if user_obj:
+            for interest in event.interests:
+                if interest.user:
+                    # Member interest (has associated user account)
                     users_list.append({
-                        'name': user_obj.name,
-                        'email': user_obj.email,
+                        'name': interest.user.name,
+                        'email': interest.user.email,
                         'is_member': True,
                         'created_at': interest.created_at.isoformat()
                     })
                 else:
+                    # Non-member interest (anonymous)
                     users_list.append({
                         'name': interest.user_name or 'Anonymous',
                         'email': interest.user_email,
@@ -1499,6 +1969,14 @@ def stripe_webhook():
                             existing_user.membership_start_date = now
                             existing_user.membership_expiry_date = expiry
                             existing_user.updated_at = now
+                            
+                            # Subscribe to newsletter if requested and not already subscribed
+                            if pending.newsletter:
+                                try:
+                                    subscribe_to_newsletter(existing_user.email, existing_user.name)
+                                    logger.info(f"Subscribed {existing_user.email} to newsletter after payment")
+                                except Exception as e:
+                                    logger.error(f"Failed to subscribe {existing_user.email} to newsletter: {e}")
                         else:
                             # Create new user account
                             new_user = User(
@@ -1514,6 +1992,15 @@ def stripe_webhook():
                                 membership_expiry_date=expiry
                             )
                             db.add(new_user)
+                            db.flush()  # Flush to get the user ID before committing
+                            
+                            # Subscribe to newsletter if requested
+                            if pending.newsletter:
+                                try:
+                                    subscribe_to_newsletter(new_user.email, new_user.name)
+                                    logger.info(f"Subscribed {new_user.email} to newsletter after payment")
+                                except Exception as e:
+                                    logger.error(f"Failed to subscribe {new_user.email} to newsletter: {e}")
 
                         # Remove pending registration
                         db.delete(pending)

@@ -193,7 +193,10 @@
         const userMenu = document.getElementById('user-menu');
         const userNameDisplay = document.getElementById('user-name-display');
         const adminNavLink = document.getElementById('admin-nav-link');
+        const joinNavLinks = document.querySelectorAll('.nav-link[href="/join"]');
+        
         if (!userMenu) return;
+        
         if (user) {
             userMenu.classList.add('show');
             if (userNameDisplay) {
@@ -204,11 +207,25 @@
             } else if (adminNavLink) {
                 adminNavLink.style.display = 'none';
             }
+            // Hide Join button when logged in
+            joinNavLinks.forEach(link => {
+                const listItem = link.parentElement;
+                if (listItem) {
+                    listItem.style.display = 'none';
+                }
+            });
         } else {
             userMenu.classList.remove('show');
             if (adminNavLink) {
                 adminNavLink.style.display = 'none';
             }
+            // Show Join button when not logged in
+            joinNavLinks.forEach(link => {
+                const listItem = link.parentElement;
+                if (listItem) {
+                    listItem.style.display = 'list-item';
+                }
+            });
         }
     }
 

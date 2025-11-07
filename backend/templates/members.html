@@ -2,14 +2,14 @@
 
 {% block title %}Members Area - WOVCC | Wickersley Old Village Cricket Club{% endblock %}
 
-{% block description %}Members Area - Access exclusive content and member benefits{% endblock %}
+{% block description %}Members Area - Access member content and benefits{% endblock %}
 
 {% block content %}
   <!-- Page Header -->
-  <section class="hero page-hero">
+  <section class="hero page-hero" id="members-hero">
     <div class="hero-content">
-      <h1>Members Area</h1>
-      <p>Login to access exclusive member content</p>
+      <h1 id="members-hero-title">Members Area</h1>
+      <p id="members-hero-subtitle">Login to access member content</p>
     </div>
   </section>
 
@@ -47,46 +47,106 @@
 
   <!-- Members Content -->
   <section id="members-content" style="display: none;">
-    <!-- Welcome Banner -->
-    <div class="welcome-banner">
-      <div>
-        <h2>Welcome, <span id="member-name">Member</span>!</h2>
-      </div>
-      <button class="btn btn-outline" onclick="handleLogout()" style="background-color: rgba(255,255,255,0.2); border-color: white; color: white;">
-        Logout
-      </button>
-    </div>
-
     <!-- Members Content -->
-    <div class="section">
-      <div class="container" style="max-width: 800px;">
+    <div class="section" style="padding-top: 40px;">
+      <div class="container" style="max-width: 900px;">
         
-        <!-- Member Info -->
-        <div class="card" style="margin-bottom: 30px;">
-          <div class="card-body">
-            <h3 style="color: var(--primary-color); margin-bottom: 15px;">Your Membership</h3>
-            <p style="margin-bottom: 10px;">
-              <strong>Status:</strong> <span id="membership-status" style="color: green;">Active</span>
-            </p>
-            <p style="margin-bottom: 10px;">
-              <strong>Type:</strong> <span id="membership-type">Annual Member</span> (£15/year)
-            </p>
-            <p style="margin-bottom: 10px;" id="membership-dates">
-              <strong>Membership Period:</strong><br>
-              <span style="color: var(--text-light); font-size: 0.95rem;">
-                <span id="start-date">-</span> to <span id="expiry-date">-</span>
-              </span>
-            </p>
-            <p style="margin-bottom: 10px;" id="days-remaining-container">
-              <strong>Days Remaining:</strong> <span id="days-remaining" style="font-size: 1.2rem; color: var(--accent-color);">-</span>
-            </p>
-            <p style="margin-bottom: 0;">
-              <strong>Benefits:</strong> Drink discounts, members area access, newsletter updates
-            </p>
-            <p style="margin-top: 15px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; color: var(--text-light); font-size: 0.95rem;">
-              💡 <strong>Membership Renewal:</strong> When your membership expires, please visit the club to renew in person at the till for £10.
-            </p>
+        <!-- Logout Button -->
+        <div style="text-align: right; margin-bottom: 20px;">
+          <button class="btn btn-outline" onclick="handleLogout()" style="padding: 10px 24px;">
+            Logout
+          </button>
+        </div>
+        
+        <!-- Member Info Grid -->
+        <div style="display: grid; grid-template-columns: 1fr; gap: 25px;">
+          
+          <!-- Membership Status Card -->
+          <div class="card" style="border-left: 4px solid var(--primary-color);">
+            <div class="card-body">
+              <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 20px;">
+                <div style="flex: 1; min-width: 250px;">
+                  <h3 style="color: var(--primary-color); margin-bottom: 20px; font-size: 1.4rem;">Your Membership</h3>
+                  
+                  <div style="display: grid; gap: 15px;">
+                    <div>
+                      <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 4px;">Status</p>
+                      <p style="margin: 0; font-size: 1.1rem; font-weight: 600;">
+                        <span id="membership-status" style="color: green;">Active</span>
+                      </p>
+                    </div>
+                    
+                    <div id="membership-dates">
+                      <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 4px;">Membership Period</p>
+                      <p style="margin: 0; font-size: 0.95rem; color: var(--text-dark);">
+                        <span id="start-date">-</span> to <span id="expiry-date">-</span>
+                      </p>
+                    </div>
+                    
+                    <div id="days-remaining-container">
+                      <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 4px;">Days Remaining</p>
+                      <p style="margin: 0;">
+                        <span id="days-remaining" style="font-size: 1.8rem; font-weight: 700; color: var(--accent-color);">-</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div style="background: var(--secondary-bg); padding: 25px; border-radius: 8px; text-align: center; min-width: 200px;">
+                  <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 8px;">Membership Type</p>
+                  <p style="margin: 0 0 15px 0; font-size: 1.2rem; font-weight: 600; color: var(--primary-color);" id="membership-type">Annual Member</p>
+                  <div style="padding: 12px; background: white; border-radius: 6px; margin-top: 10px;">
+                    <p style="margin: 0; font-size: 0.85rem; color: var(--text-light);">Initial: <strong style="color: var(--accent-color);">£15</strong></p>
+                    <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-light);">Renewal: <strong style="color: var(--accent-color);">£10</strong></p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+
+          <!-- Benefits Card -->
+          <div class="card">
+            <div class="card-body">
+              <h3 style="color: var(--primary-color); margin-bottom: 20px; font-size: 1.2rem;">Your Benefits</h3>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                <div style="display: flex; align-items: start; gap: 12px;">
+                  <span style="font-size: 1.5rem;">🍺</span>
+                  <div>
+                    <p style="margin: 0 0 4px 0; font-weight: 600; color: var(--text-dark);">Drink Discounts</p>
+                    <p style="margin: 0; font-size: 0.9rem; color: var(--text-light);">Save money at the bar</p>
+                  </div>
+                </div>
+                <div style="display: flex; align-items: start; gap: 12px;">
+                  <span style="font-size: 1.5rem;">💳</span>
+                  <div>
+                    <p style="margin: 0 0 4px 0; font-weight: 600; color: var(--text-dark);">Card Top-Up</p>
+                    <p style="margin: 0; font-size: 0.9rem; color: var(--text-light);">Top up at the tills</p>
+                  </div>
+                </div>
+                <div style="display: flex; align-items: start; gap: 12px;">
+                  <span style="font-size: 1.5rem;">📧</span>
+                  <div>
+                    <p style="margin: 0 0 4px 0; font-weight: 600; color: var(--text-dark);">Club Updates</p>
+                    <p style="margin: 0; font-size: 0.9rem; color: var(--text-light);">Stay informed</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Renewal Info -->
+          <div style="padding: 20px; background: linear-gradient(135deg, rgba(26, 95, 95, 0.05), rgba(26, 95, 95, 0.1)); border-radius: 8px; border: 1px solid rgba(26, 95, 95, 0.2);">
+            <div style="display: flex; align-items: start; gap: 15px;">
+              <span style="font-size: 1.8rem;">💡</span>
+              <div>
+                <p style="margin: 0 0 8px 0; font-weight: 600; color: var(--primary-color); font-size: 1.05rem;">Membership Renewal</p>
+                <p style="margin: 0; color: var(--text-dark); font-size: 0.95rem; line-height: 1.6;">
+                  When your membership expires, visit the club to renew in person at the till for £10. Your support helps keep WOVCC thriving!
+                </p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -126,12 +186,19 @@
     function showLoginForm() {
       document.getElementById('login-section').style.display = 'block';
       document.getElementById('members-content').style.display = 'none';
+      
+      // Update hero for login state
+      document.getElementById('members-hero-title').textContent = 'Members Area';
+      document.getElementById('members-hero-subtitle').textContent = 'Login to access member content';
     }
     
     function showMembersContent(user) {
       document.getElementById('login-section').style.display = 'none';
       document.getElementById('members-content').style.display = 'block';
-      document.getElementById('member-name').textContent = user.name;
+      
+      // Update hero for logged-in state
+      document.getElementById('members-hero-title').textContent = `Welcome back, ${user.name}!`;
+      document.getElementById('members-hero-subtitle').textContent = 'Thank you for being part of WOVCC';
       
       // Update membership information
       updateMembershipInfo(user);
@@ -224,7 +291,7 @@
       }
     });
     
-    async function handleLogout() {
+    window.handleLogout = async function() {
       await window.WOVCCAuth.logout();
       showLoginForm();
       window.WOVCCAuth.updateNavbar();

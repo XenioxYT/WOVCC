@@ -5,7 +5,7 @@ SQLite database for user management
 
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Text, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
 import os
 
@@ -39,6 +39,10 @@ class User(Base):
     join_date = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    created_events = relationship('Event', back_populates='creator', foreign_keys='Event.created_by_user_id')
+    event_interests = relationship('EventInterest', back_populates='user', foreign_keys='EventInterest.user_id')
     
     def to_dict(self, include_sensitive=False):
         """Convert user to dictionary, optionally excluding sensitive data"""
@@ -114,6 +118,13 @@ class Event(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # Relationships
+    creator = relationship('User', back_populates='created_events', foreign_keys=[created_by_user_id])
+    interests = relationship('EventInterest', back_populates='event', cascade='all, delete-orphan')
+    
+    # Self-referential relationship for recurring events
+    parent_event = relationship('Event', remote_side=[id], backref='recurring_instances')
+    
     def to_dict(self, include_sensitive=False):
         """Convert event to dictionary"""
         data = {
@@ -153,6 +164,10 @@ class EventInterest(Base):
     user_email = Column(String(255), nullable=True)  # For non-members
     user_name = Column(String(255), nullable=True)  # For non-members
     created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    event = relationship('Event', back_populates='interests')
+    user = relationship('User', back_populates='event_interests', foreign_keys=[user_id])
     
     def to_dict(self):
         """Convert event interest to dictionary"""
