@@ -311,14 +311,80 @@
   margin-right: 10px;
 }
 
+/* --- Join Page Grid Layout --- */
+.join-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: start;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+@media screen and (max-width: 968px) {
+  .join-grid {
+    grid-template-columns: 1fr;
+    max-width: 600px;
+  }
+}
+
+/* --- Membership Card Enhancements --- */
+#membership-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.95) 100%) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08) !important;
+  transition: all 0.3s ease !important;
+}
+
+#membership-card:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12) !important;
+}
+
 /* --- Signup Form --- */
 .signup-form {
   max-width: 600px;
   margin: 0 auto;
   background-color: var(--white);
-  padding: 40px;
+  padding: 40px 30px;
   border-radius: 8px;
   box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+}
+
+/* Make signup form match membership card in join grid */
+.join-grid .signup-form {
+  padding: 40px 30px;
+  margin: 0;
+}
+
+/* Enhanced checkbox styling for join page */
+.signup-form .form-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: var(--secondary-bg);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.signup-form .form-checkbox:hover {
+  background: rgba(26, 95, 95, 0.05);
+}
+
+.signup-form .form-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--primary-color);
+}
+
+.signup-form .form-checkbox label {
+  margin: 0;
+  cursor: pointer;
+  flex: 1;
+  font-size: 0.95rem;
+  color: var(--text-dark);
 }
 
 .payment-section {
