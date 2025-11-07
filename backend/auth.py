@@ -33,7 +33,7 @@ def verify_password(password: str, hashed: str) -> bool:
         return False
 
 
-def generate_token(user_id: int, email: str, is_admin: bool = False) -> dict:
+def generate_token(user_id: int, email: str, is_admin: bool = False, include_refresh: bool = True) -> dict:
     """Generate JWT access and refresh tokens"""
     now = datetime.utcnow()
     
@@ -48,22 +48,25 @@ def generate_token(user_id: int, email: str, is_admin: bool = False) -> dict:
     }
     access_token = jwt.encode(access_payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
     
-    # Refresh token (long-lived)
-    refresh_payload = {
-        'user_id': user_id,
-        'email': email,
-        'type': 'refresh',
-        'exp': now + timedelta(days=JWT_REFRESH_EXPIRATION_DAYS),
-        'iat': now
-    }
-    refresh_token = jwt.encode(refresh_payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
-    
-    return {
+    result = {
         'access_token': access_token,
-        'refresh_token': refresh_token,
         'token_type': 'Bearer',
         'expires_in': JWT_EXPIRATION_HOURS * 3600  # in seconds
     }
+    
+    # Refresh token (long-lived) - optionally included
+    if include_refresh:
+        refresh_payload = {
+            'user_id': user_id,
+            'email': email,
+            'type': 'refresh',
+            'exp': now + timedelta(days=JWT_REFRESH_EXPIRATION_DAYS),
+            'iat': now
+        }
+        refresh_token = jwt.encode(refresh_payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+        result['refresh_token'] = refresh_token
+    
+    return result
 
 
 def verify_token(token: str) -> dict:
@@ -89,6 +92,11 @@ def get_token_from_request():
         return token
     except IndexError:
         return None
+
+
+def get_refresh_token_from_request():
+    """Extract refresh token from httpOnly cookie"""
+    return request.cookies.get('refresh_token')
 
 
 def get_current_user():
