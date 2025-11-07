@@ -1832,23 +1832,27 @@ def get_interested_users(user, event_id):
     try:
         db = next(get_db())
         try:
-            results = (
-                db.query(EventInterest, User)
-                .outerjoin(User, EventInterest.user_id == User.id)
-                .filter(EventInterest.event_id == event_id)
-                .all()
-            )
+            # Use ORM relationships instead of manual outerjoin
+            event = db.query(Event).filter(Event.id == event_id).first()
+            
+            if not event:
+                return jsonify({
+                    'success': False,
+                    'error': 'Event not found'
+                }), 404
             
             users_list = []
-            for interest, user_obj in results:
-                if user_obj:
+            for interest in event.interests:
+                if interest.user:
+                    # Member interest (has associated user account)
                     users_list.append({
-                        'name': user_obj.name,
-                        'email': user_obj.email,
+                        'name': interest.user.name,
+                        'email': interest.user.email,
                         'is_member': True,
                         'created_at': interest.created_at.isoformat()
                     })
                 else:
+                    # Non-member interest (anonymous)
                     users_list.append({
                         'name': interest.user_name or 'Anonymous',
                         'email': interest.user_email,
