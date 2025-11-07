@@ -22,6 +22,7 @@ from database import init_db, get_db, User, PendingRegistration, Event, EventInt
 from auth import hash_password, verify_password, generate_token, require_auth, require_admin, get_current_user
 from stripe_config import create_checkout_session, create_or_get_customer, verify_webhook_signature, STRIPE_SECRET_KEY
 from image_utils import process_and_save_image, delete_image, allowed_file
+from mailchimp import subscribe_to_newsletter, check_subscription_status, unsubscribe_from_newsletter, is_mailchimp_configured
 from werkzeug.utils import secure_filename
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import or_
@@ -556,6 +557,15 @@ def register():
             db.commit()
             db.refresh(new_user)
 
+            # Subscribe to newsletter if requested
+            if data.get('newsletter', False):
+                try:
+                    subscribe_to_newsletter(new_user.email, new_user.name)
+                    logger.info(f"Subscribed {new_user.email} to newsletter during registration")
+                except Exception as e:
+                    logger.error(f"Failed to subscribe {new_user.email} to newsletter: {e}")
+                    # Don't fail registration if newsletter subscription fails
+
             # Generate tokens
             tokens = generate_token(new_user.id, new_user.email, new_user.is_admin)
 
@@ -829,6 +839,155 @@ def update_profile(user):
         return jsonify({
             'success': False,
             'error': str(e)
+        }), 500
+
+
+# ----- Newsletter API -----
+
+@app.route('/api/newsletter/subscribe', methods=['POST'])
+def newsletter_subscribe():
+    """Subscribe an email to the newsletter
+    
+    Request body:
+        {
+            "email": string (required),
+            "name": string (optional)
+        }
+    """
+    try:
+        data = request.get_json()
+        
+        if not data or not data.get('email'):
+            return jsonify({
+                'success': False,
+                'error': 'Email address is required'
+            }), 400
+        
+        email = data['email']
+        name = data.get('name')
+        
+        # Check if Mailchimp is configured
+        if not is_mailchimp_configured():
+            return jsonify({
+                'success': False,
+                'error': 'Newsletter service is not currently configured'
+            }), 503
+        
+        # Check if already subscribed (to avoid showing error to user)
+        status = check_subscription_status(email)
+        if status.get('subscribed'):
+            return jsonify({
+                'success': True,
+                'message': 'You are already subscribed to our newsletter!',
+                'already_subscribed': True
+            })
+        
+        # Subscribe to Mailchimp
+        result = subscribe_to_newsletter(email, name)
+        
+        if result.get('success'):
+            return jsonify({
+                'success': True,
+                'message': result.get('message', 'Successfully subscribed to newsletter!'),
+                'already_subscribed': result.get('already_subscribed', False)
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('message', 'Failed to subscribe to newsletter')
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"Newsletter subscription error: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'An unexpected error occurred'
+        }), 500
+
+
+@app.route('/api/newsletter/status', methods=['GET'])
+def newsletter_status():
+    """Check if an email is subscribed to the newsletter
+    
+    Query params:
+        email: Email address to check
+    """
+    try:
+        email = request.args.get('email')
+        
+        if not email:
+            return jsonify({
+                'success': False,
+                'error': 'Email address is required'
+            }), 400
+        
+        if not is_mailchimp_configured():
+            return jsonify({
+                'success': False,
+                'subscribed': False,
+                'error': 'Newsletter service is not currently configured'
+            })
+        
+        status = check_subscription_status(email)
+        
+        return jsonify({
+            'success': True,
+            'subscribed': status.get('subscribed', False),
+            'status': status.get('status', 'unknown')
+        })
+        
+    except Exception as e:
+        logger.error(f"Newsletter status check error: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'An unexpected error occurred'
+        }), 500
+
+
+@app.route('/api/newsletter/unsubscribe', methods=['POST'])
+def newsletter_unsubscribe():
+    """Unsubscribe an email from the newsletter
+    
+    Request body:
+        {
+            "email": string (required)
+        }
+    """
+    try:
+        data = request.get_json()
+        
+        if not data or not data.get('email'):
+            return jsonify({
+                'success': False,
+                'error': 'Email address is required'
+            }), 400
+        
+        email = data['email']
+        
+        if not is_mailchimp_configured():
+            return jsonify({
+                'success': False,
+                'error': 'Newsletter service is not currently configured'
+            }), 503
+        
+        result = unsubscribe_from_newsletter(email)
+        
+        if result.get('success'):
+            return jsonify({
+                'success': True,
+                'message': result.get('message', 'Successfully unsubscribed from newsletter')
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('message', 'Failed to unsubscribe from newsletter')
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"Newsletter unsubscribe error: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'An unexpected error occurred'
         }), 500
 
 
@@ -1806,6 +1965,14 @@ def stripe_webhook():
                             existing_user.membership_start_date = now
                             existing_user.membership_expiry_date = expiry
                             existing_user.updated_at = now
+                            
+                            # Subscribe to newsletter if requested and not already subscribed
+                            if pending.newsletter:
+                                try:
+                                    subscribe_to_newsletter(existing_user.email, existing_user.name)
+                                    logger.info(f"Subscribed {existing_user.email} to newsletter after payment")
+                                except Exception as e:
+                                    logger.error(f"Failed to subscribe {existing_user.email} to newsletter: {e}")
                         else:
                             # Create new user account
                             new_user = User(
@@ -1821,6 +1988,15 @@ def stripe_webhook():
                                 membership_expiry_date=expiry
                             )
                             db.add(new_user)
+                            db.flush()  # Flush to get the user ID before committing
+                            
+                            # Subscribe to newsletter if requested
+                            if pending.newsletter:
+                                try:
+                                    subscribe_to_newsletter(new_user.email, new_user.name)
+                                    logger.info(f"Subscribed {new_user.email} to newsletter after payment")
+                                except Exception as e:
+                                    logger.error(f"Failed to subscribe {new_user.email} to newsletter: {e}")
 
                         # Remove pending registration
                         db.delete(pending)
