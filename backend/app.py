@@ -933,8 +933,11 @@ def get_all_users(user):
         filter_type = request.args.get('filter', 'all')
         sort = request.args.get('sort', 'join_date')
         order = request.args.get('order', 'desc')
-        page = int(request.args.get('page', 1))
-        per_page = int(request.args.get('per_page', 50))
+        try:
+            page = int(request.args.get('page', 1))
+            per_page = int(request.args.get('per_page', 50))
+        except ValueError:
+            return jsonify({'success': False, 'error': 'Invalid page or per_page parameters.'}), 400
         
         db = next(get_db())
         try:
