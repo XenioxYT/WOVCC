@@ -113,43 +113,62 @@
   <section class="hero page-hero">
     <div class="hero-content">
       <h1>Join WOVCC</h1>
-      <p>Become a member of our club</p>
+      <p>Be part of something special - support your local cricket club</p>
     </div>
   </section>
 
   <!-- Membership Section -->
   <section class="section">
     <div class="container">
-      <div style="max-width: 600px; margin: 0 auto;">
+      <div class="join-grid">
         
-        <!-- Membership Card -->
-        <div class="card" id="membership-card" style="text-align: center; padding: 40px 30px; margin-bottom: 40px;">
-          <h2 style="color: var(--primary-color); margin-bottom: 20px;">Annual Membership</h2>
-          <div style="font-size: 3rem; font-weight: 700; color: var(--accent-color); margin-bottom: 20px;">
-            £15<span style="font-size: 1.2rem; color: var(--text-light);">/year</span>
+        <!-- Membership Info Card -->
+        <div class="card" id="membership-card" style="padding: 40px 30px;">
+          <h2 style="color: var(--primary-color); margin-bottom: 20px; text-align: center;">Annual Membership</h2>
+          
+          <p style="font-size: 1.05rem; line-height: 1.7; color: var(--text-dark); margin-bottom: 30px; text-align: center;">
+            Join WOVCC and become part of our community. Your membership supports the club and provides you with benefits including drink discounts at the bar.
+          </p>
+          
+          <div style="margin-bottom: 30px; text-align: center; padding: 20px; background: var(--secondary-bg); border-radius: 8px;">
+            <div style="font-size: 2.5rem; font-weight: 700; color: var(--accent-color); margin-bottom: 10px;">
+              £15
+            </div>
+            <p style="color: var(--text-dark); font-size: 0.95rem; margin: 0;">
+              Initial membership fee<br>
+              <span style="color: var(--text-light); font-size: 0.9rem;">Then £10 annually to renew</span>
+            </p>
           </div>
           
-          <div style="text-align: left; margin: 30px auto; max-width: 350px;">
-            <h4 style="color: var(--primary-color); margin-bottom: 15px;">Benefits:</h4>
+          <div>
+            <h4 style="color: var(--primary-color); margin-bottom: 20px; font-size: 1.1rem;">Membership Benefits:</h4>
             <ul style="list-style: none; padding: 0;">
-              <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color);">
-                ✓ Drink discounts at the bar
+              <li style="padding: 12px 0; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px;">
+                <span style="color: var(--primary-color); font-size: 1.2rem;">🍺</span>
+                <span style="color: var(--text-dark); font-size: 0.95rem;">Drink discounts at the bar</span>
               </li>
-              <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color);">
-                ✓ Access to members area
+              <li style="padding: 12px 0; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px;">
+                <span style="color: var(--primary-color); font-size: 1.2rem;">💳</span>
+                <span style="color: var(--text-dark); font-size: 0.95rem;">Top up your card at the tills</span>
               </li>
-              <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color);">
-                ✓ Support the club
+              <li style="padding: 12px 0; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px;">
+                <span style="color: var(--primary-color); font-size: 1.2rem;">❤️</span>
+                <span style="color: var(--text-dark); font-size: 0.95rem;">Support your local club</span>
               </li>
-              <li style="padding: 8px 0;">
-                ✓ Newsletter updates
+              <li style="padding: 12px 0; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px;">
+                <span style="color: var(--primary-color); font-size: 1.2rem;">🔒</span>
+                <span style="color: var(--text-dark); font-size: 0.95rem;">Access to members area</span>
+              </li>
+              <li style="padding: 12px 0; display: flex; align-items: center; gap: 12px;">
+                <span style="color: var(--primary-color); font-size: 1.2rem;">📧</span>
+                <span style="color: var(--text-dark); font-size: 0.95rem;">Club news and updates</span>
               </li>
             </ul>
           </div>
         </div>
 
         <!-- Signup Form -->
-        <div id="new-member-form" class="signup-form">
+        <div id="new-member-form" class="card signup-form">
           <h3 style="color: var(--primary-color); margin-bottom: 20px;">Sign Up</h3>
           
           <form id="signup-form">
@@ -179,7 +198,16 @@
               Continue to Payment
             </button>
             
-            <p class="text-center mt-2" style="color: var(--text-light); font-size: 0.9rem;">
+            <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+              <p style="color: var(--text-light); font-size: 0.95rem; margin-bottom: 12px;">
+                Already have an account?
+              </p>
+              <a href="/members" class="btn btn-outline" style="padding: 10px 24px;">
+                Login to Members Area
+              </a>
+            </div>
+            
+            <p class="text-center mt-2" style="color: var(--text-light); font-size: 0.9rem; margin-top: 20px;">
               Need help? Contact us at <a href="mailto:info@wovcc.co.uk" style="color: var(--primary-color);">info@wovcc.co.uk</a>
             </p>
           </form>
