@@ -116,7 +116,7 @@ p {
     color: var(--white);
     z-index: 2;
     max-width: 800px;
-    padding: 20px;
+    padding: 40px 20px;
 }
 .section-title {
     text-align: center;
