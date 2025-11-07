@@ -344,7 +344,7 @@
 
     function handleRecurrencePatternChange() {
         const pattern = document.getElementById('event-recurrence-pattern').value;
-        const eventDateInput = document.getElementById('event-date');
+        
         
         // Show info about the pattern
         if (typeof showNotification === 'function') {
