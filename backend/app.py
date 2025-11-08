@@ -39,11 +39,13 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)  # Enable CORS for API access
 
 # Configuration
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 PORT = int(os.environ.get('PORT', 5000))
+
+# Enable CORS with credentials support for httpOnly cookies
+CORS(app, supports_credentials=True, origins=['http://localhost:5000', 'http://127.0.0.1:5000', 'https://wovcc.co.uk', 'https://www.wovcc.co.uk'])
 
 # Initialize database on startup
 init_db()
@@ -567,14 +569,31 @@ def register():
                     # Don't fail registration if newsletter subscription fails
 
             # Generate tokens
-            tokens = generate_token(new_user.id, new_user.email, new_user.is_admin)
-
-            return jsonify({
+            tokens = generate_token(new_user.id, new_user.email, new_user.is_admin, include_refresh=True)
+            
+            # Separate refresh token for cookie
+            refresh_token = tokens.pop('refresh_token')
+            
+            # Create response
+            response = jsonify({
                 'success': True,
                 'message': 'Account created successfully',
                 'user': new_user.to_dict(),
                 **tokens
-            }), 201
+            })
+            
+            # Set refresh token as httpOnly, secure cookie
+            response.set_cookie(
+                'refresh_token',
+                refresh_token,
+                httponly=True,
+                secure=not DEBUG,
+                samesite='Lax',  # Lax allows cookie on top-level navigation
+                path='/',
+                max_age=30 * 24 * 60 * 60  # 30 days in seconds
+            )
+
+            return response, 201
             
         finally:
             db.close()
@@ -693,14 +712,31 @@ def login():
                 }), 401
             
             # Generate tokens
-            tokens = generate_token(user.id, user.email, user.is_admin)
+            tokens = generate_token(user.id, user.email, user.is_admin, include_refresh=True)
             
-            return jsonify({
+            # Separate refresh token for cookie
+            refresh_token = tokens.pop('refresh_token')
+            
+            # Create response
+            response = jsonify({
                 'success': True,
                 'message': 'Login successful',
                 'user': user.to_dict(),
                 **tokens
             })
+            
+            # Set refresh token as httpOnly, secure cookie
+            response.set_cookie(
+                'refresh_token',
+                refresh_token,
+                httponly=True,
+                secure=not DEBUG,  # Only use secure in production (HTTPS)
+                samesite='Lax',  # Lax allows cookie on top-level navigation
+                path='/',
+                max_age=30 * 24 * 60 * 60  # 30 days in seconds
+            )
+            
+            return response
             
         finally:
             db.close()
@@ -717,10 +753,85 @@ def login():
 @require_auth
 def logout(user):
     """Logout user (token invalidation handled client-side)"""
-    return jsonify({
+    response = jsonify({
         'success': True,
         'message': 'Logged out successfully'
     })
+    
+    # Clear refresh token cookie
+    response.set_cookie(
+        'refresh_token',
+        '',
+        httponly=True,
+        secure=not DEBUG,
+        samesite='Lax',
+        path='/',
+        max_age=0  # Expire immediately
+    )
+    
+    return response
+
+
+@app.route('/api/auth/refresh', methods=['POST'])
+def refresh_token():
+    """Refresh access token using httpOnly cookie refresh token"""
+    try:
+        from auth import verify_token, get_refresh_token_from_request
+        
+        # Get refresh token from httpOnly cookie
+        refresh_token = get_refresh_token_from_request()
+        
+        if not refresh_token:
+            return jsonify({
+                'success': False,
+                'error': 'No refresh token provided'
+            }), 401
+        
+        # Verify refresh token
+        payload = verify_token(refresh_token)
+        
+        if 'error' in payload:
+            return jsonify({
+                'success': False,
+                'error': payload['error']
+            }), 401
+        
+        # Verify token type
+        if payload.get('type') != 'refresh':
+            return jsonify({
+                'success': False,
+                'error': 'Invalid token type'
+            }), 401
+        
+        # Get user from database
+        db = next(get_db())
+        try:
+            user = db.query(User).filter(User.id == payload['user_id']).first()
+            
+            if not user:
+                return jsonify({
+                    'success': False,
+                    'error': 'User not found'
+                }), 401
+            
+            # Generate new access token (no refresh token needed)
+            tokens = generate_token(user.id, user.email, user.is_admin, include_refresh=False)
+            
+            return jsonify({
+                'success': True,
+                'message': 'Token refreshed',
+                **tokens
+            })
+            
+        finally:
+            db.close()
+            
+    except Exception as e:
+        logger.error(f"Token refresh error: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to refresh token'
+        }), 500
 
 
 @app.route('/api/auth/check-and-activate', methods=['POST'])

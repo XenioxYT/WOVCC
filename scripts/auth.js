@@ -9,7 +9,6 @@
     };
     const STORAGE_KEYS = {
         ACCESS_TOKEN: 'wovcc_access_token',
-        REFRESH_TOKEN: 'wovcc_refresh_token',
         USER: 'wovcc_user'
     };
     const API_BASE = (() => {
@@ -24,16 +23,15 @@
         return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
     }
 
-    function saveAuthData(accessToken, refreshToken, user) {
+    function saveAuthData(accessToken, user) {
         localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
-        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
         localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
     }
 
     function clearAuthData() {
         localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-        localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
         localStorage.removeItem(STORAGE_KEYS.USER);
+        // Note: Refresh token is stored as httpOnly cookie and will be cleared by server
     }
 
     function getCurrentUser() {
@@ -46,24 +44,78 @@
         const user = getCurrentUser();
         return !!(token && user);
     }
+
+    async function refreshAccessToken() {
+        try {
+            const response = await fetch(`${API_BASE}/auth/refresh`, {
+                method: 'POST',
+                credentials: 'include', // Include cookies
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                debugAuth.error('Token refresh failed with status:', response.status);
+                return null;
+            }
+            const data = await response.json();
+            
+            if (data.success && data.access_token) {
+                localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.access_token);
+                return data.access_token;
+            }
+            
+            return null;
+        } catch (error) {
+            debugAuth.error('Token refresh failed:', error);
+            return null;
+        }
+    }
+
     async function authenticatedFetch(endpoint, options = {}) {
         const token = getAccessToken();
         if (!token) {
             throw new Error('No access token available');
         }
+        
         const headers = {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
             ...options.headers
         };
+        
         const response = await fetch(`${API_BASE}${endpoint}`, {
             ...options,
+            credentials: 'include', // Include cookies for refresh token
             headers
         });
+        
+        // If unauthorized, try to refresh token once
         if (response.status === 401) {
+            debugAuth.info('Access token expired, attempting refresh...');
+            const newToken = await refreshAccessToken();
+            
+            if (newToken) {
+                // Retry the original request with new token
+                const retryHeaders = {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${newToken}`,
+                    ...options.headers
+                };
+                
+                return fetch(`${API_BASE}${endpoint}`, {
+                    ...options,
+                    credentials: 'include',
+                    headers: retryHeaders
+                });
+            }
+            
+            // Refresh failed, clear auth data
             clearAuthData();
             throw new Error('Session expired. Please login again.');
         }
+        
         return response;
     }
     async function signup(name, email, password, newsletter = false) {
@@ -114,6 +166,7 @@
         try {
             const response = await fetch(`${API_BASE}/auth/login`, {
                 method: 'POST',
+                credentials: 'include', // Include cookies for refresh token
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -124,7 +177,8 @@
             });
             const data = await response.json();
             if (data.success) {
-                saveAuthData(data.access_token, data.refresh_token, data.user);
+                // Only save access token and user (refresh token is in httpOnly cookie)
+                saveAuthData(data.access_token, data.user);
                 return {
                     success: true,
                     message: data.message || 'Login successful!',
@@ -155,10 +209,13 @@
             const token = getAccessToken();
             if (token) {
                 try {
+                    // This will clear the httpOnly cookie on the server
                     await authenticatedFetch('/auth/logout', {
                         method: 'POST'
                     });
-                } catch (e) {}
+                } catch (e) {
+                    debugAuth.warn('Logout request failed:', e);
+                }
             }
         } finally {
             clearAuthData();
