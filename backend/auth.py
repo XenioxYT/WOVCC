@@ -35,7 +35,7 @@ def verify_password(password: str, hashed: str) -> bool:
 
 def generate_token(user_id: int, email: str, is_admin: bool = False, include_refresh: bool = True) -> dict:
     """Generate JWT access and refresh tokens"""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     # Access token (short-lived)
     access_payload = {
@@ -58,7 +58,6 @@ def generate_token(user_id: int, email: str, is_admin: bool = False, include_ref
     if include_refresh:
         refresh_payload = {
             'user_id': user_id,
-            'email': email,
             'type': 'refresh',
             'exp': now + timedelta(days=JWT_REFRESH_EXPIRATION_DAYS),
             'iat': now

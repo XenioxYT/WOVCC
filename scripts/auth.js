@@ -74,41 +74,31 @@
     }
 
     async function authenticatedFetch(endpoint, options = {}) {
-        const token = getAccessToken();
-        if (!token) {
-            throw new Error('No access token available');
-        }
-        
-        const headers = {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-            ...options.headers
+        const doFetch = async (token) => {
+            if (!token) {
+                throw new Error('No access token available');
+            }
+            const headers = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                ...options.headers
+            };
+            return fetch(`${API_BASE}${endpoint}`, {
+                ...options,
+                credentials: 'include',
+                headers
+            });
         };
-        
-        const response = await fetch(`${API_BASE}${endpoint}`, {
-            ...options,
-            credentials: 'include', // Include cookies for refresh token
-            headers
-        });
-        
-        // If unauthorized, try to refresh token once
+
+        let response = await doFetch(getAccessToken());
+
         if (response.status === 401) {
             debugAuth.info('Access token expired, attempting refresh...');
             const newToken = await refreshAccessToken();
             
             if (newToken) {
                 // Retry the original request with new token
-                const retryHeaders = {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${newToken}`,
-                    ...options.headers
-                };
-                
-                return fetch(`${API_BASE}${endpoint}`, {
-                    ...options,
-                    credentials: 'include',
-                    headers: retryHeaders
-                });
+                return doFetch(newToken);
             }
             
             // Refresh failed, clear auth data
