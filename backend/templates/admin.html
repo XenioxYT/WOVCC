@@ -11,15 +11,46 @@
 <script src="/scripts/admin-users.js"></script>
 
 <script>
+// Notification helper - provide fallback if main.js hasn't loaded yet
+window.showNotification = window.showNotification || function(message, type = 'info') {
+  console.log(`[${type.toUpperCase()}] ${message}`);
+  // Try to use native alert as fallback
+  if (type === 'error') {
+    alert('Error: ' + message);
+  } else if (type === 'success') {
+    alert('Success: ' + message);
+  }
+};
+
 (function() {
   // Admin page controller
   let currentConfig = {};
   let allFixtures = [];
 
+  // Wait for all dependencies to be ready
+  function waitForDependencies(callback, maxAttempts = 50) {
+    let attempts = 0;
+    const checkInterval = setInterval(function() {
+      attempts++;
+      // Check if required dependencies are available
+      if (window.WOVCCAuth && window.wovccApi) {
+        clearInterval(checkInterval);
+        callback();
+      } else if (attempts >= maxAttempts) {
+        clearInterval(checkInterval);
+        console.error('Admin page: Required dependencies not loaded');
+        // Still try to initialize
+        callback();
+      }
+    }, 100);
+  }
+  
   // Initialize immediately if DOM is already loaded, otherwise wait
   function initAdminPageCheck() {
-    checkAdminAccess();
-    setupTabs();
+    waitForDependencies(function() {
+      checkAdminAccess();
+      setupTabs();
+    });
   }
   
   if (document.readyState === 'loading') {
@@ -30,7 +61,7 @@
   
   // Listen for page transitions
   document.addEventListener('pageTransitionComplete', function(e) {
-    if (e.detail.path === '/admin') {
+    if (e.detail && e.detail.path === '/admin') {
       initAdminPageCheck();
     }
   });
