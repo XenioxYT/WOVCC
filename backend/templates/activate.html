@@ -8,25 +8,16 @@
 <script>
 (function() {
   document.addEventListener('DOMContentLoaded', async function() {
-    console.log('[ACTIVATE] Page loaded, checking localStorage...');
     
     // Use localStorage instead of sessionStorage (persists across Stripe redirect)
     const pendingEmail = localStorage.getItem('wovcc_pending_email');
     const pendingPassword = localStorage.getItem('wovcc_pending_password');
     
-    console.log('[ACTIVATE] localStorage check:', {
-      email: pendingEmail ? '✓ Found' : '✗ Missing',
-      password: pendingPassword ? '✓ Found' : '✗ Missing'
-    });
-    
     if (!pendingEmail || !pendingPassword) {
       // No pending credentials, show error
-      console.error('[ACTIVATE] Missing credentials in localStorage!');
       showError();
       return;
     }
-    
-    console.log('[ACTIVATE] Credentials found, starting activation for:', pendingEmail);
     
     // Update status message
     updateStatus('processing', 'Creating Your Account', 'Please wait while we set up your membership...');
@@ -37,13 +28,11 @@
     
     while (attempts < maxAttempts) {
       attempts++;
-      console.log(`[ACTIVATE] Login attempt ${attempts}/${maxAttempts}...`);
       
       try {
         const result = await window.WOVCCAuth.login(pendingEmail, pendingPassword);
         
         if (result.success) {
-          console.log('[ACTIVATE] Login successful!');
           // Clear pending credentials from localStorage
           localStorage.removeItem('wovcc_pending_email');
           localStorage.removeItem('wovcc_pending_password');
@@ -75,7 +64,6 @@
     }
     
     // If we get here, all attempts failed
-    console.warn('[ACTIVATE] All login attempts exhausted, showing timeout');
     showTimeout();
   });
   

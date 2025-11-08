@@ -47,7 +47,6 @@ def stripe_webhook():
                 }), 400
     
     event_type = event.get('type', 'unknown')
-    logger.info(f"[WEBHOOK] Received event: {event_type}")
     
     try:
         # Handle checkout session completed
