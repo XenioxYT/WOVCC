@@ -496,7 +496,7 @@ def toggle_event_interest(event_id):
                     # Add interest
                     interest = EventInterest(
                         event_id=event_id,
-                        user_id=0,  # Sentinel value for anonymous interest
+                        user_id=None,
                         user_email=email,
                         user_name=name
                     )
