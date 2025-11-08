@@ -28,6 +28,7 @@ def stripe_webhook():
     if not event:
         # If verification fails but webhook secret is set, reject the request
         if STRIPE_WEBHOOK_SECRET:
+            logger.error("[WEBHOOK] Invalid signature")
             return jsonify({
                 'success': False,
                 'error': 'Invalid webhook signature'
@@ -37,14 +38,16 @@ def stripe_webhook():
             try:
                 import json as json_module
                 event = json_module.loads(payload)
+                logger.warning("[WEBHOOK] No webhook secret set, parsing payload directly (DEV MODE)")
             except Exception as e:
-                logger.error(f"Failed to parse webhook payload: {e}")
+                logger.error(f"[WEBHOOK] Failed to parse webhook payload: {e}")
                 return jsonify({
                     'success': False,
                     'error': 'Invalid payload'
                 }), 400
     
     event_type = event.get('type', 'unknown')
+    logger.info(f"[WEBHOOK] Received event: {event_type}")
     
     try:
         # Handle checkout session completed
@@ -53,6 +56,8 @@ def stripe_webhook():
             session_id = session.get('id')
             payment_status = session.get('payment_status')
             pending_id_str = session.get('metadata', {}).get('pending_id')
+            
+            logger.info(f"[WEBHOOK] Checkout session {session_id}: payment_status={payment_status}, pending_id={pending_id_str}")
 
             # Create user account after successful payment
             if payment_status == 'paid' and pending_id_str:
@@ -64,55 +69,64 @@ def stripe_webhook():
                 db = next(get_db())
                 try:
                     pending = db.query(PendingRegistration).filter(PendingRegistration.id == pending_id).first()
-                    if pending:
-                        now = datetime.now(timezone.utc)
-                        expiry = now + relativedelta(years=1)
+                    if not pending:
+                        logger.error(f"[WEBHOOK] Pending registration not found for ID: {pending_id}")
+                        return jsonify({'success': False, 'error': 'Pending registration not found'}), 404
+                    
+                    logger.info(f"[WEBHOOK] Found pending registration for {pending.email}")
+                    
+                    now = datetime.now(timezone.utc)
+                    expiry = now + relativedelta(years=1)
+                    
+                    # Check if user already exists (edge case)
+                    existing_user = db.query(User).filter(User.email == pending.email).first()
+                    if existing_user:
+                        logger.warning(f"[WEBHOOK] User {pending.email} already exists, updating membership")
+                        # Update existing user's membership
+                        existing_user.is_member = True
+                        existing_user.payment_status = 'active'
+                        existing_user.membership_start_date = now
+                        existing_user.membership_expiry_date = expiry
+                        existing_user.updated_at = now
                         
-                        # Check if user already exists (edge case)
-                        existing_user = db.query(User).filter(User.email == pending.email).first()
-                        if existing_user:
-                            # Update existing user's membership
-                            existing_user.is_member = True
-                            existing_user.payment_status = 'active'
-                            existing_user.membership_start_date = now
-                            existing_user.membership_expiry_date = expiry
-                            existing_user.updated_at = now
-                            
-                            # Subscribe to newsletter if requested and not already subscribed
-                            if pending.newsletter:
-                                try:
-                                    subscribe_to_newsletter(existing_user.email, existing_user.name)
-                                    logger.info(f"Subscribed {existing_user.email} to newsletter after payment")
-                                except Exception as e:
-                                    logger.error(f"Failed to subscribe {existing_user.email} to newsletter: {e}")
-                        else:
-                            # Create new user account
-                            new_user = User(
-                                name=pending.name,
-                                email=pending.email,
-                                password_hash=pending.password_hash,
-                                newsletter=pending.newsletter,
-                                membership_tier='Annual Member',
-                                is_member=True,
-                                is_admin=False,
-                                payment_status='active',
-                                membership_start_date=now,
-                                membership_expiry_date=expiry
-                            )
-                            db.add(new_user)
-                            db.flush()  # Flush to get the user ID before committing
-                            
-                            # Subscribe to newsletter if requested
-                            if pending.newsletter:
-                                try:
-                                    subscribe_to_newsletter(new_user.email, new_user.name)
-                                    logger.info(f"Subscribed {new_user.email} to newsletter after payment")
-                                except Exception as e:
-                                    logger.error(f"Failed to subscribe {new_user.email} to newsletter: {e}")
+                        # Subscribe to newsletter if requested and not already subscribed
+                        if pending.newsletter:
+                            try:
+                                subscribe_to_newsletter(existing_user.email, existing_user.name)
+                                logger.info(f"Subscribed {existing_user.email} to newsletter after payment")
+                            except Exception as e:
+                                logger.error(f"Failed to subscribe {existing_user.email} to newsletter: {e}")
+                    else:
+                        # Create new user account
+                        logger.info(f"[WEBHOOK] Creating new user account for {pending.email}")
+                        new_user = User(
+                            name=pending.name,
+                            email=pending.email,
+                            password_hash=pending.password_hash,
+                            newsletter=pending.newsletter,
+                            membership_tier='Annual Member',
+                            is_member=True,
+                            is_admin=False,
+                            payment_status='active',
+                            membership_start_date=now,
+                            membership_expiry_date=expiry
+                        )
+                        db.add(new_user)
+                        db.flush()  # Flush to get the user ID before committing
+                        logger.info(f"[WEBHOOK] User created with ID: {new_user.id}")
+                        
+                        # Subscribe to newsletter if requested
+                        if pending.newsletter:
+                            try:
+                                subscribe_to_newsletter(new_user.email, new_user.name)
+                                logger.info(f"[WEBHOOK] Subscribed {new_user.email} to newsletter")
+                            except Exception as e:
+                                logger.error(f"[WEBHOOK] Failed to subscribe {new_user.email} to newsletter: {e}")
 
-                        # Remove pending registration
-                        db.delete(pending)
-                        db.commit()
+                    # Remove pending registration
+                    db.delete(pending)
+                    db.commit()
+                    logger.info(f"[WEBHOOK] Successfully activated account for {pending.email}")
                 finally:
                     db.close()
         
