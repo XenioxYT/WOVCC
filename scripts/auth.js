@@ -55,6 +55,10 @@
                 }
             });
             
+            if (!response.ok) {
+                debugAuth.error('Token refresh failed with status:', response.status);
+                return null;
+            }
             const data = await response.json();
             
             if (data.success && data.access_token) {
