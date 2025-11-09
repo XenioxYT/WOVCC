@@ -312,7 +312,7 @@ def update_event(user, event_id):
             if 'date' in data:
                 try:
                     event.date = datetime.fromisoformat(data['date'].replace('Z', '+00:00'))
-                except:
+                except ValueError:
                     pass
             if 'time' in data:
                 event.time = data['time']
