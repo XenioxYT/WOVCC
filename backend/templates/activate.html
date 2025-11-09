@@ -8,6 +8,7 @@
 <script>
 (function() {
   document.addEventListener('DOMContentLoaded', async function() {
+    
     // Use localStorage instead of sessionStorage (persists across Stripe redirect)
     const pendingEmail = localStorage.getItem('wovcc_pending_email');
     const pendingPassword = localStorage.getItem('wovcc_pending_password');
@@ -20,17 +21,6 @@
     
     // Update status message
     updateStatus('processing', 'Creating Your Account', 'Please wait while we set up your membership...');
-    
-    // Try to activate account (fallback for development)
-    try {
-      await fetch('http://localhost:5000/api/auth/check-and-activate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: pendingEmail })
-      });
-    } catch (e) {
-      // Expected to fail, continue
-    }
     
     // Attempt to login (retry up to 10 times over 20 seconds)
     let attempts = 0;
@@ -59,8 +49,11 @@
           }, 2000);
           
           return;
+        } else {
+          console.log('[ACTIVATE] Login failed:', result.message);
         }
       } catch (e) {
+        console.error('[ACTIVATE] Login attempt error:', e);
         // Continue to retry
       }
       

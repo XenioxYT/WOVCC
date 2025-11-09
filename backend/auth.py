@@ -5,7 +5,7 @@ Password hashing, JWT tokens, and authentication utilities
 
 import bcrypt
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import os
 from functools import wraps
 from flask import request, jsonify
@@ -150,5 +150,3 @@ def require_admin(f):
             }), 403
         return f(user, *args, **kwargs)
     return decorated_function
-
-

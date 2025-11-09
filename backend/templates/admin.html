@@ -11,15 +11,90 @@
 <script src="/scripts/admin-users.js"></script>
 
 <script>
+// Notification helper - provide fallback if main.js hasn't loaded yet
+window.showNotification = window.showNotification || function(message, type = 'info') {
+  console.log(`[${type.toUpperCase()}] ${message}`);
+  // Use in-DOM notification instead of blocking alert
+  showDomNotification(message, type);
+};
+
+// Helper to show notification in the DOM
+function showDomNotification(message, type = 'info') {
+  // Ensure notification container exists
+  let container = document.getElementById('notification-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'notification-container';
+    container.style.position = 'fixed';
+    container.style.top = '20px';
+    container.style.right = '20px';
+    container.style.zIndex = '9999';
+    container.style.maxWidth = '350px';
+    container.style.pointerEvents = 'none';
+    document.body.appendChild(container);
+  }
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.textContent = message;
+  notification.style.marginBottom = '10px';
+  notification.style.padding = '12px 18px';
+  notification.style.borderRadius = '6px';
+  notification.style.boxShadow = '0 2px 8px rgba(0,0,0,0.12)';
+  notification.style.color = '#fff';
+  notification.style.fontSize = '16px';
+  notification.style.fontWeight = '500';
+  notification.style.pointerEvents = 'auto';
+  notification.style.opacity = '1';
+  notification.style.transition = 'opacity 0.5s';
+  // Set background color based on type
+  if (type === 'error') {
+    notification.style.background = '#d32f2f';
+  } else if (type === 'success') {
+    notification.style.background = '#388e3c';
+  } else {
+    notification.style.background = '#1976d2';
+  }
+  container.appendChild(notification);
+  // Remove notification after 3 seconds
+  setTimeout(function() {
+    notification.style.opacity = '0';
+    setTimeout(function() {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 500);
+  }, 3000);
+}
+
 (function() {
   // Admin page controller
   let currentConfig = {};
   let allFixtures = [];
 
+  // Wait for all dependencies to be ready
+  function waitForDependencies(callback, maxAttempts = 50) {
+    let attempts = 0;
+    const checkInterval = setInterval(function() {
+      attempts++;
+      // Check if required dependencies are available
+      if (window.WOVCCAuth && window.wovccApi) {
+        clearInterval(checkInterval);
+        callback();
+      } else if (attempts >= maxAttempts) {
+        clearInterval(checkInterval);
+        console.error('Admin page: Required dependencies not loaded');
+        // Still try to initialize
+        callback();
+      }
+    }, 100);
+  }
+  
   // Initialize immediately if DOM is already loaded, otherwise wait
   function initAdminPageCheck() {
-    checkAdminAccess();
-    setupTabs();
+    waitForDependencies(function() {
+      checkAdminAccess();
+      setupTabs();
+    });
   }
   
   if (document.readyState === 'loading') {
@@ -30,7 +105,7 @@
   
   // Listen for page transitions
   document.addEventListener('pageTransitionComplete', function(e) {
-    if (e.detail.path === '/admin') {
+    if (e.detail && e.detail.path === '/admin') {
       initAdminPageCheck();
     }
   });

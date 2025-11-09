@@ -10,20 +10,59 @@
     let currentOrder = 'desc';
     let currentEditingUser = null;
     let stats = null;
+    let isInitialized = false;
     
-    // Initialize when the users tab is clicked
-    document.addEventListener('DOMContentLoaded', function() {
+    // Initialize function to be called when users tab becomes active
+    function initializeUsersTab() {
+        console.log('Initializing users tab, isInitialized:', isInitialized);
+        if (!isInitialized) {
+            isInitialized = true;
+            console.log('Loading admin stats and users...');
+            loadAdminStats();
+            loadAdminUsers();
+        } else {
+            console.log('Users tab already initialized');
+        }
+    }
+    
+    // Initialize when the users tab is clicked - supports both initial load and page transitions
+    function setupUsersTabListener() {
         const usersTab = document.getElementById('users-tab');
         if (usersTab) {
+            console.log('Setting up users tab click listener');
+            // Remove any existing listener to avoid duplicates
+            usersTab.removeEventListener('click', initializeUsersTab);
             usersTab.addEventListener('click', function() {
-                loadAdminStats();
-                loadAdminUsers();
+                console.log('Users tab clicked');
+                initializeUsersTab();
             });
+        } else {
+            console.warn('Users tab element not found');
+        }
+    }
+    
+    // Setup on DOMContentLoaded
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupUsersTabListener);
+    } else {
+        setupUsersTabListener();
+    }
+    
+    // Also setup on page transitions
+    document.addEventListener('pageTransitionComplete', function(e) {
+        if (e.detail && e.detail.path === '/admin') {
+            isInitialized = false; // Reset initialization flag
+            setupUsersTabListener();
         }
     });
     
     async function loadAdminStats() {
         try {
+            if (!window.WOVCCAuth || !window.WOVCCAuth.authenticatedFetch) {
+                console.error('WOVCCAuth not available');
+                return;
+            }
+            
             const response = await window.WOVCCAuth.authenticatedFetch('/admin/stats');
             const data = await response.json();
             
@@ -40,7 +79,15 @@
     
     function renderStatsCards(stats) {
         const container = document.getElementById('admin-stats-cards');
-        if (!container) return;
+        if (!container) {
+            console.warn('Stats cards container not found');
+            return;
+        }
+        
+        if (!stats) {
+            console.warn('No stats data to render');
+            return;
+        }
         
         const activePercentage = stats.total_members > 0 
             ? ((stats.active_members / stats.total_members) * 100).toFixed(1) 
@@ -128,6 +175,12 @@
     
     async function loadAdminUsers(page = 1) {
         try {
+            if (!window.WOVCCAuth || !window.WOVCCAuth.authenticatedFetch) {
+                console.error('WOVCCAuth not available');
+                showUsersError('Authentication system not loaded');
+                return;
+            }
+            
             showUsersLoading();
             currentPage = page;
             
@@ -150,11 +203,11 @@
                 allUsers = data.users;
                 renderUsersTable(allUsers, data.pagination);
             } else {
-                showUsersError('Failed to load users');
+                showUsersError('Failed to load users: ' + (data.error || 'Unknown error'));
             }
         } catch (error) {
             console.error('Failed to load users:', error);
-            showUsersError(error.message);
+            showUsersError(error.message || 'Failed to load users');
         }
     }
     
