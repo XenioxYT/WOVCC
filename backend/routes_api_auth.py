@@ -5,8 +5,7 @@ Handles all endpoints related to user authentication and management.
 
 from flask import Blueprint, jsonify, request
 import logging
-import datetime
-from datetime import timezone
+from datetime import datetime, timezone
 import os
 
 from database import get_db, User, PendingRegistration
