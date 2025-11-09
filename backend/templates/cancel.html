@@ -74,42 +74,6 @@
     }
 </style>
 
-<script>
-    console.log('[Cancel] Page loaded');
-
-    // Simulate processing delay, then show cancelled message
-    setTimeout(() => {
-        console.log('[Cancel] Showing cancelled message');
-        
-        // Replace spinner with cross icon
-        const iconContainer = document.getElementById('status-icon');
-        iconContainer.innerHTML = `
-            <svg class="cross-icon" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="45"/>
-                <line class="cross-line" x1="30" y1="30" x2="70" y2="70"/>
-                <line class="cross-line" x1="70" y1="30" x2="30" y2="70"/>
-            </svg>
-        `;
-
-        // Update message
-        const messageContainer = document.getElementById('status-message');
-        messageContainer.innerHTML = `
-            <h2 style="color: #dc3545;">Payment Cancelled</h2>
-            <p style="color: #666; margin-top: 15px;">
-                Your payment was cancelled and you have not been charged.
-            </p>
-            <p style="color: #666; margin-top: 10px;">
-                No worries! You can try again whenever you're ready.
-            </p>
-        `;
-
-        // Show action buttons
-        document.getElementById('action-button').style.display = 'block';
-
-        // Clear any pending registration data
-        console.log('[Cancel] Clearing stored credentials');
-        localStorage.removeItem('wovcc_pending_email');
-        localStorage.removeItem('wovcc_pending_password');
-    }, 1500); // 1.5 second delay for effect
-</script>
+{% block extra_js %}
+<script src="/scripts/pages.js"></script>
 {% endblock %}
