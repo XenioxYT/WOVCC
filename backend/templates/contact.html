@@ -1,0 +1,164 @@
+{% extends "layout.html" %}
+
+{% block title %}Contact Us - WOVCC | Wickersley Old Village Cricket Club{% endblock %}
+
+{% block description %}Get in touch with Wickersley Old Village Cricket Club. Send us your questions, feedback, or enquiries via our contact form.{% endblock %}
+
+{% block content %}
+<section class="hero page-hero">
+  <div class="hero-content">
+    <h1>Contact Us</h1>
+    <p>Have a question or enquiry? Send us a message and we'll get back to you.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container" style="max-width: 720px;">
+
+    <div id="contact-success" style="display:none;margin-bottom:20px;padding:14px 16px;border-radius:8px;background:#d4edda;color:#155724;border:1px solid #c3e6cb;font-size:0.95rem;">
+      Your message has been sent successfully.
+    </div>
+
+    <div id="contact-error" style="display:none;margin-bottom:20px;padding:14px 16px;border-radius:8px;background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;font-size:0.95rem;">
+      Something went wrong sending your message. Please try again.
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <h2 style="margin-top:0;margin-bottom:10px;">Send us a message</h2>
+        <p style="margin-top:0;margin-bottom:20px;color:var(--text-light);font-size:0.95rem;">
+          Fill in the form below and we'll email your message to the club committee.
+        </p>
+
+        <form id="contact-form">
+          <div class="form-group">
+            <label class="form-label" for="contact-name">Name *</label>
+            <input
+              type="text"
+              id="contact-name"
+              class="form-input"
+              name="name"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="contact-email">Email *</label>
+            <input
+              type="email"
+              id="contact-email"
+              class="form-input"
+              name="email"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="contact-subject">Subject *</label>
+            <input
+              type="text"
+              id="contact-subject"
+              class="form-input"
+              name="subject"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="contact-message">Message *</label>
+            <textarea
+              id="contact-message"
+              class="form-input"
+              name="message"
+              rows="5"
+              required
+            ></textarea>
+          </div>
+
+          <button
+            type="submit"
+            id="contact-submit"
+            class="btn btn-primary"
+            style="min-width:160px;"
+          >
+            Send Message
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<script>
+  (function () {
+    const form = document.getElementById('contact-form');
+    if (!form) return;
+
+    const successBox = document.getElementById('contact-success');
+    const errorBox = document.getElementById('contact-error');
+    const submitBtn = document.getElementById('contact-submit');
+
+    function showBox(box, message) {
+      if (box) {
+        box.textContent = message;
+        box.style.display = 'block';
+      }
+    }
+
+    function hideBoxes() {
+      if (successBox) successBox.style.display = 'none';
+      if (errorBox) errorBox.style.display = 'none';
+    }
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      hideBoxes();
+
+      const name = document.getElementById('contact-name').value.trim();
+      const email = document.getElementById('contact-email').value.trim();
+      const subject = document.getElementById('contact-subject').value.trim();
+      const message = document.getElementById('contact-message').value.trim();
+
+      if (!name || !email || !subject || !message) {
+        showBox(errorBox, 'Please complete all required fields.');
+        return;
+      }
+
+      const payload = { name, email, subject, message };
+
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+
+      try {
+        const res = await fetch('/api/contact', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok && data && data.success) {
+          form.reset();
+          showBox(successBox, 'Your message has been sent successfully.');
+        } else {
+          const msg =
+            (data && (data.error || data.message)) ||
+            'Something went wrong sending your message. Please try again.';
+          showBox(errorBox, msg);
+        }
+      } catch (err) {
+        console.error('Contact form error:', err);
+        showBox(errorBox, 'Network error sending message. Please try again.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    });
+  })();
+</script>
+{% endblock %}
