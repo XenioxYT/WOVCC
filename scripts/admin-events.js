@@ -145,7 +145,8 @@
             });
         }
 
-        // Row actions are now handled via event delegation below.
+        bindRowActions(upcoming);
+        bindRowActions(completed);
 
         // Enable independent sorting for each table section
         function enableTableSorting(sourceList, tableIdPrefix, defaultSortKey, defaultDirection) {
@@ -203,7 +204,11 @@
                 });
 
                 tbody.innerHTML = sorted.map(ev => createEventRow(ev)).join('');
-                // Row actions are now handled via event delegation below.
+                sorted.forEach(ev => {
+                    document.getElementById(`edit-event-${ev.id}`)?.addEventListener('click', () => openEditEventModal(ev));
+                    document.getElementById(`delete-event-${ev.id}`)?.addEventListener('click', () => deleteEvent(ev.id));
+                    document.getElementById(`view-interested-${ev.id}`)?.addEventListener('click', () => viewInterestedUsers(ev.id));
+                });
 
                 updateSortIndicators();
             }
@@ -567,56 +572,26 @@
     // Delegated event listeners (no inline JS)
     document.addEventListener('click', function(e) {
         const target = e.target.closest('[data-admin-events-action]');
-        if (target) {
-            const action = target.getAttribute('data-admin-events-action');
-            if (!action) return;
+        if (!target) return;
 
-            if (action === 'open-create-modal') {
-                e.preventDefault();
-                openCreateEventModal();
-            } else if (action === 'close-event-modal') {
-                e.preventDefault();
-                closeEventModal();
-            } else if (action === 'close-interested-users-modal') {
-                e.preventDefault();
-                closeInterestedUsersModal();
-            } else if (action === 'toggle-markdown-preview') {
-                e.preventDefault();
-                toggleMarkdownPreview();
-            } else if (action === 'remove-image') {
-                e.preventDefault();
-                removeImage();
-            }
-            return;
-        }
+        const action = target.getAttribute('data-admin-events-action');
+        if (!action) return;
 
-        // Event row actions delegation
-        const adminEventsList = document.getElementById('admin-events-list');
-        if (adminEventsList && adminEventsList.contains(e.target)) {
-            const editBtn = e.target.closest('button[id^="edit-event-"]');
-            if (editBtn) {
-                const eventId = editBtn.id.replace('edit-event-', '');
-                const event = allEvents.find(ev => String(ev.id) === eventId);
-                if (event) {
-                    e.preventDefault();
-                    openEditEventModal(event);
-                }
-                return;
-            }
-            const deleteBtn = e.target.closest('button[id^="delete-event-"]');
-            if (deleteBtn) {
-                const eventId = deleteBtn.id.replace('delete-event-', '');
-                e.preventDefault();
-                deleteEvent(eventId);
-                return;
-            }
-            const viewBtn = e.target.closest('button[id^="view-interested-"]');
-            if (viewBtn) {
-                const eventId = viewBtn.id.replace('view-interested-', '');
-                e.preventDefault();
-                viewInterestedUsers(eventId);
-                return;
-            }
+        if (action === 'open-create-modal') {
+            e.preventDefault();
+            openCreateEventModal();
+        } else if (action === 'close-event-modal') {
+            e.preventDefault();
+            closeEventModal();
+        } else if (action === 'close-interested-users-modal') {
+            e.preventDefault();
+            closeInterestedUsersModal();
+        } else if (action === 'toggle-markdown-preview') {
+            e.preventDefault();
+            toggleMarkdownPreview();
+        } else if (action === 'remove-image') {
+            e.preventDefault();
+            removeImage();
         }
     });
 

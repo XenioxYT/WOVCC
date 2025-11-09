@@ -152,6 +152,10 @@
         showMembersContent(user);
       } else {
         showLoginForm();
+      }
+    }
+
+    // Bind login form submit once (avoid duplicates on SPA)
     loginForm.addEventListener('submit', function(e) {
       e.preventDefault();
       if (!window.WOVCCAuth) return;
@@ -185,10 +189,6 @@
           loginError.textContent = 'Failed to login. Please try again.';
           loginError.style.display = 'block';
         }
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
-      });
-    });
         submitBtn.disabled = false;
         submitBtn.textContent = originalText;
       });
@@ -265,24 +265,16 @@
       teamSelector.disabled = true;
 
       window.wovccApi.getTeams().then(function(teams) {
-        // Create a fragment to hold options
-        var fragment = document.createDocumentFragment();
-        var allOption = document.createElement('option');
-        allOption.value = 'all';
-        allOption.textContent = 'All Teams';
-        fragment.appendChild(allOption);
-
+        teamSelector.innerHTML = '<option value="all">All Teams</option>';
         (teams || []).forEach(function(team) {
           var option = document.createElement('option');
           option.value = team.id;
           option.textContent = team.name;
-          fragment.appendChild(option);
+          teamSelector.appendChild(option);
         });
 
-        // Clone the selector after populating options
-        var newSelector = teamSelector.cloneNode(false); // shallow clone, no children
-        newSelector.appendChild(fragment);
-
+        // Reset change handler by cloning to avoid duplicate listeners after SPA transitions
+        var newSelector = teamSelector.cloneNode(true);
         teamSelector.parentNode.replaceChild(newSelector, teamSelector);
         teamSelector = newSelector;
 
