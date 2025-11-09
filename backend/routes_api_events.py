@@ -334,7 +334,7 @@ def update_event(user, event_id):
                     if 'recurrence_end_date' in data:
                         try:
                             event.recurrence_end_date = datetime.fromisoformat(data['recurrence_end_date'].replace('Z', '+00:00'))
-                        except:
+                        except ValueError:
                             pass
                     
                     # Delete old recurring instances and regenerate
