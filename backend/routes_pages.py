@@ -1,6 +1,18 @@
 """
 WOVCC Flask Application - Page Routes
 Handles serving all HTML-rendered pages.
+
+Route authentication/authorization overview:
+
+- `/` (Home): Public
+- `/members`: Requires login (shows login form if not authenticated)
+- `/matches`: Public
+- `/join`: Public
+- `/join/activate`: Public (used after payment)
+- `/join/cancel`: Public (used after payment cancellation)
+- `/admin`: Requires admin authentication
+- `/events`: Public
+- `/events/<int:event_id>`: Public
 """
 
 from flask import Blueprint, render_template
