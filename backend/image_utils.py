@@ -160,28 +160,63 @@ def delete_image(image_path, base_upload_folder):
         if not image_path:
             return False
         
-        # Convert relative path to absolute
-        # Remove leading slash and "uploads/" prefix
-        filename = image_path.replace('/uploads/events/', '')
-        full_path = os.path.join(base_upload_folder, 'events', filename)
+        # Security: Validate the image path to prevent path traversal attacks
+        # Only allow paths starting with /uploads/events/
+        if not image_path.startswith('/uploads/events/'):
+            logger.error(f"Security: Invalid image path attempted: {image_path}")
+            return False
+        
+        # Extract just the filename (everything after /uploads/events/)
+        filename = image_path[len('/uploads/events/'):]
+        
+        # Security: Ensure filename doesn't contain path traversal sequences
+        if '..' in filename or '/' in filename or '\\' in filename:
+            logger.error(f"Security: Path traversal attempt detected: {filename}")
+            return False
+        
+        # Security: Ensure the filename is safe using werkzeug's secure_filename
+        from werkzeug.utils import secure_filename
+        safe_filename = secure_filename(filename)
+        if safe_filename != filename:
+            logger.error(f"Security: Unsafe filename rejected: {filename}")
+            return False
+        
+        # Construct the absolute path securely
+        events_folder = os.path.join(base_upload_folder, 'events')
+        full_path = os.path.join(events_folder, safe_filename)
+        
+        # Security: Verify the resolved path is still within the allowed directory
+        # This prevents symlink attacks
+        events_folder_abs = os.path.abspath(events_folder)
+        full_path_abs = os.path.abspath(full_path)
+        
+        if not full_path_abs.startswith(events_folder_abs + os.sep):
+            logger.error(f"Security: Path traversal blocked: {full_path_abs}")
+            return False
         
         deleted = False
         
         # Delete main image
-        if os.path.exists(full_path):
-            os.remove(full_path)
-            logger.info(f"Deleted main image: {filename}")
+        if os.path.exists(full_path_abs):
+            os.remove(full_path_abs)
+            logger.info(f"Deleted main image: {safe_filename}")
             deleted = True
         
         # Delete responsive versions if they exist
-        base_name = os.path.splitext(filename)[0]
+        base_name = os.path.splitext(safe_filename)[0]
         for size_config in RESPONSIVE_SIZES:
             suffix = size_config['suffix']
             responsive_filename = f"{base_name}{suffix}.webp"
-            responsive_path = os.path.join(base_upload_folder, 'events', responsive_filename)
+            responsive_path = os.path.join(events_folder, responsive_filename)
+            responsive_path_abs = os.path.abspath(responsive_path)
             
-            if os.path.exists(responsive_path):
-                os.remove(responsive_path)
+            # Security: Verify each responsive image path as well
+            if not responsive_path_abs.startswith(events_folder_abs + os.sep):
+                logger.error(f"Security: Path traversal blocked for responsive image: {responsive_path_abs}")
+                continue
+            
+            if os.path.exists(responsive_path_abs):
+                os.remove(responsive_path_abs)
                 logger.info(f"Deleted responsive image: {responsive_filename}")
                 deleted = True
         
