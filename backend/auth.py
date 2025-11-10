@@ -12,7 +12,14 @@ from flask import request, jsonify
 from database import get_db, User
 
 # JWT configuration
-JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'change-this-secret-key-in-production')
+JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
+if not JWT_SECRET_KEY:
+    raise RuntimeError(
+        "CRITICAL SECURITY ERROR: JWT_SECRET_KEY environment variable is not set. "
+        "The application cannot start without a secure secret key. "
+        "Please set JWT_SECRET_KEY in your .env file to a strong, random value."
+    )
+
 JWT_ALGORITHM = 'HS256'
 JWT_EXPIRATION_HOURS = 24 * 7  # 7 days
 JWT_REFRESH_EXPIRATION_DAYS = 30  # 30 days
