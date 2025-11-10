@@ -89,7 +89,7 @@ def add_security_headers(response):
         "script-src 'self' https://cdn.jsdelivr.net; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; "
-        "connect-src 'self' http://localhost:5000 http://127.0.0.1:5000 https://wovcc.xeniox.uk https://api.wovcc.co.uk; "
+        "connect-src 'self' http://localhost:5000 http://127.0.0.1:5000 https://wovcc.xeniox.uk https://wovcc.xeniox.uk; "
         "img-src 'self' data: https://maps.googleapis.com https://*.googleapis.com; "
         "frame-src https://www.google.com https://maps.google.com; "
         "object-src 'none';"
