@@ -128,6 +128,10 @@
         return;
       }
 
+      // Hide both sections initially to prevent flash
+      accessDenied.style.display = 'none';
+      adminContent.style.display = 'none';
+
       if (!isAdmin) {
         accessDenied.style.display = 'block';
         adminContent.style.display = 'none';
@@ -136,6 +140,9 @@
         adminContent.style.display = 'block';
         initAdminPanel();
       }
+
+      // Mark auth check as complete to show content
+      document.body.classList.add('auth-checked');
     } catch (err) {
       console.error('Error checking admin access:', err);
     }

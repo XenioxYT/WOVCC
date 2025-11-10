@@ -9,7 +9,7 @@
 // API Base URL
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:5000/api'
-  : 'https://api.wovcc.co.uk/api';
+  : 'https://wovcc.xeniox.uk/api';
 
 // Check if we're on the events listing page or detail page
 function isListingPage() {

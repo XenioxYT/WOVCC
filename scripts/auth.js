@@ -16,7 +16,7 @@
         if (!hostname || hostname === 'localhost' || hostname === '127.0.0.1') {
             return 'http://localhost:5000/api';
         }
-        return 'https://api.wovcc.co.uk/api';
+        return 'https://wovcc.xeniox.uk/api';
     })();
 
     function getAccessToken() {

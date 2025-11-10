@@ -73,6 +73,10 @@
       return;
     }
 
+    // Hide both sections initially to prevent flash
+    loginSection.style.display = 'none';
+    membersContent.style.display = 'none';
+
     function showLoginForm() {
       loginSection.style.display = 'block';
       membersContent.style.display = 'none';
@@ -153,6 +157,8 @@
       } else {
         showLoginForm();
       }
+      // Mark auth check as complete to show content
+      document.body.classList.add('auth-checked');
     }
 
     // Bind login form submit once (avoid duplicates on SPA)

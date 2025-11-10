@@ -117,6 +117,23 @@ class PageTransitions {
                 z-index: 1000;
                 will-change: transform;
             }
+
+            /* Prevent flash of login screen on auth pages during page load/transitions */
+            /* These sections will be shown by JavaScript after auth check completes */
+            body:not(.auth-checked) #login-section,
+            body:not(.auth-checked) #members-content,
+            body:not(.auth-checked) #access-denied-section,
+            body:not(.auth-checked) #admin-content {
+                visibility: hidden !important;
+            }
+
+            /* After auth is checked, make them visible again (JS will handle display) */
+            body.auth-checked #login-section,
+            body.auth-checked #members-content,
+            body.auth-checked #access-denied-section,
+            body.auth-checked #admin-content {
+                visibility: visible !important;
+            }
         `;
         document.head.appendChild(style);
     }
@@ -236,6 +253,8 @@ class PageTransitions {
 
         this.isTransitioning = true;
         document.body.classList.add('page-transitioning');
+        // Remove auth-checked class so new page can re-check auth without flash
+        document.body.classList.remove('auth-checked');
 
         // Dispatch event to notify other components that transition is starting
         const startEvent = new CustomEvent('pageTransitionStart', {
