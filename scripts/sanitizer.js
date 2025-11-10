@@ -39,36 +39,40 @@
         const allowedTags = ['b', 'i', 'u', 'strong', 'em', 'p', 'br', 'span', 'div'];
         
         // Recursively clean the DOM
-        function cleanNode(node) {
-            // Remove script and style tags completely
-            if (node.tagName === 'SCRIPT' || node.tagName === 'STYLE') {
-                node.remove();
-                return;
-            }
+       function cleanNode(node) {  
+            // 1. Recurse on children first (post-order traversal).  
+            //    We use a copy of the childNodes array because the list can be mutated.  
+            const children = Array.from(node.childNodes);  
+            children.forEach(child => cleanNode(child));  
 
-            // Remove event handlers and javascript: links
-            if (node.nodeType === Node.ELEMENT_NODE) {
-                // Remove all event handler attributes
-                Array.from(node.attributes).forEach(attr => {
-                    if (attr.name.startsWith('on') || attr.value.toLowerCase().includes('javascript:')) {
-                        node.removeAttribute(attr.name);
-                    }
-                });
+            // 2. Process the node itself now that its children are sanitized.  
 
-                // Remove disallowed tags but keep their content
-                if (!allowedTags.includes(node.tagName.toLowerCase())) {
-                    const parent = node.parentNode;
-                    while (node.firstChild) {
-                        parent.insertBefore(node.firstChild, node);
-                    }
-                    node.remove();
-                    return;
-                }
-            }
+            // Remove script and style tags completely  
+            if (node.nodeType === Node.ELEMENT_NODE && (node.tagName === 'SCRIPT' || node.tagName === 'STYLE')) {  
+                node.remove();  
+                return;  
+            }  
 
-            // Recursively clean children
-            Array.from(node.childNodes).forEach(child => cleanNode(child));
-        }
+            // Remove event handlers and javascript: links from allowed tags  
+            if (node.nodeType === Node.ELEMENT_NODE) {  
+                Array.from(node.attributes).forEach(attr => {  
+                    if (attr.name.startsWith('on') || attr.value.toLowerCase().includes('javascript:')) {  
+                        node.removeAttribute(attr.name);  
+                    }  
+                });  
+
+                // If the tag is not allowed, replace it with its (already sanitized) children.  
+                if (!allowedTags.includes(node.tagName.toLowerCase())) {  
+                    const parent = node.parentNode;  
+                    if (parent) {  
+                        while (node.firstChild) {  
+                            parent.insertBefore(node.firstChild, node);  
+                        }  
+                        node.remove();  
+                    }  
+                }  
+            }  
+        }  
 
         Array.from(temp.childNodes).forEach(child => cleanNode(child));
         return temp.innerHTML;

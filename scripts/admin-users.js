@@ -375,7 +375,7 @@
         
         // Previous button
         if (pagination.page > 1) {
-            html += `<button class="pagination-btn" data-page="${pagination.page - 1}" class="btn btn-outline" style="padding: 8px 16px;">Previous</button>`;
+            html += `<button class="pagination-btn btn btn-outline" data-page="${pagination.page - 1}" style="padding: 8px 16px;">Previous</button>`;
         }
         
         // Page info
@@ -383,7 +383,7 @@
         
         // Next button
         if (pagination.page < pagination.pages) {
-            html += `<button class="pagination-btn" data-page="${pagination.page + 1}" class="btn btn-outline" style="padding: 8px 16px;">Next</button>`;
+            html += `<button class="pagination-btn btn btn-outline" data-page="${pagination.page + 1}" style="padding: 8px 16px;">Next</button>`;
         }
         
         html += '</div>';
