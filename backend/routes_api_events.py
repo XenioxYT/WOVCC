@@ -6,7 +6,9 @@ Handles all endpoints for creating, reading, updating, and deleting events.
 from flask import Blueprint, jsonify, request
 import os
 import logging
+import json
 from datetime import datetime, timezone
+from openai import OpenAI
 
 from database import get_db, Event, EventInterest
 from auth import require_admin, get_current_user
@@ -663,52 +665,66 @@ def generate_event_descriptions_ai(user):
         elif is_recurring:
             recurring_text = "This is a recurring event."
 
-        # Build concise, deterministic prompt asking for strict JSON
+        # Build rich, deterministic prompt with WOVCC context and markdown support info
         system_prompt = (
-            "You are an assistant that writes clear, friendly, UK English event descriptions for a cricket club website. "
+            "You are an assistant that writes clear, friendly, UK English event descriptions for the "
+            "Wickersley Old Village Cricket Club (WOVCC) website. "
+            "WOVCC is an ECB Clubmark accredited cricket club based in Wickersley, Rotherham, South Yorkshire, "
+            "with its home ground at Northfield Lane, Wickersley, Rotherham, S66 1AL. "
+            "The club offers excellent facilities at Northfield Lane, including the main ground, outdoor practice nets "
+            "and a clubhouse with bar and function room available for hire. "
+            "When writing event descriptions, align them with a welcoming, community-focused club tone, highlight "
+            "Long descriptions may be rendered on the website with markdown support (including basic formatting such as "
+            "paragraphs, bold, italics and simple lists), but they will be stored and consumed as plain strings in JSON. "
+            "Do not include raw HTML tags. "
+            "Only respond in British English. "
             "You must respond ONLY with strict JSON and nothing else."
         )
 
-        user_prompt = {
-            "title": title,
-            "event_context": {
-                "date_time": human_date,
-                "is_recurring": is_recurring,
-                "recurrence_pattern": recurrence_pattern,
-                "recurrence_end_date": recurrence_end,
-                "recurring_text": recurring_text
-            },
-            "existing": {
-                "short_description": short_existing,
-                "long_description": long_existing
-            },
-            "instructions": {
-                "short_description": (
-                    "1-2 sentences, max 160 characters, concise teaser for listings. "
-                    "Do not include date/time; focus on what/why."
-                ),
-                "long_description": (
-                    "2-5 sentences suitable for the event detail page. "
-                    "Be welcoming, informative, mention relevant date/time/recurrence context where useful. "
-                    "No markdown, HTML, or bullet points; plain text only."
-                )
-            },
-            "output_format": {
-                "type": "json_only",
-                "schema": {
-                    "short_description": "string",
-                    "long_description": "string"
-                }
-            }
-        }
+        # Build context about existing content
+        existing_context = ""
+        if short_existing or long_existing:
+            existing_context = "\n\nEXISTING CONTENT TO ENHANCE:"
+            if short_existing:
+                existing_context += f"\n- Current short description: \"{short_existing}\""
+            if long_existing:
+                existing_context += f"\n- Current long description: \"{long_existing}\""
+            existing_context += (
+                "\n\nIMPORTANT: Build upon and improve this existing content. "
+                "Maintain the key information and intent but make it more engaging, accurate and well-structured. "
+                "If the existing content is already good, keep its core message while refining the language."
+            )
 
-        # Use environment-configured model endpoint
-        import os
-        import requests
-
-        openai_api_key = os.getenv('OPENAI_API_KEY') or os.getenv('OPENROUTER_API_KEY')
+        user_prompt = (
+            f"EVENT TITLE: {title}\n\n"
+            f"EVENT DATE/TIME: {human_date}\n"
+            f"{recurring_text}\n"
+            f"{existing_context}\n\n"
+            f"TASK:\n"
+            f"Generate two descriptions for this WOVCC event:\n\n"
+            f"1. SHORT DESCRIPTION (1-2 sentences, max 160 characters):\n"
+            f"   - Concise teaser for event listings\n"
+            f"   - Do not include date/time; focus on what/why\n"
+            f"   - Make it engaging and informative\n\n"
+            f"2. LONG DESCRIPTION (SUPPORTS MARKDOWN):\n"
+            f"   - Fuller description for the event detail page\n"
+            f"   - Be welcoming, informative and specific to WOVCC where relevant\n"
+            f"   - Include relevant date/time/recurrence context in natural language\n"
+            f"   - You may use markdown formatting (paragraphs, **bold**, simple lists)\n"
+            f"   - Do not use HTML tags\n"
+            f"   - Write in clear UK English\n\n"
+            f"OUTPUT FORMAT:\n"
+            f"Return ONLY valid JSON with this exact structure:\n"
+            f"{{\n"
+            f'  "short_description": "your short description here",\n'
+            f'  "long_description": "your long description here"\n'
+            f"}}\n\n"
+            f"No markdown code fences, no extra keys, no explanations."
+        )
+        
+        openai_api_key = os.getenv('OPENAI_API_KEY')
         openai_base_url = os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1')
-        openai_model = os.getenv('OPENAI_MODEL', 'gpt-4.1-mini')
+        openai_model = os.getenv('OPENAI_MODEL', 'gpt-4o-mini')
 
         if not openai_api_key:
             return jsonify({
@@ -716,77 +732,41 @@ def generate_event_descriptions_ai(user):
                 'error': 'AI generation not configured on server (missing API key)'
             }), 500
 
-        payload = {
-            "model": openai_model,
-            "response_format": {"type": "json_object"},
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {
-                    "role": "user",
-                    "content": (
-                        "Generate ONLY JSON, with this exact shape:\n"
-                        "{ \"short_description\": \"...\", \"long_description\": \"...\" }\n"
-                        "No markdown, no extra keys, no explanations."
-                    )
-                },
-                {
-                    "role": "user",
-                    "content": f"{user_prompt}"
-                }
-            ],
-            "temperature": 0.6,
-            "max_tokens": 400
-        }
-
-        headers = {
-            "Authorization": f"Bearer {openai_api_key}",
-            "Content-Type": "application/json"
-        }
-
-        # Support OpenRouter-style base URLs if configured
-        if 'openrouter.ai' in openai_base_url:
-            headers["HTTP-Referer"] = os.getenv('OPENROUTER_SITE_URL', 'https://wovcc.co.uk')
-            headers["X-Title"] = os.getenv('OPENROUTER_APP_NAME', 'WOVCC Admin')
+        # Initialize OpenAI client
+        client = OpenAI(
+            api_key=openai_api_key,
+            base_url=openai_base_url
+        )
 
         try:
-            resp = requests.post(
-                f"{openai_base_url}/chat/completions",
-                json=payload,
-                headers=headers,
-                timeout=20
+            completion = client.chat.completions.create(
+                model=openai_model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.6,
             )
         except Exception as e:
             logger.error(f"Error calling AI API: {e}")
             return jsonify({
                 'success': False,
-                'error': 'Error contacting AI generation service'
+                'error': f'Error contacting AI generation service: {str(e)}'
             }), 502
 
-        if resp.status_code != 200:
-            logger.error(f"AI API error {resp.status_code}: {resp.text}")
+        # Extract content from response
+        content = completion.choices[0].message.content
+        
+        if not content:
+            logger.error("AI API returned empty content")
             return jsonify({
                 'success': False,
-                'error': 'AI generation failed',
-                'details': f'Status {resp.status_code}'
+                'error': 'AI response was empty'
             }), 502
+        
+        logger.info(f"AI Content received: {content[:100]}...")  # Log first 100 chars
 
-        try:
-            completion = resp.json()
-        except Exception as e:
-            logger.error(f"Failed to parse AI API JSON: {e}")
-            return jsonify({
-                'success': False,
-                'error': 'Invalid response from AI service'
-            }), 502
-
-        content = (
-            completion.get('choices', [{}])[0]
-            .get('message', {})
-            .get('content', '')
-            .strip()
-        )
-
-        import json
         try:
             parsed = json.loads(content)
         except Exception as e:
