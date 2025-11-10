@@ -242,6 +242,8 @@
         const userNameDisplay = document.getElementById('user-name-display');
         const adminNavLink = document.getElementById('admin-nav-link');
         const joinNavLinks = document.querySelectorAll('.nav-link[href="/join"]');
+        const loginNavLink = document.getElementById('login-nav-link');
+        const membershipNavLink = document.getElementById('membership-nav-link');
         
         if (!userMenu) return;
         
@@ -255,25 +257,39 @@
             } else if (adminNavLink) {
                 adminNavLink.style.display = 'none';
             }
-            // Hide Join button when logged in
+            // Hide Join and Login buttons when logged in
             joinNavLinks.forEach(link => {
                 const listItem = link.parentElement;
                 if (listItem) {
                     listItem.style.display = 'none';
                 }
             });
+            if (loginNavLink) {
+                loginNavLink.style.display = 'none';
+            }
+            // Show Membership link when logged in
+            if (membershipNavLink) {
+                membershipNavLink.style.display = 'list-item';
+            }
         } else {
             userMenu.classList.remove('show');
             if (adminNavLink) {
                 adminNavLink.style.display = 'none';
             }
-            // Show Join button when not logged in
+            // Show Join and Login buttons when not logged in
             joinNavLinks.forEach(link => {
                 const listItem = link.parentElement;
                 if (listItem) {
                     listItem.style.display = 'list-item';
                 }
             });
+            if (loginNavLink) {
+                loginNavLink.style.display = 'list-item';
+            }
+            // Hide Membership link when not logged in
+            if (membershipNavLink) {
+                membershipNavLink.style.display = 'none';
+            }
         }
     }
 
@@ -290,7 +306,7 @@
     document.addEventListener('DOMContentLoaded', async function() {
         updateNavbar();
         setupLogoutButton();
-        const needsFreshData = window.location.pathname === '/members' || window.location.pathname === '/admin' || window.location.pathname.startsWith('/join/activate');
+        const needsFreshData = window.location.pathname === '/members' || window.location.pathname === '/membership' || window.location.pathname === '/admin' || window.location.pathname.startsWith('/join/activate');
         if (isLoggedIn() && needsFreshData) {
             await refreshUserProfile();
             updateNavbar();
