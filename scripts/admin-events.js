@@ -555,6 +555,97 @@
         }
     }
     
+    async function generateEventDescriptions() {
+        try {
+            const title = document.getElementById('event-title')?.value || '';
+            const shortDescription = document.getElementById('event-short-description')?.value || '';
+            const longDescription = document.getElementById('event-long-description')?.value || '';
+            const dateValue = document.getElementById('event-date')?.value || '';
+            const isRecurring = !!document.getElementById('event-is-recurring')?.checked;
+            const recurrencePattern = document.getElementById('event-recurrence-pattern')?.value || '';
+            const recurrenceEndDate = document.getElementById('event-recurrence-end-date')?.value || '';
+
+            if (!title || !dateValue) {
+                if (typeof showNotification === 'function') {
+                    showNotification('Please provide at least a title and date before generating descriptions.', 'error');
+                }
+                return;
+            }
+
+            const buttonShort = document.querySelector('[data-admin-events-action="ai-generate-short"]');
+            const buttonLong = document.querySelector('[data-admin-events-action="ai-generate-long"]');
+            const allButtons = [buttonShort, buttonLong].filter(Boolean);
+            allButtons.forEach(btn => {
+                btn.disabled = true;
+                btn.dataset.originalText = btn.textContent;
+                btn.textContent = 'Generating...';
+            });
+
+            const body = {
+                title,
+                short_description: shortDescription,
+                long_description: longDescription,
+                date: dateValue,
+                is_recurring: isRecurring,
+                recurrence_pattern: recurrencePattern || null,
+                recurrence_end_date: recurrenceEndDate || null
+            };
+
+            const token = localStorage.getItem('wovcc_access_token');
+            const response = await fetch(`${API_BASE}/events/ai-descriptions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify(body)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Failed to generate descriptions');
+            }
+
+            // Expecting JSON: { short_description: "...", long_description: "..." }
+            if (!data.result || typeof data.result !== 'object') {
+                throw new Error('Unexpected AI response format');
+            }
+
+            const newShort = (data.result.short_description || '').trim();
+            const newLong = (data.result.long_description || '').trim();
+
+            if (newShort) {
+                const shortEl = document.getElementById('event-short-description');
+                if (shortEl) shortEl.value = newShort;
+            }
+            if (newLong) {
+                const longEl = document.getElementById('event-long-description');
+                if (longEl) longEl.value = newLong;
+            }
+
+            if (typeof showNotification === 'function') {
+                showNotification('AI descriptions generated successfully.', 'success');
+            }
+        } catch (error) {
+            console.error('Error generating AI descriptions', error);
+            if (typeof showNotification === 'function') {
+                showNotification(error.message || 'Failed to generate AI descriptions.', 'error');
+            }
+        } finally {
+            const buttonShort = document.querySelector('[data-admin-events-action="ai-generate-short"]');
+            const buttonLong = document.querySelector('[data-admin-events-action="ai-generate-long"]');
+            const allButtons = [buttonShort, buttonLong].filter(Boolean);
+            allButtons.forEach(btn => {
+                btn.disabled = false;
+                if (btn.dataset.originalText) {
+                    btn.textContent = btn.dataset.originalText;
+                    delete btn.dataset.originalText;
+                }
+            });
+        }
+    }
+
     // Public API (invoked from admin-page.js via data-* attributes)
     window.AdminEvents = {
         loadAdminEvents,
@@ -566,7 +657,8 @@
         removeImage,
         toggleRecurringOptions,
         toggleMarkdownPreview,
-        handleRecurrencePatternChange
+        handleRecurrencePatternChange,
+        generateEventDescriptions
     };
 
     // Delegated event listeners (no inline JS)
@@ -592,6 +684,10 @@
         } else if (action === 'remove-image') {
             e.preventDefault();
             removeImage();
+        } else if (action === 'ai-generate-short' || action === 'ai-generate-long') {
+            e.preventDefault();
+            // Single generator updates both fields based on current form context
+            generateEventDescriptions();
         }
     });
 

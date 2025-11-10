@@ -602,3 +602,220 @@ def get_event_categories():
             'success': False,
             'error': str(e)
         }), 500
+
+
+@events_api_bp.route('/ai-descriptions', methods=['POST'])
+@require_admin
+def generate_event_descriptions_ai(user):
+    """
+    Generate short and long descriptions for an event using OpenAI (or compatible) API.
+
+    Expects JSON:
+    {
+        "title": "Event title",
+        "short_description": "Existing short (optional)",
+        "long_description": "Existing long (optional)",
+        "date": "2025-06-10T18:00",
+        "is_recurring": true/false,
+        "recurrence_pattern": "daily|weekly|monthly|null",
+        "recurrence_end_date": "2025-08-10" (optional)
+    }
+
+    Returns JSON:
+    {
+        "success": true,
+        "result": {
+            "short_description": "...",
+            "long_description": "..."
+        }
+    }
+    """
+    try:
+        data = request.get_json() or {}
+        title = (data.get('title') or '').strip()
+        date_str = (data.get('date') or '').strip()
+
+        if not title or not date_str:
+            return jsonify({
+                'success': False,
+                'error': 'Missing required fields: title and date'
+            }), 400
+
+        short_existing = (data.get('short_description') or '').strip()
+        long_existing = (data.get('long_description') or '').strip()
+        is_recurring = bool(data.get('is_recurring'))
+        recurrence_pattern = (data.get('recurrence_pattern') or '').strip() or None
+        recurrence_end = (data.get('recurrence_end_date') or '').strip() or None
+
+        # Parse date safely for prompt context (no strict error on failure)
+        try:
+            parsed_date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            human_date = parsed_date.strftime('%A %-d %B %Y %H:%M').replace(' 00:00', '')
+        except Exception:
+            human_date = date_str
+
+        recurring_text = ''
+        if is_recurring and recurrence_pattern:
+            if recurrence_end:
+                recurring_text = f"This is a recurring event ({recurrence_pattern}) until {recurrence_end}."
+            else:
+                recurring_text = f"This is a recurring event ({recurrence_pattern}) with no specified end date."
+        elif is_recurring:
+            recurring_text = "This is a recurring event."
+
+        # Build concise, deterministic prompt asking for strict JSON
+        system_prompt = (
+            "You are an assistant that writes clear, friendly, UK English event descriptions for a cricket club website. "
+            "You must respond ONLY with strict JSON and nothing else."
+        )
+
+        user_prompt = {
+            "title": title,
+            "event_context": {
+                "date_time": human_date,
+                "is_recurring": is_recurring,
+                "recurrence_pattern": recurrence_pattern,
+                "recurrence_end_date": recurrence_end,
+                "recurring_text": recurring_text
+            },
+            "existing": {
+                "short_description": short_existing,
+                "long_description": long_existing
+            },
+            "instructions": {
+                "short_description": (
+                    "1-2 sentences, max 160 characters, concise teaser for listings. "
+                    "Do not include date/time; focus on what/why."
+                ),
+                "long_description": (
+                    "2-5 sentences suitable for the event detail page. "
+                    "Be welcoming, informative, mention relevant date/time/recurrence context where useful. "
+                    "No markdown, HTML, or bullet points; plain text only."
+                )
+            },
+            "output_format": {
+                "type": "json_only",
+                "schema": {
+                    "short_description": "string",
+                    "long_description": "string"
+                }
+            }
+        }
+
+        # Use environment-configured model endpoint
+        import os
+        import requests
+
+        openai_api_key = os.getenv('OPENAI_API_KEY') or os.getenv('OPENROUTER_API_KEY')
+        openai_base_url = os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1')
+        openai_model = os.getenv('OPENAI_MODEL', 'gpt-4.1-mini')
+
+        if not openai_api_key:
+            return jsonify({
+                'success': False,
+                'error': 'AI generation not configured on server (missing API key)'
+            }), 500
+
+        payload = {
+            "model": openai_model,
+            "response_format": {"type": "json_object"},
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {
+                    "role": "user",
+                    "content": (
+                        "Generate ONLY JSON, with this exact shape:\n"
+                        "{ \"short_description\": \"...\", \"long_description\": \"...\" }\n"
+                        "No markdown, no extra keys, no explanations."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": f"{user_prompt}"
+                }
+            ],
+            "temperature": 0.6,
+            "max_tokens": 400
+        }
+
+        headers = {
+            "Authorization": f"Bearer {openai_api_key}",
+            "Content-Type": "application/json"
+        }
+
+        # Support OpenRouter-style base URLs if configured
+        if 'openrouter.ai' in openai_base_url:
+            headers["HTTP-Referer"] = os.getenv('OPENROUTER_SITE_URL', 'https://wovcc.co.uk')
+            headers["X-Title"] = os.getenv('OPENROUTER_APP_NAME', 'WOVCC Admin')
+
+        try:
+            resp = requests.post(
+                f"{openai_base_url}/chat/completions",
+                json=payload,
+                headers=headers,
+                timeout=20
+            )
+        except Exception as e:
+            logger.error(f"Error calling AI API: {e}")
+            return jsonify({
+                'success': False,
+                'error': 'Error contacting AI generation service'
+            }), 502
+
+        if resp.status_code != 200:
+            logger.error(f"AI API error {resp.status_code}: {resp.text}")
+            return jsonify({
+                'success': False,
+                'error': 'AI generation failed',
+                'details': f'Status {resp.status_code}'
+            }), 502
+
+        try:
+            completion = resp.json()
+        except Exception as e:
+            logger.error(f"Failed to parse AI API JSON: {e}")
+            return jsonify({
+                'success': False,
+                'error': 'Invalid response from AI service'
+            }), 502
+
+        content = (
+            completion.get('choices', [{}])[0]
+            .get('message', {})
+            .get('content', '')
+            .strip()
+        )
+
+        import json
+        try:
+            parsed = json.loads(content)
+        except Exception as e:
+            logger.error(f"Failed to parse AI JSON content: {e}; content={content!r}")
+            return jsonify({
+                'success': False,
+                'error': 'AI response was not valid JSON'
+            }), 502
+
+        short_generated = (parsed.get('short_description') or '').strip()
+        long_generated = (parsed.get('long_description') or '').strip()
+
+        if not short_generated and not long_generated:
+            return jsonify({
+                'success': False,
+                'error': 'AI response missing descriptions'
+            }), 502
+
+        return jsonify({
+            'success': True,
+            'result': {
+                'short_description': short_generated,
+                'long_description': long_generated
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Error generating AI event descriptions: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error while generating descriptions'
+        }), 500
