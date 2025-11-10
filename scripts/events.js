@@ -468,11 +468,18 @@ async function loadEventDetail(eventId) {
       const mapContainer = document.getElementById('event-map-container');
       const mapIframe = document.getElementById('event-map');
       const encodedLocation = encodeURIComponent(event.location);
-      mapIframe.src = `https://www.google.com/maps/embed/v1/place?key=&q=${encodedLocation}`;
       
-      // Show map (Google Maps Embed API is free for basic usage without API key for some browsers)
-      // For production, you should get a free API key from Google Cloud Console
-      mapContainer.style.display = 'block';
+      // Get API key from data attribute
+      const apiKey = mapIframe.getAttribute('data-maps-api-key') || '';
+      
+      if (apiKey) {
+        mapIframe.src = `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${encodedLocation}`;
+        mapContainer.style.display = 'block';
+      } else {
+        console.warn('Google Maps API key not found. Map will not be displayed.');
+        // Hide map container if no API key
+        mapContainer.style.display = 'none';
+      }
     }
     
     // Set interested count

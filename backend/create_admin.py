@@ -5,6 +5,11 @@ Run: python backend/create_admin.py
 
 import sys
 import os
+
+# IMPORTANT: Load environment variables FIRST before other imports
+from dotenv import load_dotenv
+load_dotenv()
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from database import init_db, SessionLocal, User
