@@ -355,13 +355,12 @@ async function loadEventDetail(eventId) {
       error.style.display = 'none';
     }
     
-    const headers = {};
-    const token = localStorage.getItem('wovcc_access_token');
+      const headers = {};
+    // Check both sessionStorage and localStorage for backward compatibility during transition
+    const token = sessionStorage.getItem('wovcc_access_token') || localStorage.getItem('wovcc_access_token');
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(`${API_BASE}/events/${eventId}`, { headers });
+    }    const response = await fetch(`${API_BASE}/events/${eventId}`, { headers });
     const data = await response.json();
     
     if (data.success && data.event) {
@@ -415,9 +414,16 @@ async function loadEventDetail(eventId) {
     // Set descriptions
     document.getElementById('event-short-description').textContent = event.short_description;
     
-    // Render markdown for long description
+    // Render markdown for long description with sanitization
     if (typeof marked !== 'undefined') {
-      document.getElementById('event-long-description').innerHTML = marked.parse(event.long_description);
+      const rawHtml = marked.parse(event.long_description);
+      // Security: Sanitize the HTML output from marked to prevent XSS
+      if (window.HTMLSanitizer && window.HTMLSanitizer.sanitizeHtml) {
+        document.getElementById('event-long-description').innerHTML = window.HTMLSanitizer.sanitizeHtml(rawHtml);
+      } else {
+        // Fallback: use textContent if sanitizer is not available
+        document.getElementById('event-long-description').textContent = event.long_description;
+      }
     } else {
       document.getElementById('event-long-description').textContent = event.long_description;
     }
@@ -557,7 +563,8 @@ async function loadEventDetail(eventId) {
       
       // Add auth token if logged in
       if (window.WOVCCAuth && window.WOVCCAuth.isLoggedIn()) {
-        const token = localStorage.getItem('wovcc_access_token');
+        // Check both sessionStorage and localStorage for backward compatibility
+        const token = sessionStorage.getItem('wovcc_access_token') || localStorage.getItem('wovcc_access_token');
         if (token) {
           headers['Authorization'] = `Bearer ${token}`;
         }
