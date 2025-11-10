@@ -213,8 +213,8 @@ def create_spouse_card_checkout_session(customer_id: str = None, email: str = No
     session_params = {
         'payment_method_types': ['card'],
         'mode': 'payment',
-        'success_url': f'{default_frontend_url}/members?spouse_card=success',
-        'cancel_url': f'{default_frontend_url}/members?spouse_card=cancel',
+        'success_url': f'{default_frontend_url}/membership?spouse_card=success',
+        'cancel_url': f'{default_frontend_url}/membership?spouse_card=cancel',
         'line_items': [],
         'metadata': {
             'user_id': str(user_id),
