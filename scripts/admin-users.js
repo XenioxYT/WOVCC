@@ -267,13 +267,24 @@
         
         container.innerHTML = tableHTML;
         
-        // Attach event listeners
+        // Attach event listeners for user actions
         users.forEach(user => {
             const editBtn = document.getElementById(`edit-user-${user.id}`);
             const deleteBtn = document.getElementById(`delete-user-${user.id}`);
             
             if (editBtn) editBtn.addEventListener('click', () => openEditUserModal(user));
             if (deleteBtn) deleteBtn.addEventListener('click', () => deleteUser(user.id, user.name));
+        });
+        
+        // Attach event listeners for pagination buttons (CSP-compliant)
+        const paginationBtns = container.querySelectorAll('.pagination-btn');
+        paginationBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const page = parseInt(btn.getAttribute('data-page'), 10);
+                if (page && window.AdminUsers && window.AdminUsers.loadUsers) {
+                    window.AdminUsers.loadUsers(page);
+                }
+            });
         });
     }
     
@@ -283,6 +294,9 @@
     }
     
     function createUserRow(user) {
+        // Security: Use escapeHtml to prevent XSS attacks
+        const escapeHtml = window.HTMLSanitizer ? window.HTMLSanitizer.escapeHtml : (str => String(str));
+        
         const memberBadge = user.is_member 
             ? '<span style="background: #d4edda; color: #155724; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: 600;">Member</span>'
             : '<span style="background: #f8d7da; color: #721c24; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: 600;">Non-Member</span>';
@@ -291,20 +305,20 @@
             ? '<span style="background: #1a5f5f; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; margin-left: 5px;">Admin</span>'
             : '';
         
-        const paymentStatus = user.payment_status || 'N/A';
+        const paymentStatus = escapeHtml(user.payment_status || 'N/A');
         const paymentBadgeColor = {
             'active': '#d4edda',
             'pending': '#fff3cd',
             'expired': '#f8d7da',
             'cancelled': '#f8d7da'
-        }[paymentStatus] || '#e2e3e5';
+        }[user.payment_status] || '#e2e3e5';
         
         const paymentBadgeText = {
             'active': '#155724',
             'pending': '#856404',
             'expired': '#721c24',
             'cancelled': '#721c24'
-        }[paymentStatus] || '#383d41';
+        }[user.payment_status] || '#383d41';
         
         const joinDate = user.join_date ? new Date(user.join_date).toLocaleDateString('en-GB') : 'N/A';
         const expiryDate = user.membership_expiry_date ? new Date(user.membership_expiry_date).toLocaleDateString('en-GB') : 'N/A';
@@ -313,13 +327,19 @@
         const isExpired = user.membership_expiry_date && new Date(user.membership_expiry_date) < new Date();
         const expiryColor = isExpired ? 'color: var(--accent-color); font-weight: 600;' : '';
         
+        // Escape all user-provided data
+        const safeName = escapeHtml(user.name);
+        const safeEmail = escapeHtml(user.email);
+        const safeTier = escapeHtml(user.membership_tier || 'N/A');
+        const safeUserId = parseInt(user.id, 10); // Ensure ID is a number
+        
         return `
             <tr style="border-bottom: 1px solid var(--border-color);">
                 <td style="padding: 12px;">
-                    <div style="font-weight: 600; color: var(--text-dark); margin-bottom: 4px;">${user.name}</div>
-                    <div style="font-size: 0.85rem; color: var(--text-light);">${user.membership_tier || 'N/A'}</div>
+                    <div style="font-weight: 600; color: var(--text-dark); margin-bottom: 4px;">${safeName}</div>
+                    <div style="font-size: 0.85rem; color: var(--text-light);">${safeTier}</div>
                 </td>
-                <td style="padding: 12px;">${user.email}</td>
+                <td style="padding: 12px;">${safeEmail}</td>
                 <td style="padding: 12px; text-align: center;">
                     ${memberBadge}${adminBadge}
                     <div style="margin-top: 5px;">
@@ -332,12 +352,12 @@
                 <td style="padding: 12px; text-align: center; white-space: nowrap; ${expiryColor}">${expiryDate}</td>
                 <td style="padding: 12px; text-align: center;">
                     <div style="display: flex; gap: 10px; justify-content: center;">
-                        <button id="edit-user-${user.id}" class="btn-icon" title="Edit User">
+                        <button id="edit-user-${safeUserId}" class="btn-icon" title="Edit User">
                             <svg fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
                             </svg>
                         </button>
-                        <button id="delete-user-${user.id}" class="btn-icon btn-icon-danger" title="Delete User">
+                        <button id="delete-user-${safeUserId}" class="btn-icon btn-icon-danger" title="Delete User">
                             <svg fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
                             </svg>
@@ -351,11 +371,11 @@
     function renderPagination(pagination) {
         if (!pagination || pagination.pages <= 1) return '';
         
-        let html = '<div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">';
+        let html = '<div class="pagination-container" style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">';
         
         // Previous button
         if (pagination.page > 1) {
-            html += `<button onclick="window.AdminUsers.loadUsers(${pagination.page - 1})" class="btn btn-outline" style="padding: 8px 16px;">Previous</button>`;
+            html += `<button class="pagination-btn" data-page="${pagination.page - 1}" class="btn btn-outline" style="padding: 8px 16px;">Previous</button>`;
         }
         
         // Page info
@@ -363,7 +383,7 @@
         
         // Next button
         if (pagination.page < pagination.pages) {
-            html += `<button onclick="window.AdminUsers.loadUsers(${pagination.page + 1})" class="btn btn-outline" style="padding: 8px 16px;">Next</button>`;
+            html += `<button class="pagination-btn" data-page="${pagination.page + 1}" class="btn btn-outline" style="padding: 8px 16px;">Next</button>`;
         }
         
         html += '</div>';

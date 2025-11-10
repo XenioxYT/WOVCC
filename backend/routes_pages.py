@@ -19,6 +19,7 @@ Route authentication/authorization overview:
  """
 
 from flask import Blueprint, render_template
+import os
 
 pages_bp = Blueprint('pages', __name__)
 
@@ -88,7 +89,8 @@ def events():
 @pages_bp.route('/events/<int:event_id>')
 def event_detail(event_id):
     """Event detail page"""
-    return render_template('event-detail.html', event_id=event_id)
+    google_maps_api_key = os.environ.get('GOOGLE_MAPS_API_KEY', '')
+    return render_template('event-detail.html', event_id=event_id, google_maps_api_key=google_maps_api_key)
 
 
 @pages_bp.route('/contact')

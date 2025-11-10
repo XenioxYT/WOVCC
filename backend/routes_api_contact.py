@@ -90,6 +90,14 @@ def submit_contact():
         subject = (data.get("subject") or "").strip()
         message = (data.get("message") or data.get("content") or "").strip()
 
+        # Security: Sanitize inputs to prevent email header injection
+        # Remove newline characters that could be used for header injection
+        name = name.replace('\n', '').replace('\r', '')
+        email = email.replace('\n', '').replace('\r', '')
+        subject = subject.replace('\n', '').replace('\r', '')
+        # Message content can have newlines, but sanitize control characters
+        message = message.replace('\r\n', '\n').replace('\r', '\n')
+
         if not name or not email or not subject or not message:
             return (
                 jsonify(

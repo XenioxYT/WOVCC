@@ -355,13 +355,12 @@ async function loadEventDetail(eventId) {
       error.style.display = 'none';
     }
     
-    const headers = {};
-    const token = localStorage.getItem('wovcc_access_token');
+      const headers = {};
+    // Check both sessionStorage and localStorage for backward compatibility during transition
+    const token = sessionStorage.getItem('wovcc_access_token') || localStorage.getItem('wovcc_access_token');
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(`${API_BASE}/events/${eventId}`, { headers });
+    }    const response = await fetch(`${API_BASE}/events/${eventId}`, { headers });
     const data = await response.json();
     
     if (data.success && data.event) {
@@ -415,9 +414,16 @@ async function loadEventDetail(eventId) {
     // Set descriptions
     document.getElementById('event-short-description').textContent = event.short_description;
     
-    // Render markdown for long description
+    // Render markdown for long description with sanitization
     if (typeof marked !== 'undefined') {
-      document.getElementById('event-long-description').innerHTML = marked.parse(event.long_description);
+      const rawHtml = marked.parse(event.long_description);
+      // Security: Sanitize the HTML output from marked to prevent XSS
+      if (window.HTMLSanitizer && window.HTMLSanitizer.sanitizeHtml) {
+        document.getElementById('event-long-description').innerHTML = window.HTMLSanitizer.sanitizeHtml(rawHtml);
+      } else {
+        // Fallback: use textContent if sanitizer is not available
+        document.getElementById('event-long-description').textContent = event.long_description;
+      }
     } else {
       document.getElementById('event-long-description').textContent = event.long_description;
     }
@@ -462,11 +468,18 @@ async function loadEventDetail(eventId) {
       const mapContainer = document.getElementById('event-map-container');
       const mapIframe = document.getElementById('event-map');
       const encodedLocation = encodeURIComponent(event.location);
-      mapIframe.src = `https://www.google.com/maps/embed/v1/place?key=&q=${encodedLocation}`;
       
-      // Show map (Google Maps Embed API is free for basic usage without API key for some browsers)
-      // For production, you should get a free API key from Google Cloud Console
-      mapContainer.style.display = 'block';
+      // Get API key from data attribute
+      const apiKey = mapIframe.getAttribute('data-maps-api-key') || '';
+      
+      if (apiKey) {
+        mapIframe.src = `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${encodedLocation}`;
+        mapContainer.style.display = 'block';
+      } else {
+        console.warn('Google Maps API key not found. Map will not be displayed.');
+        // Hide map container if no API key
+        mapContainer.style.display = 'none';
+      }
     }
     
     // Set interested count
@@ -557,7 +570,8 @@ async function loadEventDetail(eventId) {
       
       // Add auth token if logged in
       if (window.WOVCCAuth && window.WOVCCAuth.isLoggedIn()) {
-        const token = localStorage.getItem('wovcc_access_token');
+        // Check both sessionStorage and localStorage for backward compatibility
+        const token = sessionStorage.getItem('wovcc_access_token') || localStorage.getItem('wovcc_access_token');
         if (token) {
           headers['Authorization'] = `Bearer ${token}`;
         }

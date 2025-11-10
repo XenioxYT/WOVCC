@@ -7,10 +7,37 @@
         error: (...args) => console.error(...args),
         info: (...args) => DEBUG_AUTH && console.info(...args)
     };
+    // Security: Use sessionStorage instead of localStorage to reduce XSS attack surface
+    // sessionStorage is cleared when the browser tab is closed, limiting exposure
+    // For longer sessions, the httpOnly refresh token cookie handles re-authentication
     const STORAGE_KEYS = {
         ACCESS_TOKEN: 'wovcc_access_token',
         USER: 'wovcc_user'
     };
+    
+    // Determine storage method: prefer sessionStorage for better security
+    // Falls back to memory-only storage if both are unavailable
+    const storage = (() => {
+        try {
+            // Use sessionStorage by default (more secure, auto-clears on tab close)
+            if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.setItem('test', 'test');
+                sessionStorage.removeItem('test');
+                return sessionStorage;
+            }
+        } catch (e) {
+            console.warn('sessionStorage not available, using memory storage');
+        }
+        
+        // Fallback: in-memory storage (lost on page refresh, but secure)
+        const memStorage = {};
+        return {
+            getItem: (key) => memStorage[key] || null,
+            setItem: (key, val) => { memStorage[key] = val; },
+            removeItem: (key) => { delete memStorage[key]; },
+            clear: () => { Object.keys(memStorage).forEach(k => delete memStorage[k]); }
+        };
+    })();
     const API_BASE = (() => {
         const hostname = window.location.hostname;
         if (!hostname || hostname === 'localhost' || hostname === '127.0.0.1') {
@@ -20,22 +47,34 @@
     })();
 
     function getAccessToken() {
-        return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+        return storage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
     }
 
     function saveAuthData(accessToken, user) {
-        localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
-        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+        // Security: Store in sessionStorage (or memory) instead of localStorage
+        // This limits exposure to XSS attacks as data is cleared when tab closes
+        storage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
+        
+        // Security: Only store minimal, non-sensitive user data
+        // Never store passwords or sensitive PII
+        const minimalUser = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            is_member: user.is_member,
+            is_admin: user.is_admin
+        };
+        storage.setItem(STORAGE_KEYS.USER, JSON.stringify(minimalUser));
     }
 
     function clearAuthData() {
-        localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-        localStorage.removeItem(STORAGE_KEYS.USER);
+        storage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+        storage.removeItem(STORAGE_KEYS.USER);
         // Note: Refresh token is stored as httpOnly cookie and will be cleared by server
     }
 
     function getCurrentUser() {
-        const userStr = localStorage.getItem(STORAGE_KEYS.USER);
+        const userStr = storage.getItem(STORAGE_KEYS.USER);
         return userStr ? JSON.parse(userStr) : null;
     }
 
@@ -62,7 +101,7 @@
             const data = await response.json();
             
             if (data.success && data.access_token) {
-                localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.access_token);
+                storage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.access_token);
                 return data.access_token;
             }
             
@@ -263,8 +302,16 @@
             const response = await authenticatedFetch('/user/profile');
             const data = await response.json();
             if (data.success && data.user) {
-                localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
-                return data.user;
+                // Security: Store only minimal user data
+                const minimalUser = {
+                    id: data.user.id,
+                    name: data.user.name,
+                    email: data.user.email,
+                    is_member: data.user.is_member,
+                    is_admin: data.user.is_admin
+                };
+                storage.setItem(STORAGE_KEYS.USER, JSON.stringify(minimalUser));
+                return minimalUser;
             }
             return null;
         } catch (error) {

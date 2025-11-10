@@ -23,28 +23,21 @@ def stripe_webhook():
     payload = request.data
     sig_header = request.headers.get('Stripe-Signature')
     
-    # Verify webhook signature
+    # Verify webhook signature - ALWAYS required for production security
+    if not STRIPE_WEBHOOK_SECRET:
+        logger.critical("[WEBHOOK] STRIPE_WEBHOOK_SECRET is not configured - webhooks disabled for security")
+        return jsonify({
+            'success': False,
+            'error': 'Webhook endpoint not configured'
+        }), 503
+    
     event = verify_webhook_signature(payload, sig_header)
     if not event:
-        # If verification fails but webhook secret is set, reject the request
-        if STRIPE_WEBHOOK_SECRET:
-            logger.error("[WEBHOOK] Invalid signature")
-            return jsonify({
-                'success': False,
-                'error': 'Invalid webhook signature'
-            }), 400
-        else:
-            # If no webhook secret is set, parse the payload directly (development only!)
-            try:
-                import json as json_module
-                event = json_module.loads(payload)
-                logger.warning("[WEBHOOK] No webhook secret set, parsing payload directly (DEV MODE)")
-            except Exception as e:
-                logger.error(f"[WEBHOOK] Failed to parse webhook payload: {e}")
-                return jsonify({
-                    'success': False,
-                    'error': 'Invalid payload'
-                }), 400
+        logger.error("[WEBHOOK] Invalid webhook signature")
+        return jsonify({
+            'success': False,
+            'error': 'Invalid webhook signature'
+        }), 400
     
     event_type = event.get('type', 'unknown')
     
