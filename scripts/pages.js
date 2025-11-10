@@ -884,12 +884,9 @@
     }
 
     function initJoin() {
+      // Note: Removed success=true redirect - Stripe now redirects directly to /join/activate?token=...
       var urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('success') === 'true') {
-        window.location.href = '/join/activate';
-        return;
-      }
-
+      
       if (urlParams.get('canceled') === 'true') {
         notify('Payment was canceled. Please try again if you\'d like to join.', 'warning');
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -962,18 +959,30 @@
 
   /**
    * ACTIVATE PAGE CONTROLLER (/join/activate)
-   * Extracted from activate.html inline script.
+   * Securely activates account using activation token from URL (no password required)
    */
   function initActivatePage() {
+    console.log('[Activate] ========== ACTIVATION PAGE INIT START ==========');
+    console.log('[Activate] Time:', new Date().toISOString());
+    console.log('[Activate] Full window.location:', window.location);
+    console.log('[Activate] window.location.href:', window.location.href);
+    console.log('[Activate] window.location.pathname:', window.location.pathname);
+    console.log('[Activate] window.location.search:', window.location.search);
+    console.log('[Activate] window.location.hash:', window.location.hash);
+    
     var statusIcon = document.getElementById('status-icon');
     var statusTitle = document.getElementById('status-title');
     var statusMessage = document.getElementById('status-message');
     var actionsDiv = document.getElementById('actions');
-    if (!statusIcon || !statusTitle || !statusMessage || !actionsDiv) return;
+    if (!statusIcon || !statusTitle || !statusMessage || !actionsDiv) {
+      console.error('[Activate] Missing required DOM elements');
+      return;
+    }
     if (!window.WOVCCAuth) {
       console.warn('[Activate] WOVCCAuth not ready');
       return;
     }
+    console.log('[Activate] All prerequisites met, starting activation flow');
 
     function updateStatus(type, title, message) {
       if (type === 'processing') {
@@ -1015,15 +1024,15 @@
       }
     }
 
-    function showError() {
+    function showError(message) {
       statusIcon.className = 'status-icon';
       statusIcon.innerHTML =
         '<svg viewBox="0 0 52 52" style="width: 60px; height: 60px;">' +
         '<circle cx="26" cy="26" r="25" fill="none" stroke="#e74c3c" stroke-width="2"/>' +
         '<text x="26" y="35" text-anchor="middle" font-size="30" fill="#e74c3c">!</text>' +
         '</svg>';
-      statusTitle.textContent = 'No pending registration found';
-      statusMessage.textContent = 'Please try logging in or signing up again.';
+      statusTitle.textContent = 'Activation Error';
+      statusMessage.textContent = message || 'Please try logging in or signing up again.';
       actionsDiv.innerHTML =
         '<a href="/login" class="btn btn-primary">Go to Login</a>' +
         '<a href="/join" class="btn btn-outline">Sign Up</a>';
@@ -1031,18 +1040,40 @@
     }
 
     (async function run() {
-      var pendingEmail, pendingPassword;
+      console.log('[Activate] ========== ASYNC RUN FUNCTION START ==========');
+      
+      // SECURITY FIX: Get activation token from URL parameter (not from localStorage)
+      console.log('[Activate] Creating URLSearchParams from:', window.location.search);
+      var urlParams = new URLSearchParams(window.location.search);
+      console.log('[Activate] URLSearchParams created:', urlParams);
+      console.log('[Activate] All URL params:', Array.from(urlParams.entries()));
+      
+      var activationToken = urlParams.get('token');
+      
+      console.log('[Activate] ========== TOKEN EXTRACTION ==========');
+      console.log('[Activate] window.location.href:', window.location.href);
+      console.log('[Activate] window.location.search:', window.location.search);
+      console.log('[Activate] Raw search string length:', window.location.search.length);
+      console.log('[Activate] URLSearchParams has token?:', urlParams.has('token'));
+      console.log('[Activate] Activation token from URL:', activationToken);
+      console.log('[Activate] Token type:', typeof activationToken);
+      console.log('[Activate] Token length:', activationToken ? activationToken.length : 0);
+
+      // Clear any old insecure localStorage items (cleanup)
       try {
-        pendingEmail = localStorage.getItem('wovcc_pending_email');
-        pendingPassword = localStorage.getItem('wovcc_pending_password');
+        localStorage.removeItem('wovcc_pending_email');
+        localStorage.removeItem('wovcc_pending_password');
       } catch (e) {
-        console.warn('[Activate] Unable to read localStorage', e);
+        console.warn('[Activate] Unable to clear old localStorage', e);
       }
 
-      if (!pendingEmail || !pendingPassword) {
-        showError();
+      if (!activationToken) {
+        console.error('[Activate] No activation token found in URL parameters');
+        showError('No activation token found. Please check your email or try signing up again.');
         return;
       }
+      
+      console.log('[Activate] Starting activation with token:', activationToken.substring(0, 10) + '...');
 
       updateStatus('processing', 'Creating Your Account', 'Please wait while we set up your membership...');
 
@@ -1052,16 +1083,12 @@
       while (attempts < maxAttempts) {
         attempts++;
         try {
-          var result = await window.WOVCCAuth.login(pendingEmail, pendingPassword);
+          var result = await window.WOVCCAuth.activate(activationToken);
+          
           if (result && result.success) {
-            try {
-              localStorage.removeItem('wovcc_pending_email');
-              localStorage.removeItem('wovcc_pending_password');
-            } catch (e) {
-              console.warn('[Activate] Unable to clear localStorage', e);
-            }
-
+            // Account activated successfully
             updateStatus('success', 'Welcome to WOVCC!', 'Your membership is now active. Redirecting to your members area...');
+            
             try {
               await window.WOVCCAuth.refreshUserProfile();
             } catch (e) {
@@ -1073,9 +1100,16 @@
               window.location.href = '/membership';
             }, 2000);
             return;
+          } else if (result && result.status === 'pending') {
+            // Account still being created, will retry
+            console.log('[Activate] Account still being created, attempt ' + attempts);
+          } else {
+            // Activation failed with error
+            showError(result.message || 'Failed to activate account');
+            return;
           }
         } catch (e) {
-          console.error('[Activate] Login attempt error:', e);
+          console.error('[Activate] Activation attempt error:', e);
         }
 
         if (attempts < maxAttempts) {
@@ -1083,6 +1117,7 @@
         }
       }
 
+      // Max attempts reached
       showTimeout();
     })();
   }
