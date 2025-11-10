@@ -229,17 +229,29 @@
                 <table style="width: 100%; border-collapse: collapse;">
                     <thead>
                         <tr style="background: var(--secondary-bg); border-bottom: 2px solid var(--border-color);">
-                            <th style="padding: 12px; text-align: left; font-weight: 600; cursor: pointer;" onclick="window.AdminUsers.sortBy('name')">
+                            <th
+                              style="padding: 12px; text-align: left; font-weight: 600; cursor: pointer;"
+                              data-admin-users-sort="name"
+                            >
                                 Name ${getSortIndicator('name')}
                             </th>
-                            <th style="padding: 12px; text-align: left; font-weight: 600; cursor: pointer;" onclick="window.AdminUsers.sortBy('email')">
+                            <th
+                              style="padding: 12px; text-align: left; font-weight: 600; cursor: pointer;"
+                              data-admin-users-sort="email"
+                            >
                                 Email ${getSortIndicator('email')}
                             </th>
                             <th style="padding: 12px; text-align: center; font-weight: 600;">Status</th>
-                            <th style="padding: 12px; text-align: center; font-weight: 600; cursor: pointer;" onclick="window.AdminUsers.sortBy('join_date')">
+                            <th
+                              style="padding: 12px; text-align: center; font-weight: 600; cursor: pointer;"
+                              data-admin-users-sort="join_date"
+                            >
                                 Join Date ${getSortIndicator('join_date')}
                             </th>
-                            <th style="padding: 12px; text-align: center; font-weight: 600; cursor: pointer;" onclick="window.AdminUsers.sortBy('expiry_date')">
+                            <th
+                              style="padding: 12px; text-align: center; font-weight: 600; cursor: pointer;"
+                              data-admin-users-sort="expiry_date"
+                            >
                                 Expiry ${getSortIndicator('expiry_date')}
                             </th>
                             <th style="padding: 12px; text-align: center; font-weight: 600;">Actions</th>
@@ -390,7 +402,7 @@
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.classList.remove('active');
         });
-        document.querySelector(`[data-filter="${filter}"]`)?.classList.add('active');
+        document.querySelector(`[data-admin-users-filter="${filter}"]`)?.classList.add('active');
     }
     
     function applySearch(searchTerm) {
@@ -526,4 +538,65 @@
         closeUserModal,
         handleUserSubmit
     };
+
+    // Delegated, CSP-safe events for Users admin
+
+    // Filter buttons
+    document.addEventListener('click', function(e) {
+        const filterBtn = e.target.closest('[data-admin-users-filter]');
+        if (filterBtn) {
+            e.preventDefault();
+            const filter = filterBtn.getAttribute('data-admin-users-filter');
+            if (filter) {
+                applyFilter(filter);
+            }
+            return;
+        }
+
+        // Sort headers
+        const sortHeader = e.target.closest('[data-admin-users-sort]');
+        if (sortHeader) {
+            e.preventDefault();
+            const field = sortHeader.getAttribute('data-admin-users-sort');
+            if (field) {
+                sortBy(field);
+            }
+            return;
+        }
+
+        // Pagination buttons
+        const pageBtn = e.target.closest('[data-admin-users-page]');
+        if (pageBtn) {
+            e.preventDefault();
+            const page = parseInt(pageBtn.getAttribute('data-admin-users-page'), 10);
+            if (!isNaN(page)) {
+                loadAdminUsers(page);
+            }
+            return;
+        }
+
+        // User modal close buttons
+        const closeUserBtn = e.target.closest('[data-admin-users-action="close-user-modal"]');
+        if (closeUserBtn) {
+            e.preventDefault();
+            closeUserModal();
+            return;
+        }
+    });
+
+    // Search input: trigger search on Enter key without inline JS
+    document.addEventListener('keydown', function(e) {
+        const input = e.target;
+        if (input && input.matches('[data-admin-users-search-input]') && e.key === 'Enter') {
+            e.preventDefault();
+            applySearch(input.value || '');
+        }
+    });
+
+    // User edit form submit (no inline onsubmit)
+    const userForm = document.getElementById('user-form');
+    if (userForm) {
+        userForm.addEventListener('submit', handleUserSubmit);
+    }
 })();
+

@@ -5,19 +5,8 @@
     let currentEditingEvent = null;
     let selectedImage = null;
     let imagePreviewUrl = null;
-    if (window.location.pathname === '/admin') {
-        document.addEventListener('DOMContentLoaded', function() {
-            const eventsTab = document.getElementById('events-tab');
-            if (eventsTab) {
-                eventsTab.addEventListener('click', function() {
-                    loadAdminEvents();
-                });
-            }
-            if (document.getElementById('events-tab-content')?.style.display !== 'none') {
-                loadAdminEvents();
-            }
-        });
-    }
+    // Initialize via explicit wiring from admin-page.js / SPA transitions.
+    // No inline handlers; use delegated bindings instead.
     async function loadAdminEvents() {
         console.log('loadAdminEvents called');
         try {
@@ -53,13 +42,215 @@
             container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-light);"><p>No events yet. Create your first event!</p></div>`;
             return;
         }
-        events.sort((a, b) => new Date(b.date) - new Date(a.date));
-        container.innerHTML = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;"><thead><tr style="background:var(--secondary-bg);border-bottom:2px solid var(--border-color);"><th style="padding:12px;text-align:left;font-weight:600;">Title</th><th style="padding:12px;text-align:left;font-weight:600;">Date</th><th style="padding:12px;text-align:left;font-weight:600;">Category</th><th style="padding:12px;text-align:center;font-weight:600;">Interested</th><th style="padding:12px;text-align:center;font-weight:600;">Status</th><th style="padding:12px;text-align:center;font-weight:600;">Actions</th></tr></thead><tbody>${events.map(event=>createEventRow(event)).join('')}</tbody></table></div>`;
-        events.forEach(event => {
-            document.getElementById(`edit-event-${event.id}`)?.addEventListener('click', () => openEditEventModal(event));
-            document.getElementById(`delete-event-${event.id}`)?.addEventListener('click', () => deleteEvent(event.id));
-            document.getElementById(`view-interested-${event.id}`)?.addEventListener('click', () => viewInterestedUsers(event.id));
+
+        const now = new Date();
+
+        // Split into upcoming (including today/future) vs completed (strictly past)
+        const upcoming = [];
+        const completed = [];
+
+        events.forEach(evt => {
+            const d = new Date(evt.date);
+            if (!isNaN(d.getTime()) && d < now) {
+                completed.push(evt);
+            } else {
+                upcoming.push(evt);
+            }
         });
+
+        // Default sort within each panel:
+        // - upcoming: soonest first
+        // - completed: most recent first
+        upcoming.sort((a, b) => new Date(a.date) - new Date(b.date));
+        completed.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        // Helper to build a sortable table HTML fragment
+        function buildTableHtml(list, tableIdPrefix) {
+            if (!list.length) {
+                return `<div style="text-align:center;padding:16px;color:var(--text-light);font-size:0.9rem;">No events in this section.</div>`;
+            }
+
+            return `
+              <div style="overflow-x:auto;">
+                <table id="${tableIdPrefix}-table" style="width:100%;border-collapse:collapse;">
+                  <thead>
+                    <tr style="background:var(--secondary-bg);border-bottom:2px solid var(--border-color);">
+                      <th style="padding:12px;text-align:left;font-weight:600;cursor:pointer;white-space:nowrap;"
+                          data-sort-key="title">
+                        <span class="sort-label" data-label="Title">Title</span>
+                      </th>
+                      <th style="padding:12px;text-align:left;font-weight:600;cursor:pointer;white-space:nowrap;"
+                          data-sort-key="date">
+                        <span class="sort-label" data-label="Date">Date</span>
+                      </th>
+                      <th style="padding:12px;text-align:left;font-weight:600;cursor:pointer;"
+                          data-sort-key="category">
+                        <span class="sort-label" data-label="Category">Category</span>
+                      </th>
+                      <th style="padding:12px;text-align:center;font-weight:600;cursor:pointer;white-space:nowrap;"
+                          data-sort-key="interested">
+                        <span class="sort-label" data-label="Interested">Interested</span>
+                      </th>
+                      <th style="padding:12px;text-align:center;font-weight:600;cursor:pointer;white-space:nowrap;"
+                          data-sort-key="status">
+                        <span class="sort-label" data-label="Status">Status</span>
+                      </th>
+                      <th style="padding:12px;text-align:center;font-weight:600;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${list.map(event => createEventRow(event)).join('')}
+                  </tbody>
+                </table>
+              </div>`;
+        }
+
+        // Render two panels: Upcoming and Completed
+        container.innerHTML = `
+          <div style="display:flex;flex-direction:column;gap:24px;">
+
+            <div style="border:1px solid var(--border-color);border-radius:8px;padding:16px;background:#ffffff;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <h4 style="margin:0;font-size:1rem;color:var(--primary-color);">
+                  Upcoming & Active Events
+                </h4>
+                <span style="font-size:0.85rem;color:var(--text-light);">
+                  Sorted by nearest first • ${upcoming.length} event${upcoming.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+              ${buildTableHtml(upcoming, 'upcoming-events')}
+            </div>
+
+            <div style="border:1px solid var(--border-color);border-radius:8px;padding:16px;background:#fafafa;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <h4 style="margin:0;font-size:1rem;color:var(--text-dark);">
+                  Completed / Past Events
+                </h4>
+                <span style="font-size:0.85rem;color:var(--text-light);">
+                  Sorted by most recent first • ${completed.length} event${completed.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+              ${buildTableHtml(completed, 'completed-events')}
+            </div>
+
+          </div>
+        `;
+
+        // Wire up all row actions for both tables
+        function bindRowActions(list) {
+            list.forEach(event => {
+                document.getElementById(`edit-event-${event.id}`)?.addEventListener('click', () => openEditEventModal(event));
+                document.getElementById(`delete-event-${event.id}`)?.addEventListener('click', () => deleteEvent(event.id));
+                document.getElementById(`view-interested-${event.id}`)?.addEventListener('click', () => viewInterestedUsers(event.id));
+            });
+        }
+
+        bindRowActions(upcoming);
+        bindRowActions(completed);
+
+        // Enable independent sorting for each table section
+        function enableTableSorting(sourceList, tableIdPrefix, defaultSortKey, defaultDirection) {
+            const table = container.querySelector(`#${tableIdPrefix}-table`);
+            if (!table) return;
+
+            const thead = table.querySelector('thead');
+            const tbody = table.querySelector('tbody');
+            if (!thead || !tbody) return;
+
+            let currentSort = {
+                key: defaultSortKey || 'date',
+                direction: defaultDirection || 'asc'
+            };
+
+            function updateSortIndicators() {
+                thead.querySelectorAll('th[data-sort-key]').forEach(thEl => {
+                    const key = thEl.getAttribute('data-sort-key');
+                    const labelSpan = thEl.querySelector('.sort-label');
+                    if (!key || !labelSpan) return;
+
+                    const base = labelSpan.getAttribute('data-label') || '';
+
+                    if (key === currentSort.key) {
+                        const arrow = currentSort.direction === 'asc' ? ' ▲' : ' ▼';
+                        labelSpan.textContent = base + arrow;
+                    } else {
+                        labelSpan.textContent = base;
+                    }
+                });
+            }
+
+            function sortAndRender() {
+                const sorted = [...sourceList].sort((a, b) => {
+                    switch (currentSort.key) {
+                        case 'title':
+                            return compareStrings(a.title, b.title, currentSort.direction);
+                        case 'date':
+                            return compareDates(a.date, b.date, currentSort.direction);
+                        case 'category':
+                            return compareStrings(a.category || '', b.category || '', currentSort.direction);
+                        case 'interested': {
+                            const av = a.interested_count || 0;
+                            const bv = b.interested_count || 0;
+                            return currentSort.direction === 'asc' ? av - bv : bv - av;
+                        }
+                        case 'status': {
+                            const av = a.is_published ? 1 : 0;
+                            const bv = b.is_published ? 1 : 0;
+                            return currentSort.direction === 'asc' ? av - bv : bv - av;
+                        }
+                        default:
+                            return 0;
+                    }
+                });
+
+                tbody.innerHTML = sorted.map(ev => createEventRow(ev)).join('');
+                sorted.forEach(ev => {
+                    document.getElementById(`edit-event-${ev.id}`)?.addEventListener('click', () => openEditEventModal(ev));
+                    document.getElementById(`delete-event-${ev.id}`)?.addEventListener('click', () => deleteEvent(ev.id));
+                    document.getElementById(`view-interested-${ev.id}`)?.addEventListener('click', () => viewInterestedUsers(ev.id));
+                });
+
+                updateSortIndicators();
+            }
+
+            thead.querySelectorAll('th[data-sort-key]').forEach(th => {
+                th.addEventListener('click', () => {
+                    const key = th.getAttribute('data-sort-key');
+                    if (!key) return;
+
+                    if (currentSort.key === key) {
+                        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentSort.key = key;
+                        currentSort.direction = 'asc';
+                    }
+
+                    sortAndRender();
+                });
+            });
+
+            // Initial indicators + ensure default sorted order is reflected
+            updateSortIndicators();
+            sortAndRender();
+        }
+
+        // Upcoming: default nearest first (asc)
+        enableTableSorting(upcoming, 'upcoming-events', 'date', 'asc');
+        // Completed: default most recent first (desc)
+        enableTableSorting(completed, 'completed-events', 'date', 'desc');
+    }
+
+    function compareStrings(a, b, direction) {
+        const res = String(a).localeCompare(String(b), 'en', { sensitivity: 'base' });
+        return direction === 'asc' ? res : -res;
+    }
+
+    function compareDates(a, b, direction) {
+        const da = new Date(a);
+        const db = new Date(b);
+        const diff = da - db;
+        if (diff === 0) return 0;
+        return direction === 'asc' ? (diff < 0 ? -1 : 1) : (diff < 0 ? 1 : -1);
     }
 
     function createEventRow(event) {
@@ -364,6 +555,7 @@
         }
     }
     
+    // Public API (invoked from admin-page.js via data-* attributes)
     window.AdminEvents = {
         loadAdminEvents,
         openCreateEventModal,
@@ -376,4 +568,53 @@
         toggleMarkdownPreview,
         handleRecurrencePatternChange
     };
+
+    // Delegated event listeners (no inline JS)
+    document.addEventListener('click', function(e) {
+        const target = e.target.closest('[data-admin-events-action]');
+        if (!target) return;
+
+        const action = target.getAttribute('data-admin-events-action');
+        if (!action) return;
+
+        if (action === 'open-create-modal') {
+            e.preventDefault();
+            openCreateEventModal();
+        } else if (action === 'close-event-modal') {
+            e.preventDefault();
+            closeEventModal();
+        } else if (action === 'close-interested-users-modal') {
+            e.preventDefault();
+            closeInterestedUsersModal();
+        } else if (action === 'toggle-markdown-preview') {
+            e.preventDefault();
+            toggleMarkdownPreview();
+        } else if (action === 'remove-image') {
+            e.preventDefault();
+            removeImage();
+        }
+    });
+
+    document.addEventListener('change', function(e) {
+        const target = e.target;
+
+        if (target.matches('[data-admin-events-file-input="image"]')) {
+            handleImageSelect(e);
+        }
+
+        if (target.matches('[data-admin-events-action="toggle-recurring"]')) {
+            toggleRecurringOptions();
+        }
+
+        if (target.matches('[data-admin-events-action="recurrence-pattern"]')) {
+            handleRecurrencePatternChange();
+        }
+    });
+
+    // Attach form submit handler
+    document.addEventListener('submit', function(e) {
+        if (e.target && e.target.id === 'event-form') {
+            handleEventSubmit(e);
+        }
+    });
 })();

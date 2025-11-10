@@ -9,370 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="/scripts/admin-events.js"></script>
 <script src="/scripts/admin-users.js"></script>
-
-<script>
-// Notification helper - provide fallback if main.js hasn't loaded yet
-window.showNotification = window.showNotification || function(message, type = 'info') {
-  console.log(`[${type.toUpperCase()}] ${message}`);
-  // Use in-DOM notification instead of blocking alert
-  showDomNotification(message, type);
-};
-
-// Helper to show notification in the DOM
-function showDomNotification(message, type = 'info') {
-  // Ensure notification container exists
-  let container = document.getElementById('notification-container');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'notification-container';
-    container.style.position = 'fixed';
-    container.style.top = '20px';
-    container.style.right = '20px';
-    container.style.zIndex = '9999';
-    container.style.maxWidth = '350px';
-    container.style.pointerEvents = 'none';
-    document.body.appendChild(container);
-  }
-  // Create notification element
-  const notification = document.createElement('div');
-  notification.textContent = message;
-  notification.style.marginBottom = '10px';
-  notification.style.padding = '12px 18px';
-  notification.style.borderRadius = '6px';
-  notification.style.boxShadow = '0 2px 8px rgba(0,0,0,0.12)';
-  notification.style.color = '#fff';
-  notification.style.fontSize = '16px';
-  notification.style.fontWeight = '500';
-  notification.style.pointerEvents = 'auto';
-  notification.style.opacity = '1';
-  notification.style.transition = 'opacity 0.5s';
-  // Set background color based on type
-  if (type === 'error') {
-    notification.style.background = '#d32f2f';
-  } else if (type === 'success') {
-    notification.style.background = '#388e3c';
-  } else {
-    notification.style.background = '#1976d2';
-  }
-  container.appendChild(notification);
-  // Remove notification after 3 seconds
-  setTimeout(function() {
-    notification.style.opacity = '0';
-    setTimeout(function() {
-      if (notification.parentNode) {
-        notification.parentNode.removeChild(notification);
-      }
-    }, 500);
-  }, 3000);
-}
-
-(function() {
-  // Admin page controller
-  let currentConfig = {};
-  let allFixtures = [];
-
-  // Wait for all dependencies to be ready
-  function waitForDependencies(callback, maxAttempts = 50) {
-    let attempts = 0;
-    const checkInterval = setInterval(function() {
-      attempts++;
-      // Check if required dependencies are available
-      if (window.WOVCCAuth && window.wovccApi) {
-        clearInterval(checkInterval);
-        callback();
-      } else if (attempts >= maxAttempts) {
-        clearInterval(checkInterval);
-        console.error('Admin page: Required dependencies not loaded');
-        // Still try to initialize
-        callback();
-      }
-    }, 100);
-  }
-  
-  // Initialize immediately if DOM is already loaded, otherwise wait
-  function initAdminPageCheck() {
-    waitForDependencies(function() {
-      checkAdminAccess();
-      setupTabs();
-    });
-  }
-  
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initAdminPageCheck);
-  } else {
-    initAdminPageCheck();
-  }
-  
-  // Listen for page transitions
-  document.addEventListener('pageTransitionComplete', function(e) {
-    if (e.detail && e.detail.path === '/admin') {
-      initAdminPageCheck();
-    }
-  });
-  
-  function checkAdminAccess() {
-    if (!window.WOVCCAuth.isAdmin()) {
-      document.getElementById('access-denied-section').style.display = 'block';
-      document.getElementById('admin-content').style.display = 'none';
-    } else {
-      document.getElementById('access-denied-section').style.display = 'none';
-      document.getElementById('admin-content').style.display = 'block';
-      initAdminPanel();
-    }
-  }
-  
-  function setupTabs() {
-    document.querySelectorAll('.admin-tab').forEach(tab => {
-      tab.addEventListener('click', function() {
-        // Remove active class from all tabs
-        document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-        // Add active class to clicked tab
-        this.classList.add('active');
-        
-        // Hide all tab contents
-        document.querySelectorAll('.tab-content').forEach(content => {
-          content.style.display = 'none';
-        });
-        
-        // Show selected tab content
-        const tabName = this.dataset.tab;
-        const tabContent = document.getElementById(`${tabName}-tab-content`);
-        if (tabContent) {
-          tabContent.style.display = 'block';
-        }
-        
-        // Load events if events tab is clicked
-        if (tabName === 'events' && window.AdminEvents) {
-          window.AdminEvents.loadAdminEvents();
-        }
-      });
-    });
-  }
-  
-  async function initAdminPanel() {
-    // Load current configuration
-    await loadCurrentConfig();
-    
-    // Load fixtures for selection
-    await loadFixtures();
-    
-    // Setup event listeners
-    setupEventListeners();
-  }
-  
-  async function loadCurrentConfig() {
-    try {
-      const response = await fetch(wovccApi.baseURL + '/live-config');
-      const data = await response.json();
-      
-      if (data.success) {
-        currentConfig = data.config;
-        
-        // Update UI with current config
-        document.getElementById('live-toggle').checked = currentConfig.is_live || false;
-        document.getElementById('livestream-url').value = currentConfig.livestream_url || '';
-        
-        updateLiveStatusIndicator(currentConfig.is_live);
-        
-        if (currentConfig.last_updated) {
-          document.getElementById('last-updated-info').style.display = 'block';
-          document.getElementById('last-updated-time').textContent = new Date(currentConfig.last_updated).toLocaleString();
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load config:', error);
-      showNotification('Failed to load current configuration', 'error');
-    }
-  }
-  
-  async function loadFixtures() {
-    try {
-      const fixtures = await wovccApi.getFixtures('all');
-      allFixtures = fixtures;
-      
-      const selector = document.getElementById('match-selector');
-      selector.innerHTML = '<option value="">No match selected</option>';
-      
-      fixtures.forEach((fixture, index) => {
-        const option = document.createElement('option');
-        option.value = index;
-        option.textContent = `${fixture.team_name_scraping} - ${fixture.home_team} vs ${fixture.away_team} (${fixture.date_str})`;
-        selector.appendChild(option);
-      });
-      
-      // Pre-select if there's a selected match in config
-      if (currentConfig.selected_match) {
-        // Try to find matching fixture by comparing key properties
-        const matchIndex = fixtures.findIndex(f => 
-          f.home_team === currentConfig.selected_match.home_team &&
-          f.away_team === currentConfig.selected_match.away_team &&
-          f.date_iso === currentConfig.selected_match.date_iso
-        );
-        
-        if (matchIndex >= 0) {
-          selector.value = matchIndex;
-          showMatchPreview(fixtures[matchIndex]);
-        }
-      }
-      
-    } catch (error) {
-      console.error('Failed to load fixtures:', error);
-      showNotification('Failed to load fixtures', 'error');
-    }
-  }
-  
-  function setupEventListeners() {
-    // Live toggle
-    document.getElementById('live-toggle').addEventListener('change', function(e) {
-      updateLiveStatusIndicator(e.target.checked);
-    });
-    
-    // Match selector
-    document.getElementById('match-selector').addEventListener('change', function(e) {
-      const index = e.target.value;
-      if (index !== '') {
-        const fixture = allFixtures[parseInt(index)];
-        showMatchPreview(fixture);
-      } else {
-        document.getElementById('selected-match-preview').style.display = 'none';
-      }
-    });
-    
-    // Save button
-    document.getElementById('save-config-btn').addEventListener('click', saveConfiguration);
-    
-    // Clear button
-    document.getElementById('clear-config-btn').addEventListener('click', clearConfiguration);
-  }
-  
-  function updateLiveStatusIndicator(isLive) {
-    const indicator = document.getElementById('live-status-indicator');
-    const statusText = document.getElementById('status-text');
-    
-    if (isLive) {
-      indicator.style.backgroundColor = '#d4edda';
-      indicator.style.color = '#155724';
-      indicator.style.border = '1px solid #c3e6cb';
-      statusText.innerHTML = '🟢 Live section is <strong>ACTIVE</strong> - Visible to all visitors';
-    } else {
-      indicator.style.backgroundColor = '#f8d7da';
-      indicator.style.color = '#721c24';
-      indicator.style.border = '1px solid #f5c6cb';
-      statusText.innerHTML = '🔴 Live section is <strong>INACTIVE</strong> - Showing regular fixtures/results';
-    }
-  }
-  
-  function showMatchPreview(fixture) {
-    const preview = document.getElementById('selected-match-preview');
-    const content = document.getElementById('match-preview-content');
-    
-    content.innerHTML = `
-      <div style="color: var(--text-dark);">
-        <div style="margin-bottom: 8px;"><strong>Team:</strong> ${fixture.team_name_scraping}</div>
-        <div style="margin-bottom: 8px;"><strong>Team ID:</strong> <code style="background: #f0f0f0; padding: 2px 6px; border-radius: 4px;">${fixture.team_id}</code> <span style="color: var(--text-light); font-size: 0.85rem;">(for Play-Cricket widget)</span></div>
-        <div style="margin-bottom: 8px;"><strong>Match:</strong> ${fixture.home_team} vs ${fixture.away_team}</div>
-        <div style="margin-bottom: 8px;"><strong>Date:</strong> ${fixture.date_str}</div>
-        ${fixture.time ? `<div style="margin-bottom: 8px;"><strong>Time:</strong> ${fixture.time}</div>` : ''}
-        ${fixture.location ? `<div><strong>Location:</strong> ${fixture.location}</div>` : ''}
-      </div>
-    `;
-    
-    preview.style.display = 'block';
-  }
-  
-  async function saveConfiguration() {
-    try {
-      const isLive = document.getElementById('live-toggle').checked;
-      const livestreamUrl = document.getElementById('livestream-url').value.trim();
-      const matchIndex = document.getElementById('match-selector').value;
-      
-      // Validate
-      if (isLive) {
-        if (matchIndex === '') {
-          showNotification('Please select a match when live section is active', 'warning');
-          return;
-        }
-      }
-      
-      const selectedMatch = matchIndex !== '' ? allFixtures[parseInt(matchIndex)] : null;
-      
-      const configData = {
-        is_live: isLive,
-        livestream_url: livestreamUrl,
-        selected_match: selectedMatch
-      };
-      
-      const response = await window.WOVCCAuth.authenticatedFetch('/live-config', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(configData)
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        currentConfig = result.config;
-        
-        // Update last updated info
-        document.getElementById('last-updated-info').style.display = 'block';
-        document.getElementById('last-updated-time').textContent = new Date(result.config.last_updated).toLocaleString();
-        
-        showNotification('Configuration saved successfully!', 'success');
-      } else {
-        showNotification('Failed to save configuration: ' + result.error, 'error');
-      }
-      
-    } catch (error) {
-      console.error('Failed to save config:', error);
-      showNotification('Failed to save configuration: ' + error.message, 'error');
-    }
-  }
-  
-  async function clearConfiguration() {
-    if (!confirm('Are you sure you want to clear all configuration? This will turn off the live section.')) {
-      return;
-    }
-    
-    try {
-      const configData = {
-        is_live: false,
-        livestream_url: '',
-        selected_match: null
-      };
-      
-      const response = await window.WOVCCAuth.authenticatedFetch('/live-config', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(configData)
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        // Reset UI
-        document.getElementById('live-toggle').checked = false;
-        document.getElementById('livestream-url').value = '';
-        document.getElementById('match-selector').value = '';
-        document.getElementById('selected-match-preview').style.display = 'none';
-        
-        updateLiveStatusIndicator(false);
-        
-        showNotification('Configuration cleared successfully!', 'success');
-      } else {
-        showNotification('Failed to clear configuration: ' + result.error, 'error');
-      }
-      
-    } catch (error) {
-      console.error('Failed to clear config:', error);
-      showNotification('Failed to clear configuration: ' + error.message, 'error');
-    }
-  }
-})(); // End IIFE
-</script>
+<script src="/scripts/admin-page.js"></script>
 
 <!-- Toggle Switch CSS and Admin Styles -->
 <style>
@@ -778,35 +415,35 @@ function showDomNotification(message, type = 'info') {
                 
                 <!-- Search -->
                 <div style="flex: 1; max-width: 400px;">
-                  <input 
-                    type="text" 
-                    id="user-search" 
-                    class="form-input" 
+                  <input
+                    type="text"
+                    id="user-search"
+                    class="form-input"
                     placeholder="Search by name or email..."
                     style="margin: 0;"
-                    onkeyup="if(event.key==='Enter') window.AdminUsers.applySearch(this.value)"
+                    data-admin-users-search-input="true"
                   >
                 </div>
               </div>
               
               <!-- Filters -->
               <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
-                <button class="filter-btn active" data-filter="all" onclick="window.AdminUsers.applyFilter('all')">
+                <button class="filter-btn active" data-filter="all" data-admin-users-filter="all">
                   All Users
                 </button>
-                <button class="filter-btn" data-filter="members" onclick="window.AdminUsers.applyFilter('members')">
+                <button class="filter-btn" data-filter="members" data-admin-users-filter="members">
                   Members
                 </button>
-                <button class="filter-btn" data-filter="active" onclick="window.AdminUsers.applyFilter('active')">
+                <button class="filter-btn" data-filter="active" data-admin-users-filter="active">
                   Active
                 </button>
-                <button class="filter-btn" data-filter="expired" onclick="window.AdminUsers.applyFilter('expired')">
+                <button class="filter-btn" data-filter="expired" data-admin-users-filter="expired">
                   Expired
                 </button>
-                <button class="filter-btn" data-filter="admins" onclick="window.AdminUsers.applyFilter('admins')">
+                <button class="filter-btn" data-filter="admins" data-admin-users-filter="admins">
                   Admins
                 </button>
-                <button class="filter-btn" data-filter="non-members" onclick="window.AdminUsers.applyFilter('non-members')">
+                <button class="filter-btn" data-filter="non-members" data-admin-users-filter="non-members">
                   Non-Members
                 </button>
               </div>
@@ -825,7 +462,7 @@ function showDomNotification(message, type = 'info') {
             <div class="card-body">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3 style="color: var(--primary-color); margin: 0;">Events Management</h3>
-                <button onclick="window.AdminEvents.openCreateEventModal()" class="btn btn-primary">
+                <button class="btn btn-primary" data-admin-events-action="open-create-modal">
                   <svg style="width: 18px; height: 18px; margin-right: 8px;" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
                   </svg>
@@ -849,10 +486,10 @@ function showDomNotification(message, type = 'info') {
     <div class="modal-content" style="max-width: 800px;">
       <div class="modal-header">
         <h3 id="event-modal-title" style="margin: 0;">Create New Event</h3>
-        <button class="modal-close" onclick="window.AdminEvents.closeEventModal()">&times;</button>
+        <button class="modal-close" data-admin-events-action="close-event-modal">&times;</button>
       </div>
       <div class="modal-body">
-        <form id="event-form" onsubmit="window.AdminEvents.handleEventSubmit(event)">
+        <form id="event-form">
           <div class="form-group">
             <label class="form-label" for="event-title">Title *</label>
             <input type="text" id="event-title" class="form-input" required>
@@ -866,7 +503,15 @@ function showDomNotification(message, type = 'info') {
           <div class="form-group">
             <label class="form-label" for="event-long-description">
               Long Description * (Markdown supported)
-              <button type="button" onclick="window.AdminEvents.toggleMarkdownPreview()" class="btn btn-outline" style="float: right; padding: 4px 12px; font-size: 0.85rem;" id="markdown-preview-btn">Preview</button>
+              <button
+                type="button"
+                class="btn btn-outline"
+                style="float: right; padding: 4px 12px; font-size: 0.85rem;"
+                id="markdown-preview-btn"
+                data-admin-events-action="toggle-markdown-preview"
+              >
+                Preview
+              </button>
             </label>
             <textarea id="event-long-description" class="form-input" rows="6" required></textarea>
             <div id="markdown-preview" style="margin-top: 10px; padding: 15px; background: var(--secondary-bg); border-radius: 8px; border-left: 3px solid var(--primary-color); display: none; min-height: 50px; line-height: 1.6; color: var(--text-dark);"></div>
@@ -892,13 +537,23 @@ function showDomNotification(message, type = 'info') {
           
           <div class="form-group">
             <label class="form-label" for="event-image">Event Image</label>
-            <input type="file" id="event-image" class="form-input" accept="image/png,image/jpeg,image/jpg,image/webp" onchange="window.AdminEvents.handleImageSelect(event)">
+            <input
+              type="file"
+              id="event-image"
+              class="form-input"
+              accept="image/png,image/jpeg,image/jpg,image/webp"
+              data-admin-events-file-input="image"
+            >
             <p style="margin-top: 8px; font-size: 0.85rem; color: var(--text-light);">
               Accepted formats: PNG, JPG, WebP. Max size: 5MB. Image will be auto-resized and optimized.
             </p>
             <div id="image-preview-container" style="margin-top: 15px; position: relative; display: none;">
               <img id="image-preview" src="" alt="Preview" style="max-width: 100%; max-height: 300px; border-radius: 8px; display: block;">
-              <button type="button" onclick="window.AdminEvents.removeImage()" style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+              <button
+                type="button"
+                data-admin-events-action="remove-image"
+                style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"
+              >
                 <svg style="width: 20px; height: 20px; color: var(--accent-color);" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
                 </svg>
@@ -908,7 +563,11 @@ function showDomNotification(message, type = 'info') {
           
           <div class="form-group">
             <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-              <input type="checkbox" id="event-is-recurring" onchange="window.AdminEvents.toggleRecurringOptions()">
+              <input
+                type="checkbox"
+                id="event-is-recurring"
+                data-admin-events-action="toggle-recurring"
+              >
               <span class="form-label" style="margin: 0;">Recurring Event</span>
             </label>
           </div>
@@ -917,7 +576,11 @@ function showDomNotification(message, type = 'info') {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
               <div class="form-group" style="margin-bottom: 0;">
                 <label class="form-label" for="event-recurrence-pattern">Recurrence Pattern</label>
-                <select id="event-recurrence-pattern" class="form-input" onchange="window.AdminEvents.handleRecurrencePatternChange()">
+                <select
+                  id="event-recurrence-pattern"
+                  class="form-input"
+                  data-admin-events-action="recurrence-pattern"
+                >
                   <option value="daily">Daily</option>
                   <option value="weekly" selected>Weekly</option>
                   <option value="monthly">Monthly</option>
@@ -942,7 +605,13 @@ function showDomNotification(message, type = 'info') {
           </div>
           
           <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-            <button type="button" class="btn btn-outline" onclick="window.AdminEvents.closeEventModal()">Cancel</button>
+            <button
+              type="button"
+              class="btn btn-outline"
+              data-admin-events-action="close-event-modal"
+            >
+              Cancel
+            </button>
             <button type="submit" id="event-submit-btn" class="btn btn-primary">Create Event</button>
           </div>
         </form>
@@ -955,7 +624,7 @@ function showDomNotification(message, type = 'info') {
     <div class="modal-content" style="max-width: 600px;">
       <div class="modal-header">
         <h3 style="margin: 0;">Interested Users</h3>
-        <button class="modal-close" onclick="window.AdminEvents.closeInterestedUsersModal()">&times;</button>
+        <button class="modal-close" data-admin-events-action="close-interested-users-modal">&times;</button>
       </div>
       <div class="modal-body">
         <div id="interested-users-list">
@@ -970,10 +639,10 @@ function showDomNotification(message, type = 'info') {
     <div class="modal-content" style="max-width: 700px;">
       <div class="modal-header">
         <h3 id="user-modal-title" style="margin: 0;">Edit User</h3>
-        <button class="modal-close" onclick="window.AdminUsers.closeUserModal()">&times;</button>
+        <button class="modal-close" data-admin-users-action="close-user-modal">&times;</button>
       </div>
       <div class="modal-body">
-        <form id="user-form" onsubmit="window.AdminUsers.handleUserSubmit(event)">
+        <form id="user-form">
           <div class="form-group">
             <label class="form-label" for="user-name">Name *</label>
             <input type="text" id="user-name" class="form-input" required>
@@ -1031,7 +700,13 @@ function showDomNotification(message, type = 'info') {
           </div>
           
           <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-            <button type="button" class="btn btn-outline" onclick="window.AdminUsers.closeUserModal()">Cancel</button>
+            <button
+              type="button"
+              class="btn btn-outline"
+              data-admin-users-action="close-user-modal"
+            >
+              Cancel
+            </button>
             <button type="submit" id="user-submit-btn" class="btn btn-primary">Update User</button>
           </div>
         </form>

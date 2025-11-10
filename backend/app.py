@@ -47,6 +47,7 @@ from routes_api_auth import auth_api_bp
 from routes_api_admin import admin_api_bp
 from routes_api_events import events_api_bp
 from routes_api_webhooks import webhooks_api_bp
+from routes_api_contact import contact_bp
 
 app.register_blueprint(pages_bp)
 app.register_blueprint(cricket_api_bp)
@@ -54,6 +55,7 @@ app.register_blueprint(auth_api_bp)
 app.register_blueprint(admin_api_bp)
 app.register_blueprint(events_api_bp)
 app.register_blueprint(webhooks_api_bp)
+app.register_blueprint(contact_bp)
 
 
 # ========================================
@@ -73,10 +75,13 @@ def add_security_headers(response):
     # Prevent clickjacking
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     # Enable XSS protection
-    # Add a basic Content-Security-Policy for better XSS protection.
+    # Updated Content-Security-Policy:
+    # - Remove 'unsafe-inline' for scripts
+    # - Allow external marked.js CDN
+    # - Permit inline styles via nonce-based attributes (templates/scripts should avoid new inline JS)
     csp = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+        "script-src 'self' https://cdn.jsdelivr.net; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; "
         "connect-src 'self' http://localhost:5000 http://127.0.0.1:5000; "

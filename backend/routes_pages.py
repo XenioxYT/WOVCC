@@ -13,7 +13,8 @@ Route authentication/authorization overview:
 - `/admin`: Requires admin authentication
 - `/events`: Public
 - `/events/<int:event_id>`: Public
-"""
+- `/contact`: Public
+ """
 
 from flask import Blueprint, render_template
 
@@ -72,3 +73,9 @@ def events():
 def event_detail(event_id):
     """Event detail page"""
     return render_template('event-detail.html', event_id=event_id)
+
+
+@pages_bp.route('/contact')
+def contact():
+    """Contact page"""
+    return render_template('contact.html')
