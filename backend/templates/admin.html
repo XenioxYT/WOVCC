@@ -496,22 +496,48 @@
           </div>
           
           <div class="form-group">
-            <label class="form-label" for="event-short-description">Short Description * (max 255 chars)</label>
+            <label class="form-label" for="event-short-description" style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+              <span>Short Description * (max 255 chars)</span>
+              <button
+                type="button"
+                class="btn btn-outline"
+                style="padding:4px 10px;font-size:0.8rem;display:flex;align-items:center;gap:6px;"
+                data-admin-events-action="ai-generate-short"
+              >
+                <svg style="width:14px;height:14px;" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M4 3a1 1 0 011.447-.894l10 5a1 1 0 010 1.788l-10 5A1 1 0 014 14V3z"/>
+                </svg>
+                AI Short
+              </button>
+            </label>
             <textarea id="event-short-description" class="form-input" rows="2" maxlength="255" required></textarea>
           </div>
           
           <div class="form-group">
-            <label class="form-label" for="event-long-description">
-              Long Description * (Markdown supported)
-              <button
-                type="button"
-                class="btn btn-outline"
-                style="float: right; padding: 4px 12px; font-size: 0.85rem;"
-                id="markdown-preview-btn"
-                data-admin-events-action="toggle-markdown-preview"
-              >
-                Preview
-              </button>
+            <label class="form-label" for="event-long-description" style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+              <span>Long Description * (Markdown supported)</span>
+              <div style="display:flex;gap:6px;align-items:center;">
+                <button
+                  type="button"
+                  class="btn btn-outline"
+                  style="padding:4px 10px;font-size:0.8rem;display:flex;align-items:center;gap:6px;"
+                  data-admin-events-action="ai-generate-long"
+                >
+                  <svg style="width:14px;height:14px;" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M4 3a1 1 0 011.447-.894l10 5a1 1 0 010 1.788l-10 5A1 1 0 014 14V3z"/>
+                  </svg>
+                  AI Long
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline"
+                  style="padding:4px 10px;font-size:0.8rem;"
+                  id="markdown-preview-btn"
+                  data-admin-events-action="toggle-markdown-preview"
+                >
+                  Preview
+                </button>
+              </div>
             </label>
             <textarea id="event-long-description" class="form-input" rows="6" required></textarea>
             <div id="markdown-preview" style="margin-top: 10px; padding: 15px; background: var(--secondary-bg); border-radius: 8px; border-left: 3px solid var(--primary-color); display: none; min-height: 50px; line-height: 1.6; color: var(--text-dark);"></div>
