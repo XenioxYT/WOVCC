@@ -6,6 +6,7 @@ Handles Stripe payment integration
 import stripe
 import os
 import json
+from urllib.parse import quote
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -32,7 +33,7 @@ else:
     print("WARNING: STRIPE_SECRET_KEY not set. Stripe functionality will be disabled.")
 
 
-def create_checkout_session(customer_id: str = None, email: str = None, user_id: int = None, include_spouse_card: bool = False):
+def create_checkout_session(customer_id: str = None, email: str = None, user_id: int = None, include_spouse_card: bool = False, activation_token: str = None):
     """
     Create a Stripe Checkout session for membership payment
     
@@ -41,6 +42,7 @@ def create_checkout_session(customer_id: str = None, email: str = None, user_id:
         email: Customer email (for new signups)
         user_id: User ID to include in metadata (optional)
         include_spouse_card: Whether to include spouse card addon (optional)
+        activation_token: Secure token for account activation (optional)
     
     Returns:
         Stripe Checkout Session object
@@ -57,10 +59,20 @@ def create_checkout_session(customer_id: str = None, email: str = None, user_id:
     # In production, use the environment variable or default to the main domain
     default_frontend_url = os.environ.get('FRONTEND_URL', 'http://127.0.0.1:5000')
     
+    # Build success URL with activation token if provided (secure activation)
+    # NOTE: Stripe allows query parameters in success_url and preserves them
+    success_url = os.environ.get('STRIPE_SUCCESS_URL', f'{default_frontend_url}/join/activate')
+    if activation_token:
+        # Append activation token as URL parameter
+        # URL encode the token to handle special characters (- and _ are safe in URLs)
+        encoded_token = quote(activation_token, safe='-_')
+        separator = '&' if '?' in success_url else '?'
+        success_url = f'{success_url}{separator}token={encoded_token}'
+    
     session_params = {
         'payment_method_types': ['card'],
         'mode': 'payment',
-        'success_url': os.environ.get('STRIPE_SUCCESS_URL', f'{default_frontend_url}/join/activate'),
+        'success_url': success_url,
         'cancel_url': os.environ.get('STRIPE_CANCEL_URL', f'{default_frontend_url}/join/cancel'),
         'line_items': [],
         'metadata': {},
