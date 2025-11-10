@@ -57,6 +57,7 @@
    * Mirrors inline IIFE and onclick="handleLogout()" from members.html
    */
   function initMembersPage() {
+    var membersHero = document.getElementById('members-hero');
     var loginSection = document.getElementById('login-section');
     var membersContent = document.getElementById('members-content');
     var loginForm = document.getElementById('login-form');
@@ -73,15 +74,39 @@
       return;
     }
 
+    // Clear any previous animation classes so SPA re-init is clean
+    if (membersHero) {
+      membersHero.classList.remove('page-hero-animate');
+    }
+    loginSection.classList.remove('members-section-animate');
+    membersContent.classList.remove('members-section-animate');
+
     // Hide both sections initially to prevent flash
     loginSection.style.display = 'none';
     membersContent.style.display = 'none';
+
+    function animateView(isMembersView) {
+      // Apply one-shot animation classes when we reveal content
+      if (membersHero) {
+        // Force reflow so class re-add retriggers animation on SPA nav
+        // eslint-disable-next-line no-unused-expressions
+        membersHero.offsetHeight;
+        membersHero.classList.add('page-hero-animate');
+      }
+      var target = isMembersView ? membersContent : loginSection;
+      if (target) {
+        // eslint-disable-next-line no-unused-expressions
+        target.offsetHeight;
+        target.classList.add('members-section-animate');
+      }
+    }
 
     function showLoginForm() {
       loginSection.style.display = 'block';
       membersContent.style.display = 'none';
       heroTitle.textContent = 'Members Area';
       heroSubtitle.textContent = 'Login to access member content';
+      animateView(false);
     }
 
     function showMembersContent(user) {
@@ -90,6 +115,7 @@
       heroTitle.textContent = 'Welcome back, ' + (user.name || 'Member') + '!';
       heroSubtitle.textContent = 'Thank you for being part of WOVCC';
       updateMembershipInfo(user);
+      animateView(true);
     }
 
     function updateMembershipInfo(user) {
@@ -387,8 +413,8 @@
 
   // Ensure matches page initializes on both direct load and SPA transitions,
   // without causing duplicate entrance animations:
-  // - We rely on the existing .tab-content CSS animation for the first activation.
-  // - Subsequent SPA calls re-run initMatchesPage() but cloning prevents duplicate handlers.
+  // - Tab content fade-in is tied to .tab-content.active in matches.html.
+  // - SPA calls re-run initMatchesPage() but cloning prevents duplicate handlers.
   if (window.location.pathname === '/matches') {
     initMatchesPage();
   }

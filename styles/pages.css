@@ -1733,6 +1733,30 @@
    Page Transition & Loading Improvements
    =================================== */
 
+/* Members / page hero + section entrance
+   - Triggered explicitly from scripts/pages.js so:
+     - plays once on direct load (after auth/content resolution)
+     - plays once on SPA navigation
+*/
+.page-hero-animate {
+  animation: fadeInUpSoft 0.4s ease-out forwards;
+}
+
+.members-section-animate {
+  animation: fadeInUpSoft 0.4s ease-out forwards;
+}
+
+@keyframes fadeInUpSoft {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Prevent content jumping during async loads */
 .matchday-hub #upcoming-fixtures-container,
 .matchday-hub #recent-results-container {
