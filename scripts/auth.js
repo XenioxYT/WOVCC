@@ -108,7 +108,7 @@
         
         return response;
     }
-    async function signup(name, email, password, newsletter = false) {
+    async function signup(name, email, password, newsletter = false, includeSpouseCard = false) {
         try {
             // Store credentials in localStorage (persists across redirects)
             // These will be cleared after successful login
@@ -128,7 +128,8 @@
                     name,
                     email,
                     password,
-                    newsletter
+                    newsletter,
+                    includeSpouseCard
                 })
             });
             

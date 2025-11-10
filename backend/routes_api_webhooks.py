@@ -55,11 +55,36 @@ def stripe_webhook():
             session_id = session.get('id')
             payment_status = session.get('payment_status')
             pending_id_str = session.get('metadata', {}).get('pending_id')
+            user_id_str = session.get('metadata', {}).get('user_id')
+            spouse_card_only = session.get('metadata', {}).get('spouse_card_only') == 'true'
             
-            logger.info(f"[WEBHOOK] Checkout session {session_id}: payment_status={payment_status}, pending_id={pending_id_str}")
+            logger.info(f"[WEBHOOK] Checkout session {session_id}: payment_status={payment_status}, pending_id={pending_id_str}, user_id={user_id_str}, spouse_card_only={spouse_card_only}")
 
+            # Handle additional card only purchase (for existing members)
+            if payment_status == 'paid' and spouse_card_only and user_id_str:
+                try:
+                    user_id = int(user_id_str)
+                except (ValueError, TypeError):
+                    logger.error(f"[WEBHOOK] Invalid user_id in spouse card purchase: {user_id_str}")
+                    return jsonify({'success': False, 'error': 'Invalid user_id'}), 400
+                
+                db = next(get_db())
+                try:
+                    user = db.query(User).filter(User.id == user_id).first()
+                    if not user:
+                        logger.error(f"[WEBHOOK] User not found for ID: {user_id}")
+                        return jsonify({'success': False, 'error': 'User not found'}), 404
+                    
+                    logger.info(f"[WEBHOOK] Setting additional card flag for user {user.email}")
+                    user.has_spouse_card = True
+                    user.updated_at = datetime.now(timezone.utc)
+                    db.commit()
+                    logger.info(f"[WEBHOOK] Successfully added additional card for {user.email}")
+                finally:
+                    db.close()
+            
             # Create user account after successful payment
-            if payment_status == 'paid' and pending_id_str:
+            elif payment_status == 'paid' and pending_id_str:
                 try:
                     pending_id = int(pending_id_str)
                 except (ValueError, TypeError):
@@ -107,6 +132,7 @@ def stripe_webhook():
                             is_member=True,
                             is_admin=False,
                             payment_status='active',
+                            has_spouse_card=pending.include_spouse_card,
                             membership_start_date=now,
                             membership_expiry_date=expiry
                         )

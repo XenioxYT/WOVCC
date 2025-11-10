@@ -115,6 +115,7 @@
       heroTitle.textContent = 'Welcome back, ' + (user.name || 'Member') + '!';
       heroSubtitle.textContent = 'Thank you for being part of WOVCC';
       updateMembershipInfo(user);
+      setupSpouseCardButton(); // Set up button after showing content
       animateView(true);
     }
 
@@ -136,6 +137,18 @@
           statusElement.textContent = 'Pending';
           statusElement.style.color = 'orange';
         }
+      }
+
+      // Show/hide spouse card sections based on user status
+      var spouseCardAddon = document.getElementById('spouse-card-addon');
+      var spouseCardStatus = document.getElementById('spouse-card-status');
+      
+      if (user.has_spouse_card) {
+        if (spouseCardAddon) spouseCardAddon.style.display = 'none';
+        if (spouseCardStatus) spouseCardStatus.style.display = 'block';
+      } else {
+        if (spouseCardAddon) spouseCardAddon.style.display = 'block';
+        if (spouseCardStatus) spouseCardStatus.style.display = 'none';
       }
 
       var datesEl = document.getElementById('membership-dates');
@@ -247,6 +260,84 @@
         handleLogout();
       });
     }
+
+    // Spouse card purchase button handler
+    function setupSpouseCardButton() {
+      var purchaseSpouseCardBtn = document.getElementById('purchase-spouse-card-btn');
+      if (!purchaseSpouseCardBtn) return;
+      // Reset any previous handlers
+      var newBtn = purchaseSpouseCardBtn.cloneNode(true);
+      purchaseSpouseCardBtn.parentNode.replaceChild(newBtn, purchaseSpouseCardBtn);
+      purchaseSpouseCardBtn = newBtn;
+
+      purchaseSpouseCardBtn.addEventListener('click', function() {
+        if (!window.WOVCCAuth) return;
+        
+        var originalText = purchaseSpouseCardBtn.textContent;
+        purchaseSpouseCardBtn.disabled = true;
+        purchaseSpouseCardBtn.textContent = 'Processing...';
+
+        // Call the purchase spouse card endpoint
+        var token = localStorage.getItem('wovcc_access_token');
+        if (!token) {
+          notify('Please log in to purchase an additional card', 'error');
+          purchaseSpouseCardBtn.disabled = false;
+          purchaseSpouseCardBtn.textContent = originalText;
+          return;
+        }
+
+        fetch('/api/user/purchase-spouse-card', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          credentials: 'include'
+        })
+          .then(function(res) { return res.json(); })
+          .then(function(data) {
+            if (data.success && data.checkout_url) {
+              // Redirect to Stripe checkout
+              window.location.href = data.checkout_url;
+            } else {
+              notify(data.error || 'Failed to create checkout session', 'error');
+              purchaseSpouseCardBtn.disabled = false;
+              purchaseSpouseCardBtn.textContent = originalText;
+            }
+          })
+          .catch(function(error) {
+            console.error('Spouse card purchase error:', error);
+            notify('Failed to connect to server', 'error');
+            purchaseSpouseCardBtn.disabled = false;
+            purchaseSpouseCardBtn.textContent = originalText;
+          });
+      });
+    }
+
+    // Check for spouse card purchase success/cancel in URL params
+    function checkSpouseCardUrlParams() {
+      var urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('spouse_card') === 'success') {
+        notify('Additional card purchased successfully! It will be ready for collection at the club within 7 days.', 'success');
+        // Refresh user profile to get updated spouse card status
+        if (window.WOVCCAuth && window.WOVCCAuth.refreshUserProfile) {
+          window.WOVCCAuth.refreshUserProfile().then(function() {
+            var user = window.WOVCCAuth.getCurrentUser();
+            if (user) {
+              updateMembershipInfo(user);
+            }
+          });
+        }
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (urlParams.get('spouse_card') === 'cancel') {
+        notify('Additional card purchase was cancelled', 'warning');
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+
+    // Check URL params on init
+    checkSpouseCardUrlParams();
 
     // Only flip visibility once based on current auth state to avoid login→member flicker
     checkAuthStatus();
@@ -432,10 +523,25 @@
     var form = document.getElementById('signup-form');
     if (!form) return;
 
+    function updateTotalPrice() {
+      var spouseCheckbox = document.getElementById('spouseCard');
+      var totalPriceEl = document.getElementById('totalPrice');
+      if (spouseCheckbox && totalPriceEl) {
+        var total = spouseCheckbox.checked ? 20 : 15;
+        totalPriceEl.textContent = '£' + total;
+      }
+    }
+
     function setupSignupForm() {
       var freshForm = form.cloneNode(true);
       form.parentNode.replaceChild(freshForm, form);
       form = freshForm;
+
+      // Bind spouse card checkbox change event
+      var spouseCheckbox = document.getElementById('spouseCard');
+      if (spouseCheckbox) {
+        spouseCheckbox.addEventListener('change', updateTotalPrice);
+      }
 
       form.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -445,6 +551,7 @@
         var email = document.getElementById('email').value;
         var password = document.getElementById('password').value;
         var newsletter = document.getElementById('newsletter').checked;
+        var includeSpouseCard = spouseCheckbox ? spouseCheckbox.checked : false;
 
         if (password.length < 6) {
           notify('Password must be at least 6 characters', 'error');
@@ -458,7 +565,7 @@
           submitBtn.textContent = 'Processing...';
         }
 
-        window.WOVCCAuth.signup(name, email, password, newsletter).then(function(result) {
+        window.WOVCCAuth.signup(name, email, password, newsletter, includeSpouseCard).then(function(result) {
           if (result && result.success && result.checkout_url) {
             window.location.href = result.checkout_url;
           } else {
