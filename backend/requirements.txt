@@ -9,4 +9,4 @@ pyjwt
 stripe
 python-dotenv
 openai
-
+gunicorn
