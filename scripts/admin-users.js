@@ -267,13 +267,24 @@
         
         container.innerHTML = tableHTML;
         
-        // Attach event listeners
+        // Attach event listeners for user actions
         users.forEach(user => {
             const editBtn = document.getElementById(`edit-user-${user.id}`);
             const deleteBtn = document.getElementById(`delete-user-${user.id}`);
             
             if (editBtn) editBtn.addEventListener('click', () => openEditUserModal(user));
             if (deleteBtn) deleteBtn.addEventListener('click', () => deleteUser(user.id, user.name));
+        });
+        
+        // Attach event listeners for pagination buttons (CSP-compliant)
+        const paginationBtns = container.querySelectorAll('.pagination-btn');
+        paginationBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const page = parseInt(btn.getAttribute('data-page'), 10);
+                if (page && window.AdminUsers && window.AdminUsers.loadUsers) {
+                    window.AdminUsers.loadUsers(page);
+                }
+            });
         });
     }
     
@@ -360,11 +371,11 @@
     function renderPagination(pagination) {
         if (!pagination || pagination.pages <= 1) return '';
         
-        let html = '<div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">';
+        let html = '<div class="pagination-container" style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">';
         
         // Previous button
         if (pagination.page > 1) {
-            html += `<button onclick="window.AdminUsers.loadUsers(${pagination.page - 1})" class="btn btn-outline" style="padding: 8px 16px;">Previous</button>`;
+            html += `<button class="pagination-btn" data-page="${pagination.page - 1}" class="btn btn-outline" style="padding: 8px 16px;">Previous</button>`;
         }
         
         // Page info
@@ -372,7 +383,7 @@
         
         // Next button
         if (pagination.page < pagination.pages) {
-            html += `<button onclick="window.AdminUsers.loadUsers(${pagination.page + 1})" class="btn btn-outline" style="padding: 8px 16px;">Next</button>`;
+            html += `<button class="pagination-btn" data-page="${pagination.page + 1}" class="btn btn-outline" style="padding: 8px 16px;">Next</button>`;
         }
         
         html += '</div>';
