@@ -254,6 +254,9 @@
     }
 
     function createEventRow(event) {
+        // Security: Use escapeHtml to prevent XSS attacks
+        const escapeHtml = window.HTMLSanitizer ? window.HTMLSanitizer.escapeHtml : (str => String(str));
+        
         const eventDate = new Date(event.date);
         const dateDisplay = eventDate.toLocaleDateString('en-GB', {
             day: 'numeric',
@@ -261,7 +264,15 @@
             year: 'numeric'
         });
         const statusBadge = event.is_published ? '<span style="background:#d4edda;color:#155724;padding:4px 10px;border-radius:12px;font-size:0.85rem;font-weight:600;">Published</span>' : '<span style="background:#fff3cd;color:#856404;padding:4px 10px;border-radius:12px;font-size:0.85rem;font-weight:600;">Draft</span>';
-        return `<tr style="border-bottom:1px solid var(--border-color);"><td style="padding:12px;"><div style="font-weight:600;color:var(--text-dark);margin-bottom:4px;">${event.title}</div><div style="font-size:0.85rem;color:var(--text-light);">${event.short_description.substring(0,60)}${event.short_description.length>60?'...':''}</div></td><td style="padding:12px;white-space:nowrap;">${dateDisplay}</td><td style="padding:12px;">${event.category||'-'}</td><td style="padding:12px;text-align:center;"><button id="view-interested-${event.id}" style="background:none;border:none;color:var(--primary-color);cursor:pointer;font-weight:600;text-decoration:underline;">${event.interested_count||0}</button></td><td style="padding:12px;text-align:center;">${statusBadge}</td><td style="padding:12px;text-align:center;"><div style="display:flex;gap:10px;justify-content:center;"><button id="edit-event-${event.id}" class="btn-icon" title="Edit"><svg fill="currentColor" viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg></button><button id="delete-event-${event.id}" class="btn-icon btn-icon-danger" title="Delete"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg></button></div></td></tr>`;
+        
+        // Escape all user-provided data
+        const safeTitle = escapeHtml(event.title);
+        const safeDescription = escapeHtml(event.short_description);
+        const safeCategory = escapeHtml(event.category || '-');
+        const safeEventId = parseInt(event.id, 10);
+        const truncatedDesc = safeDescription.substring(0, 60) + (safeDescription.length > 60 ? '...' : '');
+        
+        return `<tr style="border-bottom:1px solid var(--border-color);"><td style="padding:12px;"><div style="font-weight:600;color:var(--text-dark);margin-bottom:4px;">${safeTitle}</div><div style="font-size:0.85rem;color:var(--text-light);">${truncatedDesc}</div></td><td style="padding:12px;white-space:nowrap;">${dateDisplay}</td><td style="padding:12px;">${safeCategory}</td><td style="padding:12px;text-align:center;"><button id="view-interested-${safeEventId}" style="background:none;border:none;color:var(--primary-color);cursor:pointer;font-weight:600;text-decoration:underline;">${parseInt(event.interested_count, 10)||0}</button></td><td style="padding:12px;text-align:center;">${statusBadge}</td><td style="padding:12px;text-align:center;"><div style="display:flex;gap:10px;justify-content:center;"><button id="edit-event-${safeEventId}" class="btn-icon" title="Edit"><svg fill="currentColor" viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg></button><button id="delete-event-${safeEventId}" class="btn-icon btn-icon-danger" title="Delete"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg></button></div></td></tr>`;
     }
 
     function showEventsLoading() {
@@ -383,7 +394,15 @@
         try {
             const url = currentEditingEvent ? `${API_BASE}/events/${currentEditingEvent.id}` : `${API_BASE}/events`;
             const method = currentEditingEvent ? 'PUT' : 'POST';
-            const token = localStorage.getItem('wovcc_access_token');
+            // Use WOVCCAuth for authenticated requests
+            const token = window.WOVCCAuth && window.WOVCCAuth.isLoggedIn() 
+                ? (sessionStorage.getItem('wovcc_access_token') || localStorage.getItem('wovcc_access_token'))
+                : null;
+            
+            if (!token) {
+                throw new Error('Authentication required');
+            }
+            
             const response = await fetch(url, {
                 method,
                 headers: {
@@ -456,13 +475,26 @@
     }
 
     function showInterestedUsersModal(users, count) {
+        // Security: Use escapeHtml to prevent XSS attacks
+        const escapeHtml = window.HTMLSanitizer ? window.HTMLSanitizer.escapeHtml : (str => String(str));
+        
         const modal = document.getElementById('interested-users-modal');
         if (!modal) return;
         const container = document.getElementById('interested-users-list');
         if (!users || users.length === 0) {
             container.innerHTML = `<p style="text-align:center;padding:20px;color:var(--text-light);">No one has shown interest yet.</p>`;
         } else {
-            container.innerHTML = `<div style="margin-bottom:15px;color:var(--text-light);"><strong>${count}</strong>${count===1?'person has':'people have'}shown interest in this event.</div><div style="max-height:400px;overflow-y:auto;">${users.map(user=>`<div style="padding:12px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:10px;"><svg style="width:20px;height:20px;color:var(--primary-color);" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg><div style="flex:1;"><div style="font-weight:600;color:var(--text-dark);">${user.name}${user.is_member?'<span style="font-size:0.75rem;background:var(--primary-color);color:white;padding:2px 6px;border-radius:4px;margin-left:6px;">Member</span>':''}</div><div style="font-size:0.9rem;color:var(--text-light);">${user.email}</div></div><div style="font-size:0.85rem;color:var(--text-light);">${new Date(user.created_at).toLocaleDateString('en-GB')}</div></div>`).join('')}</div>`;
+            const safeCount = parseInt(count, 10);
+            const userRows = users.map(user => {
+                const safeName = escapeHtml(user.name);
+                const safeEmail = escapeHtml(user.email);
+                const memberBadge = user.is_member ? '<span style="font-size:0.75rem;background:var(--primary-color);color:white;padding:2px 6px;border-radius:4px;margin-left:6px;">Member</span>' : '';
+                const safeDate = new Date(user.created_at).toLocaleDateString('en-GB');
+                
+                return `<div style="padding:12px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:10px;"><svg style="width:20px;height:20px;color:var(--primary-color);" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg><div style="flex:1;"><div style="font-weight:600;color:var(--text-dark);">${safeName}${memberBadge}</div><div style="font-size:0.9rem;color:var(--text-light);">${safeEmail}</div></div><div style="font-size:0.85rem;color:var(--text-light);">${safeDate}</div></div>`;
+            }).join('');
+            
+            container.innerHTML = `<div style="margin-bottom:15px;color:var(--text-light);"><strong>${safeCount}</strong> ${safeCount===1?'person has':'people have'} shown interest in this event.</div><div style="max-height:400px;overflow-y:auto;">${userRows}</div>`;
         }
         modal.style.display = 'flex';
     }
@@ -591,7 +623,11 @@
                 recurrence_end_date: recurrenceEndDate || null
             };
 
-            const token = localStorage.getItem('wovcc_access_token');
+            // Use WOVCCAuth for authenticated requests
+            const token = window.WOVCCAuth && window.WOVCCAuth.isLoggedIn() 
+                ? (sessionStorage.getItem('wovcc_access_token') || localStorage.getItem('wovcc_access_token'))
+                : null;
+            
             const response = await fetch(`${API_BASE}/events/ai-descriptions`, {
                 method: 'POST',
                 headers: {
