@@ -121,12 +121,13 @@ def stripe_webhook():
                             except Exception as e:
                                 logger.error(f"Failed to subscribe {existing_user.email} to newsletter: {e}")
                     else:
-                        # Create new user account
+                        # Create new user account with activation token for secure first login
                         logger.info(f"[WEBHOOK] Creating new user account for {pending.email}")
                         new_user = User(
                             name=pending.name,
                             email=pending.email,
                             password_hash=pending.password_hash,
+                            activation_token=pending.activation_token,  # Transfer token for secure activation
                             newsletter=pending.newsletter,
                             membership_tier='Annual Member',
                             is_member=True,
