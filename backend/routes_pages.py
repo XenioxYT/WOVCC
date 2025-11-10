@@ -5,7 +5,9 @@ Handles serving all HTML-rendered pages.
 Route authentication/authorization overview:
 
 - `/` (Home): Public
-- `/members`: Requires login (shows login form if not authenticated)
+- `/login`: Public (login page)
+- `/membership`: Requires login (member content)
+- `/members`: Legacy page (kept for backwards compatibility)
 - `/matches`: Public
 - `/join`: Public
 - `/join/activate`: Public (used after payment)
@@ -29,8 +31,22 @@ def index():
 
 @pages_bp.route('/members')
 def members():
-    """Members page - shows login form or member content based on auth"""
+    """Legacy members page - redirects to appropriate page"""
+    # This route is kept for backwards compatibility
+    # It redirects to login or membership based on context
     return render_template('members.html')
+
+
+@pages_bp.route('/login')
+def login():
+    """Login page"""
+    return render_template('login.html')
+
+
+@pages_bp.route('/membership')
+def membership():
+    """Membership page - requires authentication"""
+    return render_template('membership.html')
 
 
 @pages_bp.route('/matches')

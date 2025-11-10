@@ -20,6 +20,11 @@ MEMBERSHIP_PRICE_ID = os.environ.get('STRIPE_PRICE_ID', '')  # Optional: Price I
 MEMBERSHIP_PRODUCT_ID = os.environ.get('STRIPE_PRODUCT_ID')
 MEMBERSHIP_AMOUNT = 1500  # £15.00 in pence
 
+# Additional card addon configuration (extra physical card for spouse/partner)
+SPOUSE_CARD_PRICE_ID = os.environ.get('STRIPE_SPOUSE_CARD_PRICE_ID', '')  # Price ID for £5 additional card (price_...)
+SPOUSE_CARD_PRODUCT_ID = os.environ.get('STRIPE_SPOUSE_CARD_PRODUCT_ID')  # Product ID for additional card (prod_...)
+SPOUSE_CARD_AMOUNT = 500  # £5.00 in pence - extra physical card sharing same membership account
+
 # Initialize Stripe
 if STRIPE_SECRET_KEY:
     stripe.api_key = STRIPE_SECRET_KEY
@@ -27,7 +32,7 @@ else:
     print("WARNING: STRIPE_SECRET_KEY not set. Stripe functionality will be disabled.")
 
 
-def create_checkout_session(customer_id: str = None, email: str = None, user_id: int = None):
+def create_checkout_session(customer_id: str = None, email: str = None, user_id: int = None, include_spouse_card: bool = False):
     """
     Create a Stripe Checkout session for membership payment
     
@@ -35,6 +40,7 @@ def create_checkout_session(customer_id: str = None, email: str = None, user_id:
         customer_id: Existing Stripe customer ID (optional)
         email: Customer email (for new signups)
         user_id: User ID to include in metadata (optional)
+        include_spouse_card: Whether to include spouse card addon (optional)
     
     Returns:
         Stripe Checkout Session object
@@ -67,26 +73,50 @@ def create_checkout_session(customer_id: str = None, email: str = None, user_id:
         }
     }
 
+    # Build line items array
+    line_items = []
+    
     # Prefer a pre-created Price ID if provided (STRIPE_PRICE_ID / MEMBERSHIP_PRICE_ID).
     # Otherwise attach a price_data block referencing the existing Product ID.
     if MEMBERSHIP_PRICE_ID:
-        session_params['line_items'] = [{
+        line_items.append({
             'price': MEMBERSHIP_PRICE_ID,
             'quantity': 1
-        }]
+        })
     else:
         # Use existing Product ID and create inline price_data referencing it.
         if not MEMBERSHIP_PRODUCT_ID:
             raise ValueError("STRIPE_PRODUCT_ID must be set when STRIPE_PRICE_ID is not provided")
         
-        session_params['line_items'] = [{
+        line_items.append({
             'price_data': {
                 'currency': 'gbp',
                 'unit_amount': MEMBERSHIP_AMOUNT,
                 'product': MEMBERSHIP_PRODUCT_ID
             },
             'quantity': 1
-        }]
+        })
+    
+    # Add additional card if requested (extra physical card for spouse/partner)
+    if include_spouse_card:
+        if SPOUSE_CARD_PRICE_ID:
+            line_items.append({
+                'price': SPOUSE_CARD_PRICE_ID,
+                'quantity': 1
+            })
+        elif SPOUSE_CARD_PRODUCT_ID:
+            line_items.append({
+                'price_data': {
+                    'currency': 'gbp',
+                    'unit_amount': SPOUSE_CARD_AMOUNT,
+                    'product': SPOUSE_CARD_PRODUCT_ID
+                },
+                'quantity': 1
+            })
+        else:
+            print("WARNING: Additional card requested but STRIPE_SPOUSE_CARD_PRICE_ID or STRIPE_SPOUSE_CARD_PRODUCT_ID not set")
+    
+    session_params['line_items'] = line_items
     
     if user_id:
         session_params['metadata']['user_id'] = str(user_id)
@@ -151,6 +181,82 @@ def verify_webhook_signature(payload: bytes, sig_header: str):
         # Catches SignatureVerificationError and other webhook errors
         print(f"Invalid signature or webhook error: {e}")
         return None
+
+
+def create_spouse_card_checkout_session(customer_id: str = None, email: str = None, user_id: int = None):
+    """
+    Create a Stripe Checkout session for additional card only (for existing members)
+    This creates a second physical card that shares the same membership account.
+    
+    Args:
+        customer_id: Existing Stripe customer ID (optional)
+        email: Customer email
+        user_id: User ID to include in metadata (required)
+    
+    Returns:
+        Stripe Checkout Session object
+    """
+    if not STRIPE_SECRET_KEY:
+        raise ValueError("Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.")
+    
+    if not user_id:
+        raise ValueError("user_id is required for spouse card purchase")
+    
+    # Ensure Stripe API key is set
+    if not stripe.api_key:
+        stripe.api_key = STRIPE_SECRET_KEY
+    
+    # Determine the base URL for frontend redirects
+    default_frontend_url = os.environ.get('FRONTEND_URL', 'http://127.0.0.1:5000')
+    
+    # Use specific URLs for spouse card purchase (don't use env vars as those are for new signups)
+    session_params = {
+        'payment_method_types': ['card'],
+        'mode': 'payment',
+        'success_url': f'{default_frontend_url}/membership?spouse_card=success',
+        'cancel_url': f'{default_frontend_url}/membership?spouse_card=cancel',
+        'line_items': [],
+        'metadata': {
+            'user_id': str(user_id),
+            'spouse_card_only': 'true'
+        },
+        'ui_mode': 'hosted',
+        'custom_text': {
+            'submit': {
+                'message': 'Add Additional Card to Your Membership'
+            }
+        }
+    }
+    
+    # Add additional card line item
+    if SPOUSE_CARD_PRICE_ID:
+        session_params['line_items'] = [{
+            'price': SPOUSE_CARD_PRICE_ID,
+            'quantity': 1
+        }]
+    elif SPOUSE_CARD_PRODUCT_ID:
+        session_params['line_items'] = [{
+            'price_data': {
+                'currency': 'gbp',
+                'unit_amount': SPOUSE_CARD_AMOUNT,
+                'product': SPOUSE_CARD_PRODUCT_ID
+            },
+            'quantity': 1
+        }]
+    else:
+        raise ValueError("STRIPE_SPOUSE_CARD_PRICE_ID or STRIPE_SPOUSE_CARD_PRODUCT_ID must be set")
+    
+    if customer_id:
+        session_params['customer'] = customer_id
+    elif email:
+        session_params['customer_email'] = email
+    
+    try:
+        session = stripe.checkout.Session.create(**session_params)
+        return session
+    except Exception as e:
+        print(f"ERROR creating Stripe additional card session: {type(e).__name__}: {e}")
+        raise
 
 
 def get_payment_status(session_id: str):

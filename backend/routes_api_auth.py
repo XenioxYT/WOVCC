@@ -13,7 +13,7 @@ from auth import (
     hash_password, verify_password, generate_token, require_auth, 
     get_refresh_token_from_request, verify_token
 )
-from stripe_config import create_checkout_session, STRIPE_SECRET_KEY
+from stripe_config import create_checkout_session, create_spouse_card_checkout_session, STRIPE_SECRET_KEY
 from mailchimp import subscribe_to_newsletter
 
 logger = logging.getLogger(__name__)
@@ -43,11 +43,13 @@ def pre_register():
 
             logger.info("[PRE-REGISTER] Creating pending registration...")
             # Create pending registration
+            include_spouse_card = data.get('includeSpouseCard', False)
             pending = PendingRegistration(
                 name=data['name'],
                 email=data['email'],
                 password_hash=hash_password(data['password']),
-                newsletter=data.get('newsletter', False)
+                newsletter=data.get('newsletter', False),
+                include_spouse_card=include_spouse_card
             )
             db.add(pending)
             db.commit()
@@ -55,11 +57,12 @@ def pre_register():
             logger.info(f"[PRE-REGISTER] Pending registration created with ID: {pending.id}")
 
             # Create checkout session
-            logger.info("[PRE-REGISTER] Creating Stripe checkout session...")
+            logger.info(f"[PRE-REGISTER] Creating Stripe checkout session (spouse card: {include_spouse_card})...")
             session = create_checkout_session(
                 customer_id=None,
                 email=data['email'],
-                user_id=None
+                user_id=None,
+                include_spouse_card=include_spouse_card
             )
             logger.info(f"[PRE-REGISTER] Stripe session created: {session.id}")
 
@@ -276,6 +279,52 @@ def update_profile(user):
             db.close()
             
     except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@auth_api_bp.route('/user/purchase-spouse-card', methods=['POST'])
+@require_auth
+def purchase_spouse_card(user):
+    """Create checkout session for additional card (for existing members only)"""
+    logger.info(f"[SPOUSE-CARD] User {user.id} ({user.email}) requesting additional card purchase")
+    
+    try:
+        # Check if user already has additional card
+        if user.has_spouse_card:
+            logger.warning(f"[SPOUSE-CARD] User {user.id} already has additional card")
+            return jsonify({
+                'success': False,
+                'error': 'You already have an additional card'
+            }), 400
+        
+        # Check if user is an active member
+        if not user.is_member or user.payment_status != 'active':
+            logger.warning(f"[SPOUSE-CARD] User {user.id} is not an active member")
+            return jsonify({
+                'success': False,
+                'error': 'You must be an active member to purchase an additional card'
+            }), 400
+        
+        # Create checkout session for additional card only
+        logger.info(f"[SPOUSE-CARD] Creating checkout session for user {user.id}")
+        session = create_spouse_card_checkout_session(
+            customer_id=user.stripe_customer_id,
+            email=user.email,
+            user_id=user.id
+        )
+        
+        logger.info(f"[SPOUSE-CARD] Checkout session created: {session.id}")
+        return jsonify({
+            'success': True,
+            'checkout_url': session.url,
+            'session_id': session.id
+        })
+        
+    except Exception as e:
+        logger.error(f"[SPOUSE-CARD] ERROR: {e}", exc_info=True)
         return jsonify({
             'success': False,
             'error': str(e)

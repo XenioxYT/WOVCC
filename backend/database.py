@@ -34,6 +34,7 @@ class User(Base):
     newsletter = Column(Boolean, default=False)
     stripe_customer_id = Column(String(255), nullable=True, index=True)
     payment_status = Column(String(50), default='pending')  # pending, active, expired, cancelled
+    has_spouse_card = Column(Boolean, default=False)  # Whether user has purchased spouse card addon
     membership_start_date = Column(DateTime, nullable=True)  # When membership started
     membership_expiry_date = Column(DateTime, nullable=True)  # When membership expires
     join_date = Column(DateTime, default=datetime.utcnow)
@@ -55,6 +56,7 @@ class User(Base):
             'is_admin': self.is_admin,
             'newsletter': self.newsletter,
             'payment_status': self.payment_status,
+            'has_spouse_card': self.has_spouse_card,
             'membership_start_date': self.membership_start_date.isoformat() if self.membership_start_date else None,
             'membership_expiry_date': self.membership_expiry_date.isoformat() if self.membership_expiry_date else None,
             'join_date': self.join_date.isoformat() if self.join_date else None,
@@ -77,6 +79,7 @@ class PendingRegistration(Base):
     email = Column(String(255), index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     newsletter = Column(Boolean, default=False)
+    include_spouse_card = Column(Boolean, default=False)  # Whether user wants spouse card addon
     created_at = Column(DateTime, default=datetime.utcnow)
 
     def to_dict(self):
@@ -85,6 +88,7 @@ class PendingRegistration(Base):
             'name': self.name,
             'email': self.email,
             'newsletter': self.newsletter,
+            'include_spouse_card': self.include_spouse_card,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
