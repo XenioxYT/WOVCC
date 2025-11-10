@@ -267,7 +267,8 @@
       purchaseSpouseCardBtn.disabled = true;
       purchaseSpouseCardBtn.textContent = 'Processing...';
 
-      var token = localStorage.getItem('wovcc_access_token');
+      // Check both sessionStorage and localStorage for backward compatibility
+      var token = sessionStorage.getItem('wovcc_access_token') || localStorage.getItem('wovcc_access_token');
       if (!token) {
         notify('Please log in to purchase an additional card', 'error');
         purchaseSpouseCardBtn.disabled = false;
@@ -586,7 +587,8 @@
         purchaseSpouseCardBtn.textContent = 'Processing...';
 
         // Call the purchase spouse card endpoint
-        var token = localStorage.getItem('wovcc_access_token');
+        // Check both sessionStorage and localStorage for backward compatibility
+        var token = sessionStorage.getItem('wovcc_access_token') || localStorage.getItem('wovcc_access_token');
         if (!token) {
           notify('Please log in to purchase an additional card', 'error');
           purchaseSpouseCardBtn.disabled = false;
