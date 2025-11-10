@@ -28,6 +28,7 @@ class User(Base):
     name = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
+    activation_token = Column(String(255), unique=True, index=True, nullable=True)  # Temporary token for first-time activation (cleared after use)
     membership_tier = Column(String(100), default='Social Member')
     is_member = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
@@ -78,6 +79,7 @@ class PendingRegistration(Base):
     name = Column(String(255), nullable=False)
     email = Column(String(255), index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
+    activation_token = Column(String(255), unique=True, index=True, nullable=False)  # Secure token for account activation
     newsletter = Column(Boolean, default=False)
     include_spouse_card = Column(Boolean, default=False)  # Whether user wants spouse card addon
     created_at = Column(DateTime, default=datetime.utcnow)
