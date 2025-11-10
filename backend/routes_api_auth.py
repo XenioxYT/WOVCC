@@ -7,6 +7,7 @@ from flask import Blueprint, jsonify, request
 import logging
 from datetime import datetime, timezone
 import os
+import secrets
 
 from database import get_db, User, PendingRegistration
 from auth import (
@@ -42,12 +43,17 @@ def pre_register():
                 return jsonify({'success': False, 'error': 'An account with this email already exists'}), 400
 
             logger.info("[PRE-REGISTER] Creating pending registration...")
-            # Create pending registration
+            # Create pending registration with secure activation token
             include_spouse_card = data.get('includeSpouseCard', False)
+            # Generate a cryptographically secure random token (32 bytes = 64 hex chars)
+            activation_token = secrets.token_urlsafe(32)
+            logger.info(f"[PRE-REGISTER] Generated secure activation token")
+            
             pending = PendingRegistration(
                 name=data['name'],
                 email=data['email'],
                 password_hash=hash_password(data['password']),
+                activation_token=activation_token,
                 newsletter=data.get('newsletter', False),
                 include_spouse_card=include_spouse_card
             )
@@ -56,22 +62,29 @@ def pre_register():
             db.refresh(pending)
             logger.info(f"[PRE-REGISTER] Pending registration created with ID: {pending.id}")
 
-            # Create checkout session
+            # Create checkout session with activation token in success URL
             logger.info(f"[PRE-REGISTER] Creating Stripe checkout session (spouse card: {include_spouse_card})...")
             session = create_checkout_session(
                 customer_id=None,
                 email=data['email'],
                 user_id=None,
-                include_spouse_card=include_spouse_card
+                include_spouse_card=include_spouse_card,
+                activation_token=activation_token
             )
             logger.info(f"[PRE-REGISTER] Stripe session created: {session.id}")
 
-            # Attach pending_id to session metadata
+            # Attach pending_id and activation_token to session metadata
             try:
                 import stripe
                 stripe.api_key = STRIPE_SECRET_KEY
                 logger.info(f"[PRE-REGISTER] Updating session metadata with pending_id={pending.id}")
-                stripe.checkout.Session.modify(session.id, metadata={'pending_id': str(pending.id)})
+                stripe.checkout.Session.modify(
+                    session.id, 
+                    metadata={
+                        'pending_id': str(pending.id),
+                        'activation_token': activation_token
+                    }
+                )
                 logger.info("[PRE-REGISTER] Session metadata updated successfully")
             except Exception as e:
                 # If modifying fails, still return session; webhook can match by customer_email
@@ -150,6 +163,105 @@ def login():
             
     except Exception as e:
         logger.error(f"Login error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@auth_api_bp.route('/auth/activate', methods=['POST'])
+def activate_account():
+    """
+    Activate account using secure activation token (no password required)
+    This endpoint is called after successful payment to check activation status and auto-login
+    
+    Flow:
+    1. User completes payment, redirected with activation_token in URL
+    2. Frontend calls this endpoint with the token
+    3. If pending still exists -> account being created (webhook processing), return 'pending'
+    4. If user found with token -> account created, issue auth tokens and clear activation_token
+    5. Otherwise -> token invalid/expired
+    """
+    try:
+        data = request.get_json()
+        
+        if not data or not data.get('activation_token'):
+            return jsonify({
+                'success': False,
+                'error': 'Activation token is required'
+            }), 400
+        
+        activation_token = data['activation_token']
+        
+        db = next(get_db())
+        try:
+            # First check if pending registration still exists with this token
+            pending = db.query(PendingRegistration).filter(
+                PendingRegistration.activation_token == activation_token
+            ).first()
+            
+            if pending:
+                # Account hasn't been created yet (webhook hasn't been processed)
+                logger.info(f"[ACTIVATE] Pending registration found for {pending.email}, account not yet created")
+                return jsonify({
+                    'success': False,
+                    'status': 'pending',
+                    'message': 'Your account is being created. Please wait...'
+                }), 202  # 202 Accepted - processing
+            
+            # Look up user by activation token
+            user = db.query(User).filter(User.activation_token == activation_token).first()
+            
+            if not user:
+                logger.warning(f"[ACTIVATE] No user found with activation token")
+                return jsonify({
+                    'success': False,
+                    'error': 'Invalid or expired activation token'
+                }), 404
+            
+            # User found! Generate auth tokens and clear the activation token
+            logger.info(f"[ACTIVATE] Activating account for user {user.email}")
+            
+            # Generate tokens
+            tokens = generate_token(user.id, user.email, user.is_admin, include_refresh=True)
+            
+            # Separate refresh token for cookie
+            refresh_token = tokens.pop('refresh_token')
+            
+            # Clear the activation token (single use only)
+            user.activation_token = None
+            user.updated_at = datetime.now(timezone.utc)
+            db.commit()
+            db.refresh(user)
+            
+            logger.info(f"[ACTIVATE] Successfully activated account for {user.email}")
+            
+            # Create response with auth tokens
+            response = jsonify({
+                'success': True,
+                'message': 'Account activated successfully',
+                'user': user.to_dict(),
+                **tokens
+            })
+            
+            # Set refresh token as httpOnly, secure cookie
+            response.set_cookie(
+                'refresh_token',
+                refresh_token,
+                httponly=True,
+                secure=not (os.environ.get('DEBUG', 'False').lower() == 'true'),
+                samesite='Lax',
+                path='/',
+                max_age=30 * 24 * 60 * 60  # 30 days
+            )
+            
+            return response
+            
+        finally:
+            db.close()
+            
+    except Exception as e:
+        logger.error(f"[ACTIVATE] Activation error: {e}", exc_info=True)
         return jsonify({
             'success': False,
             'error': str(e)
