@@ -79,14 +79,19 @@ def add_security_headers(response):
     # - Remove 'unsafe-inline' for scripts
     # - Allow external marked.js CDN
     # - Permit inline styles via nonce-based attributes (templates/scripts should avoid new inline JS)
+    # IMPORTANT:
+    # - Allow API calls to your Cloudflare-tunnelled backend and external API hostname.
+    # - Keep localhost targets for local/dev usage.
+    # - Keep cdn.jsdelivr.net for external scripts.
+    # - Update this if you introduce new domains.
     csp = (
         "default-src 'self'; "
         "script-src 'self' https://cdn.jsdelivr.net; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; "
-        "connect-src 'self' http://localhost:5000 http://127.0.0.1:5000; "
+        "connect-src 'self' http://localhost:5000 http://127.0.0.1:5000 https://wovcc.xeniox.uk https://api.wovcc.co.uk; "
         "img-src 'self' data: https://maps.googleapis.com https://*.googleapis.com; "
-        "frame-src https://www.google.com https://maps.google.com;"
+        "frame-src https://www.google.com https://maps.google.com; "
         "object-src 'none';"
     )
     response.headers['Content-Security-Policy'] = csp

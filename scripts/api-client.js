@@ -8,7 +8,7 @@
         info: (...args) => DEBUG_API && console.info(...args)
     };
     const API_CONFIG = {
-        baseURL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5000/api' : 'https://api.wovcc.co.uk/api',
+        baseURL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5000/api' : 'https://wovcc.xeniox.uk/api',
         timeout: 10000
     };
     class WOVCCApi {
