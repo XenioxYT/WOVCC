@@ -661,4 +661,101 @@
       });
     }
   });
+
+  /**
+   * CONTACT PAGE CONTROLLER (/contact)
+   * Handles contact form submission without inline JS and supports SPA transitions.
+   */
+  function initContactPage() {
+    var form = document.getElementById('contact-form');
+    if (!form) return;
+
+    var successBox = document.getElementById('contact-success');
+    var errorBox = document.getElementById('contact-error');
+    var submitBtn = document.getElementById('contact-submit');
+
+    function showBox(box, message) {
+      if (!box) return;
+      box.textContent = message;
+      box.style.display = 'block';
+    }
+
+    function hideBoxes() {
+      if (successBox) successBox.style.display = 'none';
+      if (errorBox) errorBox.style.display = 'none';
+    }
+
+    // Avoid duplicate listeners on SPA transitions by replacing the form node
+    var freshForm = form.cloneNode(true);
+    form.parentNode.replaceChild(freshForm, form);
+    form = freshForm;
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      hideBoxes();
+
+      var name = (document.getElementById('contact-name').value || '').trim();
+      var email = (document.getElementById('contact-email').value || '').trim();
+      var subject = (document.getElementById('contact-subject').value || '').trim();
+      var message = (document.getElementById('contact-message').value || '').trim();
+
+      if (!name || !email || !subject || !message) {
+        showBox(errorBox, 'Please complete all required fields.');
+        return;
+      }
+
+      var payload = {
+        name: name,
+        email: email,
+        subject: subject,
+        message: message
+      };
+
+      var originalText = submitBtn ? submitBtn.textContent : '';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending...';
+      }
+
+      fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+        .then(function(res) {
+          return res.json().catch(function() { return {}; }).then(function(data) {
+            return { res: res, data: data };
+          });
+        })
+        .then(function(result) {
+          var res = result.res;
+          var data = result.data || {};
+          if (res.ok && data.success) {
+            form.reset();
+            showBox(successBox, 'Your message has been sent successfully.');
+          } else {
+            var msg =
+              data.error ||
+              data.message ||
+              'Something went wrong sending your message. Please try again.';
+            showBox(errorBox, msg);
+          }
+        })
+        .catch(function(err) {
+          console.error('Contact form error:', err);
+          showBox(errorBox, 'Network error sending message. Please try again.');
+        })
+        .finally(function() {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+          }
+        });
+    });
+  }
+
+  // Wire contact page for direct load and SPA transitions
+  onPage('/contact', initContactPage);
 })();
