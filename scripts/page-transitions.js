@@ -194,6 +194,7 @@ class PageTransitions {
             if (!link) return;
             
             const href = link.getAttribute('href');
+            console.log('[PageTransitions] Link clicked:', href);
             
             // Skip if:
             // - External link
@@ -201,16 +202,17 @@ class PageTransitions {
             // - Special link (logout, etc)
             // - Download link
             // - Has target attribute
-            // - URL has query parameters (like success=true from Stripe)
+            // - URL has query parameters (like success=true from Stripe or token= for activation)
             if (!href || 
                 href.startsWith('http') || 
                 href.startsWith('#') || 
                 href.startsWith('mailto:') ||
                 href.startsWith('tel:') ||
-                (href.includes('?success=true') || href.includes('?canceled=true')) || // Skip for Stripe redirect URLs
+                href.includes('?') || // Skip ALL URLs with query parameters to preserve them
                 link.hasAttribute('target') ||
                 link.hasAttribute('download') ||
                 link.id === 'logout-btn') {
+                console.log('[PageTransitions] Skipping navigation (external/special):', href);
                 return;
             }
             
@@ -229,28 +231,38 @@ class PageTransitions {
                               href === '/';
             
             if (isNavLink || isEventCard) {
+                console.log('[PageTransitions] Intercepting navigation to:', href);
                 e.preventDefault();
                 this.navigateToPage(href);
+            } else {
+                console.log('[PageTransitions] Not intercepting (not nav/event link):', href);
             }
         });
     }
 
     setupHistoryNavigation() {
         window.addEventListener('popstate', (e) => {
+            console.log('[PageTransitions] Popstate event:', e.state);
             if (e.state && e.state.path) {
                 this.navigateToPage(e.state.path, false);
             }
         });
         
-        // Store initial state
-        history.replaceState({ path: window.location.pathname }, '', window.location.pathname);
+        // Store initial state (preserve query parameters!)
+        const fullPath = window.location.pathname + window.location.search;
+        history.replaceState({ path: fullPath }, '', fullPath);
+        console.log('[PageTransitions] Initial state stored with full path:', fullPath);
     }
 
     async navigateToPage(path, pushState = true) {
+        console.log('[PageTransitions] navigateToPage called with path:', path, 'pushState:', pushState);
+        
         if (this.isTransitioning || path === this.currentPage) {
+            console.log('[PageTransitions] Skipping navigation (already transitioning or same page)');
             return;
         }
 
+        console.log('[PageTransitions] Starting navigation transition to:', path);
         this.isTransitioning = true;
         document.body.classList.add('page-transitioning');
         // Remove auth-checked class so new page can re-check auth without flash
