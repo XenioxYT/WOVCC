@@ -53,10 +53,318 @@
   }
 
   /**
+   * LOGIN PAGE CONTROLLER (/login)
+   * Handles user login and redirects to membership page on success
+   */
+  function initLoginPage() {
+    var loginForm = document.getElementById('login-form');
+    var loginError = document.getElementById('login-error');
+
+    if (!loginForm) return;
+    
+    if (!window.WOVCCAuth) {
+      console.warn('[Login] WOVCCAuth not available yet');
+      return;
+    }
+
+    // If already logged in, redirect to membership page
+    if (window.WOVCCAuth.isLoggedIn()) {
+      window.location.href = '/membership';
+      return;
+    }
+
+    // Bind login form submit
+    loginForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (!window.WOVCCAuth) return;
+
+      var email = document.getElementById('login-email').value;
+      var password = document.getElementById('login-password').value;
+      var submitBtn = loginForm.querySelector('button[type="submit"]');
+      var originalText = submitBtn ? submitBtn.textContent : '';
+
+      if (loginError) {
+        loginError.style.display = 'none';
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Logging in...';
+
+      window.WOVCCAuth.login(email, password).then(function(result) {
+        if (result && result.success) {
+          window.WOVCCAuth.updateNavbar();
+          // Redirect to membership page
+          window.location.href = '/membership';
+        } else {
+          if (loginError) {
+            loginError.textContent = (result && result.message) || 'Failed to login. Please try again.';
+            loginError.style.display = 'block';
+          }
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      }).catch(function() {
+        if (loginError) {
+          loginError.textContent = 'Failed to login. Please try again.';
+          loginError.style.display = 'block';
+        }
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      });
+    }, { once: true });
+  }
+
+  // Initialize Login page
+  if (window.location.pathname === '/login') {
+    initLoginPage();
+  }
+  document.addEventListener('pageTransitionComplete', function(e) {
+    if (e && e.detail && e.detail.path === '/login') {
+      initLoginPage();
+    }
+  });
+
+  /**
+   * MEMBERSHIP PAGE CONTROLLER (/membership)
+   * Shows membership details for authenticated users
+   */
+  function initMembershipPage() {
+    if (!window.WOVCCAuth) {
+      console.warn('[Membership] WOVCCAuth not available yet');
+      return;
+    }
+
+    // If not logged in, redirect to login page
+    if (!window.WOVCCAuth.isLoggedIn()) {
+      window.location.href = '/login';
+      return;
+    }
+
+    var logoutButton = document.getElementById('logout-button');
+    var heroTitle = document.getElementById('membership-hero-title');
+    var heroSubtitle = document.getElementById('membership-hero-subtitle');
+
+    var user = window.WOVCCAuth.getCurrentUser();
+    
+    if (!user) {
+      window.location.href = '/login';
+      return;
+    }
+
+    // Update hero with user's name
+    if (heroTitle && user.name) {
+      heroTitle.textContent = 'Welcome back, ' + user.name + '!';
+    }
+    if (heroSubtitle) {
+      heroSubtitle.textContent = 'Thank you for being part of WOVCC';
+    }
+
+    // Update membership info
+    updateMembershipInfo(user);
+    setupSpouseCardButton();
+
+    // Handle logout button
+    if (logoutButton) {
+      var newLogoutBtn = logoutButton.cloneNode(true);
+      logoutButton.parentNode.replaceChild(newLogoutBtn, logoutButton);
+      logoutButton = newLogoutBtn;
+
+      logoutButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.WOVCCAuth.logout().then(function() {
+          window.WOVCCAuth.updateNavbar();
+          window.location.href = '/login';
+        });
+      });
+    }
+
+    // Check URL params for spouse card purchase
+    checkSpouseCardUrlParams();
+  }
+
+  function updateMembershipInfo(user) {
+    var membershipTypeEl = document.getElementById('membership-type');
+    if (membershipTypeEl && user.membership_tier) {
+      membershipTypeEl.textContent = user.membership_tier;
+    }
+
+    var statusElement = document.getElementById('membership-status');
+    if (statusElement) {
+      if (user.payment_status === 'active' && user.is_member) {
+        statusElement.textContent = 'Active';
+        statusElement.style.color = 'green';
+      } else if (user.payment_status === 'expired') {
+        statusElement.textContent = 'Expired';
+        statusElement.style.color = 'red';
+      } else {
+        statusElement.textContent = 'Pending';
+        statusElement.style.color = 'orange';
+      }
+    }
+
+    // Show/hide spouse card sections based on user status
+    var spouseCardAddon = document.getElementById('spouse-card-addon');
+    var spouseCardStatus = document.getElementById('spouse-card-status');
+    
+    if (user.has_spouse_card) {
+      if (spouseCardAddon) spouseCardAddon.style.display = 'none';
+      if (spouseCardStatus) spouseCardStatus.style.display = 'block';
+    } else {
+      if (spouseCardAddon) spouseCardAddon.style.display = 'block';
+      if (spouseCardStatus) spouseCardStatus.style.display = 'none';
+    }
+
+    var datesEl = document.getElementById('membership-dates');
+    var daysRemainingContainer = document.getElementById('days-remaining-container');
+    var daysRemainingEl = document.getElementById('days-remaining');
+
+    if (user.membership_start_date && user.membership_expiry_date && datesEl && daysRemainingContainer && daysRemainingEl) {
+      var startDate = new Date(user.membership_start_date);
+      var expiryDate = new Date(user.membership_expiry_date);
+      var formatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+
+      var startSpan = document.getElementById('start-date');
+      var expirySpan = document.getElementById('expiry-date');
+      if (startSpan) startSpan.textContent = startDate.toLocaleDateString('en-GB', formatOptions);
+      if (expirySpan) expirySpan.textContent = expiryDate.toLocaleDateString('en-GB', formatOptions);
+
+      var today = new Date();
+      var diffMs = expiryDate.getTime() - today.getTime();
+      var daysRemaining = Math.ceil(diffMs / (1000 * 3600 * 24));
+
+      if (daysRemaining > 0) {
+        daysRemainingEl.textContent = daysRemaining;
+        if (daysRemaining <= 30) {
+          daysRemainingEl.style.color = 'orange';
+        } else {
+          daysRemainingEl.style.color = 'var(--accent-color)';
+        }
+      } else {
+        daysRemainingEl.textContent = 'Expired';
+        daysRemainingEl.style.color = 'red';
+      }
+
+      datesEl.style.display = 'block';
+      daysRemainingContainer.style.display = 'block';
+    } else {
+      if (datesEl) datesEl.style.display = 'none';
+      if (daysRemainingContainer) daysRemainingContainer.style.display = 'none';
+    }
+  }
+
+  function setupSpouseCardButton() {
+    var purchaseSpouseCardBtn = document.getElementById('purchase-spouse-card-btn');
+    if (!purchaseSpouseCardBtn) return;
+    
+    var newBtn = purchaseSpouseCardBtn.cloneNode(true);
+    purchaseSpouseCardBtn.parentNode.replaceChild(newBtn, purchaseSpouseCardBtn);
+    purchaseSpouseCardBtn = newBtn;
+
+    purchaseSpouseCardBtn.addEventListener('click', function() {
+      if (!window.WOVCCAuth) return;
+      
+      var originalText = purchaseSpouseCardBtn.textContent;
+      purchaseSpouseCardBtn.disabled = true;
+      purchaseSpouseCardBtn.textContent = 'Processing...';
+
+      var token = localStorage.getItem('wovcc_access_token');
+      if (!token) {
+        notify('Please log in to purchase an additional card', 'error');
+        purchaseSpouseCardBtn.disabled = false;
+        purchaseSpouseCardBtn.textContent = originalText;
+        return;
+      }
+
+      fetch('/api/user/purchase-spouse-card', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        credentials: 'include'
+      })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data.success && data.checkout_url) {
+            window.location.href = data.checkout_url;
+          } else {
+            notify(data.error || 'Failed to create checkout session', 'error');
+            purchaseSpouseCardBtn.disabled = false;
+            purchaseSpouseCardBtn.textContent = originalText;
+          }
+        })
+        .catch(function(error) {
+          console.error('Spouse card purchase error:', error);
+          notify('Failed to connect to server', 'error');
+          purchaseSpouseCardBtn.disabled = false;
+          purchaseSpouseCardBtn.textContent = originalText;
+        });
+    });
+  }
+
+  function checkSpouseCardUrlParams() {
+    var urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('spouse_card') === 'success') {
+      notify('Additional card purchased successfully! It will be ready for collection at the club within 7 days.', 'success');
+      if (window.WOVCCAuth && window.WOVCCAuth.refreshUserProfile) {
+        window.WOVCCAuth.refreshUserProfile().then(function() {
+          var user = window.WOVCCAuth.getCurrentUser();
+          if (user) {
+            updateMembershipInfo(user);
+          }
+        });
+      }
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (urlParams.get('spouse_card') === 'cancel') {
+      notify('Additional card purchase was cancelled', 'warning');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }
+
+  // Initialize Membership page
+  if (window.location.pathname === '/membership') {
+    initMembershipPage();
+  }
+  document.addEventListener('pageTransitionComplete', function(e) {
+    if (e && e.detail && e.detail.path === '/membership') {
+      initMembershipPage();
+    }
+  });
+
+  /**
    * MEMBERS PAGE CONTROLLER (/members)
-   * Mirrors inline IIFE and onclick="handleLogout()" from members.html
+   * Legacy page - redirects to login or membership
    */
   function initMembersPage() {
+    if (!window.WOVCCAuth) {
+      console.warn('[Members] WOVCCAuth not available yet');
+      // Wait a bit and try again
+      setTimeout(initMembersPage, 100);
+      return;
+    }
+
+    // Redirect to appropriate page based on login state
+    if (window.WOVCCAuth.isLoggedIn()) {
+      window.location.replace('/membership');
+    } else {
+      window.location.replace('/login');
+    }
+  }
+
+  // Initialize Members page on direct load and SPA transitions
+  if (window.location.pathname === '/members') {
+    initMembersPage();
+  }
+  document.addEventListener('pageTransitionComplete', function(e) {
+    if (e && e.detail && e.detail.path === '/members') {
+      initMembersPage();
+    }
+  });
+
+  // Legacy members page code (kept but not used since we redirect)
+  function initLegacyMembersPage() {
+    // This function is kept for reference but not actively used
+    // The /members route now redirects to /login or /membership
     var membersHero = document.getElementById('members-hero');
     var loginSection = document.getElementById('login-section');
     var membersContent = document.getElementById('members-content');
@@ -342,16 +650,6 @@
     // Only flip visibility once based on current auth state to avoid login→member flicker
     checkAuthStatus();
   }
-
-  // Initialize Members page on direct load and SPA transitions
-  if (window.location.pathname === '/members') {
-    initMembersPage();
-  }
-  document.addEventListener('pageTransitionComplete', function(e) {
-    if (e && e.detail && e.detail.path === '/members') {
-      initMembersPage();
-    }
-  });
 
   /**
    * MATCHES PAGE CONTROLLER (/matches)
@@ -705,7 +1003,7 @@
       statusMessage.textContent =
         'Your payment was successful! Your account is being set up and should be ready in a few moments.';
       actionsDiv.innerHTML =
-        '<a href="/members" class="btn btn-primary">Try Login Now</a>' +
+        '<a href="/login" class="btn btn-primary">Try Login Now</a>' +
         '<button type="button" class="btn btn-outline" data-action="retry-activation">Retry Activation</button>';
       actionsDiv.style.display = 'flex';
 
@@ -727,7 +1025,7 @@
       statusTitle.textContent = 'No pending registration found';
       statusMessage.textContent = 'Please try logging in or signing up again.';
       actionsDiv.innerHTML =
-        '<a href="/members" class="btn btn-primary">Go to Login</a>' +
+        '<a href="/login" class="btn btn-primary">Go to Login</a>' +
         '<a href="/join" class="btn btn-outline">Sign Up</a>';
       actionsDiv.style.display = 'flex';
     }
@@ -772,7 +1070,7 @@
             window.WOVCCAuth.updateNavbar();
 
             setTimeout(function() {
-              window.location.href = '/members';
+              window.location.href = '/membership';
             }, 2000);
             return;
           }
