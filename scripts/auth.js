@@ -110,14 +110,8 @@
     }
     async function signup(name, email, password, newsletter = false, includeSpouseCard = false) {
         try {
-            // Store credentials in localStorage (persists across redirects)
-            // These will be cleared after successful login
-            try {
-                localStorage.setItem('wovcc_pending_email', email);
-                localStorage.setItem('wovcc_pending_password', password);
-            } catch (e) {
-                debugAuth.warn('Could not store pending credentials:', e);
-            }
+            // SECURITY: Do NOT store password in localStorage
+            // The activation token passed via URL after payment is used for secure activation
             
             const response = await fetch(`${API_BASE}/auth/pre-register`, {
                 method: 'POST',
@@ -153,6 +147,54 @@
             };
         }
     }
+    async function activate(activationToken) {
+        try {
+            const response = await fetch(`${API_BASE}/auth/activate`, {
+                method: 'POST',
+                credentials: 'include', // Include cookies for refresh token
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    activation_token: activationToken
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.status === 202 && data.status === 'pending') {
+                // Account still being created
+                return {
+                    success: false,
+                    status: 'pending',
+                    message: data.message || 'Account being created...'
+                };
+            }
+            
+            if (data.success) {
+                // Account activated successfully, save auth data
+                saveAuthData(data.access_token, data.user);
+                return {
+                    success: true,
+                    message: data.message || 'Account activated!',
+                    user: data.user
+                };
+            } else {
+                return {
+                    success: false,
+                    status: data.status,
+                    message: data.error || data.message || 'Activation failed'
+                };
+            }
+        } catch (error) {
+            debugAuth.error('Activation error:', error);
+            return {
+                success: false,
+                message: error.message || 'Failed to connect to server'
+            };
+        }
+    }
+    
     async function login(email, password) {
         try {
             const response = await fetch(`${API_BASE}/auth/login`, {
@@ -311,11 +353,11 @@
             await refreshUserProfile();
             updateNavbar();
         }
+        // Note: Stripe redirect handling removed - success URL now goes directly to /join/activate?token=...
+        // The activate page handles the secure token-based activation
         const urlParams = new URLSearchParams(window.location.search);
         
-        if (urlParams.get('success') === 'true') {
-            window.location.href = '/join/activate';
-        } else if (urlParams.get('canceled') === 'true') {
+        if (urlParams.get('canceled') === 'true') {
             if (typeof showNotification === 'function') {
                 showNotification('Payment was canceled.', 'info');
             }
@@ -326,6 +368,7 @@
         isLoggedIn,
         getCurrentUser,
         signup,
+        activate,
         login,
         logout,
         updateNavbar,
