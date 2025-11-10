@@ -360,7 +360,8 @@ async function loadEventDetail(eventId) {
     const token = sessionStorage.getItem('wovcc_access_token') || localStorage.getItem('wovcc_access_token');
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
-    }    const response = await fetch(`${API_BASE}/events/${eventId}`, { headers });
+    }
+    const response = await fetch(`${API_BASE}/events/${eventId}`, { headers });
     const data = await response.json();
     
     if (data.success && data.event) {

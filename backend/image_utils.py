@@ -174,8 +174,6 @@ def delete_image(image_path, base_upload_folder):
             logger.error(f"Security: Path traversal attempt detected: {filename}")
             return False
         
-        # Security: Ensure the filename is safe using werkzeug's secure_filename
-        from werkzeug.utils import secure_filename
         safe_filename = secure_filename(filename)
         if safe_filename != filename:
             logger.error(f"Security: Unsafe filename rejected: {filename}")
