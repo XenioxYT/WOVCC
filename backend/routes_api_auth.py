@@ -8,14 +8,16 @@ import logging
 from datetime import datetime, timezone
 import os
 import secrets
+import stripe
 
 from database import get_db, User, PendingRegistration
 from auth import (
     hash_password, verify_password, generate_token, require_auth, 
     get_refresh_token_from_request, verify_token
 )
-from stripe_config import create_checkout_session, create_spouse_card_checkout_session, STRIPE_SECRET_KEY
-from mailchimp import subscribe_to_newsletter
+from stripe_config import create_checkout_session, create_spouse_card_checkout_session, STRIPE_SECRET_KEY, delete_stripe_customer
+from mailchimp import unsubscribe_from_newsletter, subscribe_to_newsletter
+from email_validator import validate_email, EmailNotValidError
 
 logger = logging.getLogger(__name__)
 auth_api_bp = Blueprint('auth_api', __name__, url_prefix='/api')
@@ -75,7 +77,6 @@ def pre_register():
 
             # Attach pending_id and activation_token to session metadata
             try:
-                import stripe
                 stripe.api_key = STRIPE_SECRET_KEY
                 logger.info(f"[PRE-REGISTER] Updating session metadata with pending_id={pending.id}")
                 stripe.checkout.Session.modify(
@@ -355,15 +356,6 @@ def refresh_token():
 @require_auth
 def get_profile(user):
     """Get current user profile"""
-    # Add detailed logging for membership status debugging
-    logger.info(f"[PROFILE] User ID: {user.id}, Email: {user.email}")
-    logger.info(f"[PROFILE] payment_status: '{user.payment_status}' (type: {type(user.payment_status).__name__})")
-    logger.info(f"[PROFILE] is_member: {user.is_member} (type: {type(user.is_member).__name__})")
-    logger.info(f"[PROFILE] has_spouse_card: {user.has_spouse_card}")
-    logger.info(f"[PROFILE] membership_tier: '{user.membership_tier}'")
-    logger.info(f"[PROFILE] stripe_customer_id: {user.stripe_customer_id}")
-    logger.info(f"[PROFILE] membership_start_date: {user.membership_start_date}")
-    logger.info(f"[PROFILE] membership_expiry_date: {user.membership_expiry_date}")
     
     resp = jsonify({
         'success': True,
@@ -474,11 +466,10 @@ def change_email(user):
         new_email = data['new_email'].strip().lower()
         
         # Validate email format
-        if '@' not in new_email or '.' not in new_email.split('@')[-1]:
-            return jsonify({
-                'success': False,
-                'error': 'Invalid email address format'
-            }), 400
+        try:
+            validate_email(new_email)
+        except EmailNotValidError as e:
+            return jsonify({'success': False, 'error': str(e)}), 400
         
         # Check if email is the same
         if new_email == user.email:
@@ -519,8 +510,6 @@ def change_email(user):
             # Update Mailchimp if user is subscribed to newsletter
             if db_user.newsletter:
                 try:
-                    # Unsubscribe old email and subscribe new email
-                    from mailchimp import unsubscribe_from_newsletter, subscribe_to_newsletter
                     
                     # Unsubscribe old email
                     unsubscribe_result = unsubscribe_from_newsletter(old_email)
@@ -593,7 +582,6 @@ def delete_account(user):
         # Delete Stripe customer (if exists)
         if stripe_customer_id:
             try:
-                from stripe_config import delete_stripe_customer
                 stripe_deleted = delete_stripe_customer(stripe_customer_id)
                 if stripe_deleted:
                     logger.info(f"[DELETE-ACCOUNT] Stripe customer {stripe_customer_id} deleted")
@@ -606,7 +594,6 @@ def delete_account(user):
         # Unsubscribe from Mailchimp (if subscribed)
         if is_subscribed_newsletter:
             try:
-                from mailchimp import unsubscribe_from_newsletter
                 mailchimp_result = unsubscribe_from_newsletter(user_email)
                 logger.info(f"[DELETE-ACCOUNT] Mailchimp unsubscribe result: {mailchimp_result}")
             except Exception as e:

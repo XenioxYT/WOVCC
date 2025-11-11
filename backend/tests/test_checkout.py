@@ -4,6 +4,7 @@ Test script for Stripe checkout endpoint
 """
 import os
 import sys
+import traceback
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -35,7 +36,6 @@ try:
     print(f"  Status: {session.status}")
 except Exception as e:
     print(f"✗ FAILED: {type(e).__name__}: {e}")
-    import traceback
     traceback.print_exc()
     sys.exit(1)
 

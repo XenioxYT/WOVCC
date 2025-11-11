@@ -374,8 +374,8 @@
       if (errorDiv) errorDiv.style.display = 'none';
       if (successDiv) successDiv.style.display = 'none';
       
-      // Validate email
-      if (!newEmail || newEmail.indexOf('@') === -1) {
+      const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;  
+      if (!newEmail || !emailRegex.test(newEmail)) { 
         if (errorDiv) {
           errorDiv.querySelector('p').textContent = 'Please enter a valid email address';
           errorDiv.style.display = 'block';

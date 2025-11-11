@@ -8,6 +8,7 @@ import os
 import json
 from datetime import datetime
 import logging
+import shutil
 
 from scraper import scraper
 from auth import require_admin
@@ -263,7 +264,6 @@ def update_live_config(user):
 def clear_cache(user):
     """Clear all cached data (admin endpoint)"""
     try:
-        import shutil
         cache_dir = 'cache'
         if os.path.exists(cache_dir):
             shutil.rmtree(cache_dir)

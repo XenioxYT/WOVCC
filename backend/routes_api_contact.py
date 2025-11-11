@@ -59,7 +59,6 @@ def _send_email_smtp(subject: str, body: str, reply_to: str = None):
     msg.set_content(body)
 
     if use_tls:
-        import smtplib
 
         with smtplib.SMTP(host, port) as server:
             server.starttls()
