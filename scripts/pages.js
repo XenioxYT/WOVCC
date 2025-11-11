@@ -177,6 +177,8 @@
     }
     
     setupSpouseCardButton();
+    setupEmailChangeForm();
+    setupAccountDeletion();
 
     // Handle logout button
     if (logoutButton) {
@@ -284,6 +286,12 @@
       if (datesEl) datesEl.style.display = 'none';
       if (daysRemainingContainer) daysRemainingContainer.style.display = 'none';
     }
+
+    // Populate current email in change email form
+    var currentEmailDisplay = document.getElementById('current-email-display');
+    if (currentEmailDisplay && user.email) {
+      currentEmailDisplay.value = user.email;
+    }
   }
 
   function setupSpouseCardButton() {
@@ -334,6 +342,205 @@
           purchaseSpouseCardBtn.disabled = false;
           purchaseSpouseCardBtn.textContent = originalText;
         });
+    });
+  }
+
+  function setupEmailChangeForm() {
+    var form = document.getElementById('change-email-form');
+    if (!form) return;
+    
+    var errorDiv = document.getElementById('email-change-error');
+    var successDiv = document.getElementById('email-change-success');
+    var submitBtn = document.getElementById('change-email-btn');
+    
+    // Clone form to remove old event listeners
+    var newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+    form = newForm;
+    
+    // Re-get elements after cloning
+    errorDiv = document.getElementById('email-change-error');
+    successDiv = document.getElementById('email-change-success');
+    submitBtn = document.getElementById('change-email-btn');
+    
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      if (!window.WOVCCAuth) return;
+      
+      var newEmail = document.getElementById('new-email').value.trim();
+      
+      // Hide previous messages
+      if (errorDiv) errorDiv.style.display = 'none';
+      if (successDiv) successDiv.style.display = 'none';
+      
+      // Validate email
+      if (!newEmail || newEmail.indexOf('@') === -1) {
+        if (errorDiv) {
+          errorDiv.querySelector('p').textContent = 'Please enter a valid email address';
+          errorDiv.style.display = 'block';
+        }
+        return;
+      }
+      
+      var originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Changing...';
+      
+      var token = sessionStorage.getItem('wovcc_access_token') || localStorage.getItem('wovcc_access_token');
+      if (!token) {
+        notify('Please log in to change your email', 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+        return;
+      }
+      
+      fetch('/api/user/change-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        credentials: 'include',
+        body: JSON.stringify({ new_email: newEmail })
+      })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data.success) {
+            if (successDiv) {
+              successDiv.querySelector('p').textContent = 'Email address updated successfully';
+              successDiv.style.display = 'block';
+            }
+            notify('Email updated successfully', 'success');
+            
+            // Update user data
+            if (window.WOVCCAuth && window.WOVCCAuth.refreshUserProfile) {
+              window.WOVCCAuth.refreshUserProfile().then(function() {
+                var user = window.WOVCCAuth.getCurrentUser();
+                if (user) {
+                  updateMembershipInfo(user);
+                }
+              });
+            }
+            
+            // Clear form
+            document.getElementById('new-email').value = '';
+          } else {
+            if (errorDiv) {
+              errorDiv.querySelector('p').textContent = data.error || 'Failed to change email';
+              errorDiv.style.display = 'block';
+            }
+          }
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        })
+        .catch(function(error) {
+          console.error('Email change error:', error);
+          if (errorDiv) {
+            errorDiv.querySelector('p').textContent = 'Failed to connect to server';
+            errorDiv.style.display = 'block';
+          }
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        });
+    });
+  }
+
+  function setupAccountDeletion() {
+    var deleteBtn = document.getElementById('delete-account-btn');
+    var modal = document.getElementById('delete-account-modal');
+    var cancelBtn = document.getElementById('cancel-delete-btn');
+    var confirmBtn = document.getElementById('confirm-delete-btn');
+    
+    if (!deleteBtn || !modal || !cancelBtn || !confirmBtn) return;
+    
+    // Clone buttons to remove old event listeners
+    var newDeleteBtn = deleteBtn.cloneNode(true);
+    deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+    deleteBtn = newDeleteBtn;
+    
+    var newCancelBtn = cancelBtn.cloneNode(true);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+    cancelBtn = newCancelBtn;
+    
+    var newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+    confirmBtn = newConfirmBtn;
+    
+    // Show modal when delete button clicked
+    deleteBtn.addEventListener('click', function() {
+      modal.style.display = 'flex';
+    });
+    
+    // Hide modal when cancel clicked
+    cancelBtn.addEventListener('click', function() {
+      modal.style.display = 'none';
+    });
+    
+    // Handle account deletion
+    confirmBtn.addEventListener('click', function() {
+      if (!window.WOVCCAuth) return;
+      
+      var originalText = confirmBtn.textContent;
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Deleting...';
+      cancelBtn.disabled = true;
+      
+      var token = sessionStorage.getItem('wovcc_access_token') || localStorage.getItem('wovcc_access_token');
+      if (!token) {
+        notify('Please log in to delete your account', 'error');
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = originalText;
+        cancelBtn.disabled = false;
+        modal.style.display = 'none';
+        return;
+      }
+      
+      fetch('/api/user/delete-account', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        credentials: 'include'
+      })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data.success) {
+            notify('Your account has been permanently deleted', 'success');
+            
+            // Clear auth data
+            if (window.WOVCCAuth && window.WOVCCAuth.logout) {
+              window.WOVCCAuth.logout();
+            }
+            
+            // Redirect to home page after short delay
+            setTimeout(function() {
+              window.location.href = '/';
+            }, 2000);
+          } else {
+            notify(data.error || 'Failed to delete account', 'error');
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = originalText;
+            cancelBtn.disabled = false;
+            modal.style.display = 'none';
+          }
+        })
+        .catch(function(error) {
+          console.error('Account deletion error:', error);
+          notify('Failed to connect to server', 'error');
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = originalText;
+          cancelBtn.disabled = false;
+          modal.style.display = 'none';
+        });
+    });
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+      }
     });
   }
 
