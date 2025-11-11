@@ -159,8 +159,23 @@
       heroSubtitle.textContent = 'Thank you for being part of WOVCC';
     }
 
-    // Update membership info
-    updateMembershipInfo(user);
+    // Check if we have all required membership fields, if not refresh profile
+    if (!user.payment_status || !user.membership_tier) {
+      console.log('[MEMBERSHIP] Missing membership fields, refreshing profile...');
+      window.WOVCCAuth.refreshUserProfile().then(function(freshUser) {
+        if (freshUser) {
+          console.log('[MEMBERSHIP] Profile refreshed successfully');
+          updateMembershipInfo(freshUser);
+        } else {
+          // Fallback to current user if refresh fails
+          updateMembershipInfo(user);
+        }
+      });
+    } else {
+      // Update membership info
+      updateMembershipInfo(user);
+    }
+    
     setupSpouseCardButton();
 
     // Handle logout button
@@ -183,6 +198,17 @@
   }
 
   function updateMembershipInfo(user) {
+    // Add detailed logging for membership status debugging
+    console.log('[MEMBERSHIP] ==== USER DATA DEBUG ====');
+    console.log('[MEMBERSHIP] Full user object:', user);
+    console.log('[MEMBERSHIP] payment_status:', user.payment_status, '(type:', typeof user.payment_status + ')');
+    console.log('[MEMBERSHIP] is_member:', user.is_member, '(type:', typeof user.is_member + ')');
+    console.log('[MEMBERSHIP] has_spouse_card:', user.has_spouse_card);
+    console.log('[MEMBERSHIP] membership_tier:', user.membership_tier);
+    console.log('[MEMBERSHIP] membership_start_date:', user.membership_start_date);
+    console.log('[MEMBERSHIP] membership_expiry_date:', user.membership_expiry_date);
+    console.log('[MEMBERSHIP] stripe_customer_id:', user.stripe_customer_id);
+    
     var membershipTypeEl = document.getElementById('membership-type');
     if (membershipTypeEl && user.membership_tier) {
       membershipTypeEl.textContent = user.membership_tier;
@@ -190,13 +216,21 @@
 
     var statusElement = document.getElementById('membership-status');
     if (statusElement) {
+      console.log('[MEMBERSHIP] Checking status conditions...');
+      console.log('[MEMBERSHIP] user.payment_status === "active":', user.payment_status === 'active');
+      console.log('[MEMBERSHIP] user.is_member:', user.is_member);
+      console.log('[MEMBERSHIP] Both conditions:', user.payment_status === 'active' && user.is_member);
+      
       if (user.payment_status === 'active' && user.is_member) {
+        console.log('[MEMBERSHIP] Setting status to: Active (green)');
         statusElement.textContent = 'Active';
         statusElement.style.color = 'green';
       } else if (user.payment_status === 'expired') {
+        console.log('[MEMBERSHIP] Setting status to: Expired (red)');
         statusElement.textContent = 'Expired';
         statusElement.style.color = 'red';
       } else {
+        console.log('[MEMBERSHIP] Setting status to: Pending (orange) - payment_status=' + user.payment_status + ', is_member=' + user.is_member);
         statusElement.textContent = 'Pending';
         statusElement.style.color = 'orange';
       }

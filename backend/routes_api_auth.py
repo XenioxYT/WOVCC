@@ -355,6 +355,16 @@ def refresh_token():
 @require_auth
 def get_profile(user):
     """Get current user profile"""
+    # Add detailed logging for membership status debugging
+    logger.info(f"[PROFILE] User ID: {user.id}, Email: {user.email}")
+    logger.info(f"[PROFILE] payment_status: '{user.payment_status}' (type: {type(user.payment_status).__name__})")
+    logger.info(f"[PROFILE] is_member: {user.is_member} (type: {type(user.is_member).__name__})")
+    logger.info(f"[PROFILE] has_spouse_card: {user.has_spouse_card}")
+    logger.info(f"[PROFILE] membership_tier: '{user.membership_tier}'")
+    logger.info(f"[PROFILE] stripe_customer_id: {user.stripe_customer_id}")
+    logger.info(f"[PROFILE] membership_start_date: {user.membership_start_date}")
+    logger.info(f"[PROFILE] membership_expiry_date: {user.membership_expiry_date}")
+    
     resp = jsonify({
         'success': True,
         'user': user.to_dict()
