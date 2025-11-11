@@ -3,6 +3,7 @@ import logging
 import smtplib
 from email.message import EmailMessage
 import os
+from mailchimp import subscribe_to_newsletter, is_mailchimp_configured
 
 contact_bp = Blueprint("contact_api", __name__, url_prefix="/api")
 
@@ -150,6 +151,105 @@ def submit_contact():
                 {
                     "success": False,
                     "error": "Unexpected error processing your request.",
+                }
+            ),
+            500,
+        )
+
+
+@contact_bp.route("/newsletter/subscribe", methods=["POST"])
+def subscribe_newsletter():
+    """
+    Handle newsletter subscription requests.
+
+    Expects JSON:
+      - email (required): Email address to subscribe
+
+    Subscribes the email to the Mailchimp newsletter list.
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        email = (data.get("email") or "").strip()
+
+        # Security: Sanitize email input
+        email = email.replace('\n', '').replace('\r', '')
+
+        if not email:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Email address is required.",
+                    }
+                ),
+                400,
+            )
+
+        # Basic email validation
+        if '@' not in email or '.' not in email.split('@')[-1]:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Please provide a valid email address.",
+                    }
+                ),
+                400,
+            )
+
+        # Check if Mailchimp is configured
+        if not is_mailchimp_configured():
+            current_app.logger.warning(
+                "Newsletter API: Mailchimp not configured, subscription request for %s ignored",
+                email
+            )
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Newsletter service is not currently available.",
+                    }
+                ),
+                503,
+            )
+
+        # Attempt to subscribe
+        result = subscribe_to_newsletter(email)
+
+        if result.get('success'):
+            current_app.logger.info(
+                "Newsletter API: Successfully subscribed %s (already_subscribed: %s)",
+                email,
+                result.get('already_subscribed', False)
+            )
+            return jsonify({
+                "success": True,
+                "message": result.get('message', 'Successfully subscribed to newsletter'),
+                "already_subscribed": result.get('already_subscribed', False)
+            })
+        else:
+            current_app.logger.warning(
+                "Newsletter API: Failed to subscribe %s - %s",
+                email,
+                result.get('message', 'Unknown error')
+            )
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": result.get('message', 'Unable to subscribe at this time.'),
+                    }
+                ),
+                500,
+            )
+
+    except Exception as exc:  # noqa: BLE001
+        logging.exception("Newsletter API: Unexpected error handling subscription: %s", exc)
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "Unexpected error processing your subscription.",
                 }
             ),
             500,

@@ -57,6 +57,25 @@ def subscribe_to_newsletter(email, name=None, merge_fields=None):
         subscriber_hash = get_subscriber_hash(email)
         url = f"https://{MAILCHIMP_SERVER}.api.mailchimp.com/3.0/lists/{MAILCHIMP_LIST_ID}/members/{subscriber_hash}"
         
+        # First, check if the member already exists
+        check_response = requests.get(
+            url,
+            auth=('anystring', MAILCHIMP_API_KEY),
+            timeout=10
+        )
+        
+        was_already_subscribed = False
+        if check_response.status_code == 200:
+            # Member exists - check their current status
+            existing_member = check_response.json()
+            existing_status = existing_member.get('status')
+            
+            if existing_status == 'subscribed':
+                logger.info(f"Email {email} is already subscribed")
+                was_already_subscribed = True
+            else:
+                logger.info(f"Email {email} exists with status: {existing_status}, updating to subscribed")
+        
         # Build merge fields
         fields = merge_fields or {}
         if name and 'FNAME' not in fields:
@@ -91,12 +110,20 @@ def subscribe_to_newsletter(email, name=None, merge_fields=None):
             status = result.get('status')
             
             if status == 'subscribed':
-                logger.info(f"Successfully subscribed {email} to newsletter")
-                return {
-                    'success': True,
-                    'message': 'Successfully subscribed to newsletter',
-                    'already_subscribed': False
-                }
+                if was_already_subscribed:
+                    logger.info(f"Email {email} was already subscribed")
+                    return {
+                        'success': True,
+                        'message': 'You are already subscribed to our newsletter',
+                        'already_subscribed': True
+                    }
+                else:
+                    logger.info(f"Successfully subscribed {email} to newsletter")
+                    return {
+                        'success': True,
+                        'message': 'Successfully subscribed to newsletter',
+                        'already_subscribed': False
+                    }
             else:
                 logger.info(f"Email {email} status: {status}")
                 return {
