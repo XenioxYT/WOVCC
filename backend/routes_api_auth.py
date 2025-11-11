@@ -8,14 +8,16 @@ import logging
 from datetime import datetime, timezone
 import os
 import secrets
+import stripe
 
 from database import get_db, User, PendingRegistration
 from auth import (
     hash_password, verify_password, generate_token, require_auth, 
     get_refresh_token_from_request, verify_token
 )
-from stripe_config import create_checkout_session, create_spouse_card_checkout_session, STRIPE_SECRET_KEY
-from mailchimp import subscribe_to_newsletter
+from stripe_config import create_checkout_session, create_spouse_card_checkout_session, STRIPE_SECRET_KEY, delete_stripe_customer
+from mailchimp import unsubscribe_from_newsletter, subscribe_to_newsletter
+from email_validator import validate_email, EmailNotValidError
 
 logger = logging.getLogger(__name__)
 auth_api_bp = Blueprint('auth_api', __name__, url_prefix='/api')
@@ -75,7 +77,6 @@ def pre_register():
 
             # Attach pending_id and activation_token to session metadata
             try:
-                import stripe
                 stripe.api_key = STRIPE_SECRET_KEY
                 logger.info(f"[PRE-REGISTER] Updating session metadata with pending_id={pending.id}")
                 stripe.checkout.Session.modify(
@@ -355,6 +356,7 @@ def refresh_token():
 @require_auth
 def get_profile(user):
     """Get current user profile"""
+    
     resp = jsonify({
         'success': True,
         'user': user.to_dict()
@@ -440,4 +442,188 @@ def purchase_spouse_card(user):
         return jsonify({
             'success': False,
             'error': str(e)
+        }), 500
+
+
+@auth_api_bp.route('/user/change-email', methods=['POST'])
+@require_auth
+def change_email(user):
+    """
+    Change user's email address (GDPR Right to Rectification)
+    Updates email in database and Mailchimp if subscribed
+    """
+    logger.info(f"[CHANGE-EMAIL] User {user.id} ({user.email}) requesting email change")
+    
+    try:
+        data = request.get_json()
+        
+        if not data or not data.get('new_email'):
+            return jsonify({
+                'success': False,
+                'error': 'New email address is required'
+            }), 400
+        
+        new_email = data['new_email'].strip().lower()
+        
+        # Validate email format
+        try:
+            validate_email(new_email)
+        except EmailNotValidError as e:
+            return jsonify({'success': False, 'error': str(e)}), 400
+        
+        # Check if email is the same
+        if new_email == user.email:
+            return jsonify({
+                'success': False,
+                'error': 'New email is the same as current email'
+            }), 400
+        
+        db = next(get_db())
+        try:
+            # Check if new email is already in use
+            existing_user = db.query(User).filter(User.email == new_email).first()
+            if existing_user:
+                logger.warning(f"[CHANGE-EMAIL] Email {new_email} already in use")
+                return jsonify({
+                    'success': False,
+                    'error': 'This email address is already registered'
+                }), 400
+            
+            # Get the user from the current session
+            db_user = db.query(User).filter(User.id == user.id).first()
+            if not db_user:
+                return jsonify({
+                    'success': False,
+                    'error': 'User not found'
+                }), 404
+            
+            old_email = db_user.email
+            
+            # Update email in database
+            db_user.email = new_email
+            db_user.updated_at = datetime.now(timezone.utc)
+            db.commit()
+            db.refresh(db_user)
+            
+            logger.info(f"[CHANGE-EMAIL] Email updated from {old_email} to {new_email}")
+            
+            # Update Mailchimp if user is subscribed to newsletter
+            if db_user.newsletter:
+                try:
+                    
+                    # Unsubscribe old email
+                    unsubscribe_result = unsubscribe_from_newsletter(old_email)
+                    logger.info(f"[CHANGE-EMAIL] Mailchimp unsubscribe result for {old_email}: {unsubscribe_result}")
+                    
+                    # Subscribe new email
+                    subscribe_result = subscribe_to_newsletter(new_email, db_user.name)
+                    logger.info(f"[CHANGE-EMAIL] Mailchimp subscribe result for {new_email}: {subscribe_result}")
+                    
+                except Exception as e:
+                    logger.error(f"[CHANGE-EMAIL] Mailchimp update failed: {e}", exc_info=True)
+                    # Don't fail the request if Mailchimp update fails
+            
+            return jsonify({
+                'success': True,
+                'message': 'Email address updated successfully',
+                'user': db_user.to_dict()
+            })
+            
+        finally:
+            db.close()
+        
+    except Exception as e:
+        logger.error(f"[CHANGE-EMAIL] ERROR: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': 'An unexpected error occurred while changing your email. Please try again later.'
+        }), 500
+
+
+@auth_api_bp.route('/user/delete-account', methods=['DELETE'])
+@require_auth
+def delete_account(user):
+    """
+    Delete user account and all personal data (GDPR Right to Erasure)
+    
+    This endpoint:
+    1. Deletes user from database
+    2. Deletes Stripe customer (if exists)
+    3. Unsubscribes from Mailchimp (if subscribed)
+    4. Logs out the user
+    """
+    logger.info(f"[DELETE-ACCOUNT] User {user.id} ({user.email}) requesting account deletion")
+    
+    try:
+        # Store user data before deletion
+        user_id = user.id
+        user_email = user.email
+        stripe_customer_id = user.stripe_customer_id
+        is_subscribed_newsletter = user.newsletter
+        
+        db = next(get_db())
+        try:
+            # Get the user from the current session
+            db_user = db.query(User).filter(User.id == user_id).first()
+            if not db_user:
+                return jsonify({
+                    'success': False,
+                    'error': 'User not found'
+                }), 404
+            
+            # Delete user from database
+            db.delete(db_user)
+            db.commit()
+            logger.info(f"[DELETE-ACCOUNT] User {user_id} deleted from database")
+            
+        finally:
+            db.close()
+        
+        # Delete Stripe customer (if exists)
+        if stripe_customer_id:
+            try:
+                stripe_deleted = delete_stripe_customer(stripe_customer_id)
+                if stripe_deleted:
+                    logger.info(f"[DELETE-ACCOUNT] Stripe customer {stripe_customer_id} deleted")
+                else:
+                    logger.warning(f"[DELETE-ACCOUNT] Failed to delete Stripe customer {stripe_customer_id}")
+            except Exception as e:
+                logger.error(f"[DELETE-ACCOUNT] Stripe deletion error: {e}", exc_info=True)
+                # Continue with deletion even if Stripe fails
+        
+        # Unsubscribe from Mailchimp (if subscribed)
+        if is_subscribed_newsletter:
+            try:
+                mailchimp_result = unsubscribe_from_newsletter(user_email)
+                logger.info(f"[DELETE-ACCOUNT] Mailchimp unsubscribe result: {mailchimp_result}")
+            except Exception as e:
+                logger.error(f"[DELETE-ACCOUNT] Mailchimp unsubscribe error: {e}", exc_info=True)
+                # Continue with deletion even if Mailchimp fails
+        
+        # Create response with logout
+        response = jsonify({
+            'success': True,
+            'message': 'Your account has been permanently deleted'
+        })
+        
+        # Clear refresh token cookie
+        response.set_cookie(
+            'refresh_token',
+            '',
+            httponly=True,
+            secure=not (os.environ.get('DEBUG', 'False').lower() == 'true'),
+            samesite='Lax',
+            path='/',
+            max_age=0  # Expire immediately
+        )
+        
+        logger.info(f"[DELETE-ACCOUNT] Account deletion completed for user {user_id}")
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"[DELETE-ACCOUNT] ERROR: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': 'Failed to delete account. Please contact support.'
         }), 500

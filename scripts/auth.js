@@ -55,16 +55,23 @@
         // This limits exposure to XSS attacks as data is cleared when tab closes
         storage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
         
-        // Security: Only store minimal, non-sensitive user data
-        // Never store passwords or sensitive PII
-        const minimalUser = {
+        // Security: Store non-sensitive user data needed for membership display
+        // Excludes password_hash and other sensitive fields
+        const userData = {
             id: user.id,
             name: user.name,
             email: user.email,
             is_member: user.is_member,
-            is_admin: user.is_admin
+            is_admin: user.is_admin,
+            // Membership fields needed for display
+            payment_status: user.payment_status,
+            has_spouse_card: user.has_spouse_card,
+            membership_tier: user.membership_tier,
+            membership_start_date: user.membership_start_date,
+            membership_expiry_date: user.membership_expiry_date,
+            newsletter: user.newsletter
         };
-        storage.setItem(STORAGE_KEYS.USER, JSON.stringify(minimalUser));
+        storage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
     }
 
     function clearAuthData() {
@@ -302,16 +309,23 @@
             const response = await authenticatedFetch('/user/profile');
             const data = await response.json();
             if (data.success && data.user) {
-                // Security: Store only minimal user data
-                const minimalUser = {
+                // Store non-sensitive user data needed for membership display
+                const userData = {
                     id: data.user.id,
                     name: data.user.name,
                     email: data.user.email,
                     is_member: data.user.is_member,
-                    is_admin: data.user.is_admin
+                    is_admin: data.user.is_admin,
+                    // Membership fields needed for display
+                    payment_status: data.user.payment_status,
+                    has_spouse_card: data.user.has_spouse_card,
+                    membership_tier: data.user.membership_tier,
+                    membership_start_date: data.user.membership_start_date,
+                    membership_expiry_date: data.user.membership_expiry_date,
+                    newsletter: data.user.newsletter
                 };
-                storage.setItem(STORAGE_KEYS.USER, JSON.stringify(minimalUser));
-                return minimalUser;
+                storage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
+                return userData;
             }
             return null;
         } catch (error) {

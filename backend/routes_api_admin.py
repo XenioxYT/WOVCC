@@ -11,6 +11,7 @@ from database import get_db, User
 from auth import require_admin
 from sqlalchemy import or_, func
 from datetime import timedelta
+from dateutil import parser
 
 logger = logging.getLogger(__name__)
 admin_api_bp = Blueprint('admin_api', __name__, url_prefix='/api/admin')
@@ -230,7 +231,6 @@ def update_user(admin_user, user_id):
                 user.membership_tier = data['membership_tier']
             if 'membership_expiry_date' in data:
                 if data['membership_expiry_date']:
-                    from dateutil import parser
                     user.membership_expiry_date = parser.parse(data['membership_expiry_date'])
                 else:
                     user.membership_expiry_date = None

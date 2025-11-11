@@ -97,3 +97,9 @@ def event_detail(event_id):
 def contact():
     """Contact page"""
     return render_template('contact.html')
+
+
+@pages_bp.route('/privacy')
+def privacy():
+    """Privacy policy page"""
+    return render_template('privacy.html')

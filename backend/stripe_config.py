@@ -289,3 +289,45 @@ def get_payment_status(session_id: str):
         return None
 
 
+def delete_stripe_customer(customer_id: str):
+    """
+    Delete a Stripe customer (for GDPR Right to Erasure)
+    
+    This permanently deletes the customer from Stripe, which:
+    - Removes all customer data from Stripe
+    - Cancels all active subscriptions
+    - Deletes all payment methods
+    
+    Args:
+        customer_id: Stripe customer ID (starts with 'cus_')
+    
+    Returns:
+        True if successful, False otherwise
+    """
+    if not STRIPE_SECRET_KEY:
+        print("WARNING: STRIPE_SECRET_KEY not set. Cannot delete customer.")
+        return False
+    
+    if not customer_id:
+        print("WARNING: No customer_id provided for deletion")
+        return False
+    
+    # Ensure Stripe API key is set
+    if not stripe.api_key:
+        stripe.api_key = STRIPE_SECRET_KEY
+    
+    try:
+        # Delete the customer from Stripe
+        # This will automatically cancel all subscriptions and remove all data
+        stripe.Customer.delete(customer_id)
+        print(f"Successfully deleted Stripe customer: {customer_id}")
+        return True
+    except stripe.error.InvalidRequestError as e:
+        # Customer doesn't exist or already deleted
+        print(f"Stripe customer not found or already deleted: {customer_id} - {e}")
+        return True  # Consider it a success since the goal (customer deleted) is achieved
+    except Exception as e:
+        print(f"ERROR deleting Stripe customer {customer_id}: {type(e).__name__}: {e}")
+        return False
+
+

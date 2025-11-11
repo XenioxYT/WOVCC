@@ -163,9 +163,101 @@
           </div>
         </div>
 
+        <!-- Account Settings Card -->
+        <div class="card" style="border-left: 4px solid var(--accent-color);">
+          <div class="card-body">
+            <h3 style="color: var(--accent-color); margin-bottom: 20px; font-size: 1.3rem;">Account Settings</h3>
+            
+            <!-- Email Change Section -->
+            <div style="margin-bottom: 30px; padding-bottom: 30px; border-bottom: 1px solid var(--border-color);">
+              <h4 style="color: var(--text-dark); margin-bottom: 15px; font-size: 1.1rem;">Change Email Address</h4>
+              <p style="color: var(--text-light); font-size: 0.95rem; margin-bottom: 15px;">
+                Update the email address associated with your membership account.
+              </p>
+              
+              <form id="change-email-form" style="max-width: 500px;">
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label class="form-label" for="current-email-display">Current Email</label>
+                  <input type="text" id="current-email-display" class="form-input" readonly style="background: var(--secondary-bg); cursor: not-allowed;">
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label class="form-label" for="new-email">New Email Address</label>
+                  <input type="email" id="new-email" class="form-input" placeholder="Enter new email address" required>
+                </div>
+                
+                <div id="email-change-error" style="display: none; padding: 12px; background: #ffe6e6; border-left: 4px solid #dc3545; border-radius: 4px; margin-bottom: 15px;">
+                  <p style="margin: 0; color: #dc3545; font-size: 0.95rem;"></p>
+                </div>
+                
+                <div id="email-change-success" style="display: none; padding: 12px; background: #e6f7e6; border-left: 4px solid #28a745; border-radius: 4px; margin-bottom: 15px;">
+                  <p style="margin: 0; color: #28a745; font-size: 0.95rem;"></p>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="change-email-btn">
+                  Change Email
+                </button>
+              </form>
+            </div>
+            
+            <!-- Account Deletion Section -->
+            <div>
+              <h4 style="color: #dc3545; margin-bottom: 15px; font-size: 1.1rem;">Delete Account</h4>
+              <p style="color: var(--text-light); font-size: 0.95rem; margin-bottom: 15px; line-height: 1.6;">
+                Permanently delete your account and all associated data. This action cannot be undone.
+              </p>
+              
+              <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+                <p style="margin: 0; color: #856404; font-size: 0.9rem; line-height: 1.6;">
+                  <strong>Warning:</strong> Deleting your account will permanently remove:
+                </p>
+                <ul style="margin: 10px 0 0 20px; color: #856404; font-size: 0.9rem; line-height: 1.6;">
+                  <li>Your membership account and profile</li>
+                  <li>Your payment history from Stripe</li>
+                  <li>Your newsletter subscription (if subscribed)</li>
+                  <li>All personal data we hold about you</li>
+                </ul>
+              </div>
+              
+              <button type="button" class="btn" id="delete-account-btn" style="background: #dc3545; color: white; border: none;">
+                Delete My Account
+              </button>
+            </div>
+            
+          </div>
+        </div>
+
+        <!-- GDPR Rights Info -->
+        <div style="padding: 20px; background: var(--secondary-bg); border-radius: 8px; margin-top: 20px;">
+          <p style="margin: 0; color: var(--text-dark); font-size: 0.95rem; line-height: 1.6; text-align: center;">
+            Your data rights are protected under UK GDPR. For more information, read our <a href="/privacy" style="color: var(--primary-color); text-decoration: underline;">Privacy Policy</a>.
+          </p>
+        </div>
+
       </div>
     </div>
   </section>
+
+  <!-- Account Deletion Confirmation Modal -->
+  <div id="delete-account-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); z-index: 10000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 12px; max-width: 500px; width: 90%; padding: 30px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
+      <h3 style="color: #dc3545; margin-bottom: 20px; font-size: 1.5rem;">Confirm Account Deletion</h3>
+      <p style="color: var(--text-dark); margin-bottom: 20px; line-height: 1.6;">
+        Are you absolutely sure you want to delete your account? This action is <strong>permanent and cannot be undone</strong>.
+      </p>
+      <p style="color: var(--text-dark); margin-bottom: 25px; line-height: 1.6;">
+        All your personal data, including membership details and payment history, will be permanently deleted.
+      </p>
+      <div style="display: flex; gap: 15px; justify-content: flex-end;">
+        <button type="button" class="btn btn-outline" id="cancel-delete-btn">
+          Cancel
+        </button>
+        <button type="button" class="btn" id="confirm-delete-btn" style="background: #dc3545; color: white; border: none;">
+          Yes, Delete My Account
+        </button>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block extra_js %}
