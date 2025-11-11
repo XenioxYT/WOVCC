@@ -547,7 +547,7 @@ def change_email(user):
         logger.error(f"[CHANGE-EMAIL] ERROR: {e}", exc_info=True)
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': 'An unexpected error occurred while changing your email. Please try again later.'
         }), 500
 
 
