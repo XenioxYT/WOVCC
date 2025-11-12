@@ -6,11 +6,14 @@ Handles all incoming webhooks, e.g., from Stripe.
 from flask import Blueprint, jsonify, request
 import logging
 from datetime import datetime, timezone
+import os
 
 from database import get_db, User, PendingRegistration
 from stripe_config import verify_webhook_signature, STRIPE_WEBHOOK_SECRET
 from mailchimp import subscribe_to_newsletter
 from dateutil.relativedelta import relativedelta
+from signup_logger import log_signup
+from email_config import EmailConfig
 
 logger = logging.getLogger(__name__)
 webhooks_api_bp = Blueprint('webhooks_api', __name__, url_prefix='/api/payments')
@@ -73,6 +76,37 @@ def stripe_webhook():
                     user.updated_at = datetime.now(timezone.utc)
                     db.commit()
                     logger.info(f"[WEBHOOK] Successfully added additional card for {user.email}")
+                    
+                    # Log spouse card purchase
+                    amount = session.get('amount_total', 0) / 100  # Convert from cents
+                    log_signup(
+                        user_id=user.id,
+                        name=user.name,
+                        email=user.email,
+                        has_spouse_card=True,
+                        amount_paid=amount,
+                        currency=session.get('currency', 'gbp').upper(),
+                        stripe_session_id=session_id,
+                        stripe_customer_id=user.stripe_customer_id,
+                        newsletter_subscribed=user.newsletter
+                    )
+                    
+                    # Send extra card receipt email
+                    try:
+                        email_sent = EmailConfig.send_extra_card_receipt_email(
+                            to_email=user.email,
+                            to_name=user.name,
+                            amount_paid=amount,
+                            currency=session.get('currency', 'gbp').upper()
+                        )
+                        
+                        if email_sent:
+                            logger.info(f"[WEBHOOK] Extra card receipt email sent to {user.email}")
+                        else:
+                            logger.warning(f"[WEBHOOK] Failed to send extra card receipt email to {user.email}")
+                    except Exception as e:
+                        logger.error(f"[WEBHOOK] Error sending extra card receipt email: {e}", exc_info=True)
+                        # Don't fail the webhook if email fails
                 finally:
                     db.close()
             
@@ -92,11 +126,16 @@ def stripe_webhook():
                     
                     logger.info(f"[WEBHOOK] Found pending registration for {pending.email}")
                     
+                    # Calculate amount paid from session
+                    amount = session.get('amount_total', 0) / 100  # Convert from cents
+                    
                     now = datetime.now(timezone.utc)
                     expiry = now + relativedelta(years=1)
                     
                     # Check if user already exists (edge case)
                     existing_user = db.query(User).filter(User.email == pending.email).first()
+                    created_user = None  # Track which user was created/updated
+                    
                     if existing_user:
                         logger.warning(f"[WEBHOOK] User {pending.email} already exists, updating membership")
                         # Update existing user's membership
@@ -105,6 +144,7 @@ def stripe_webhook():
                         existing_user.membership_start_date = now
                         existing_user.membership_expiry_date = expiry
                         existing_user.updated_at = now
+                        created_user = existing_user
                         
                         # Subscribe to newsletter if requested and not already subscribed
                         if pending.newsletter:
@@ -133,6 +173,7 @@ def stripe_webhook():
                         db.add(new_user)
                         db.flush()  # Flush to get the user ID before committing
                         logger.info(f"[WEBHOOK] User created with ID: {new_user.id}")
+                        created_user = new_user
                         
                         # Subscribe to newsletter if requested
                         if pending.newsletter:
@@ -141,11 +182,52 @@ def stripe_webhook():
                                 logger.info(f"[WEBHOOK] Subscribed {new_user.email} to newsletter")
                             except Exception as e:
                                 logger.error(f"[WEBHOOK] Failed to subscribe {new_user.email} to newsletter: {e}")
-
+                        
                     # Remove pending registration
                     db.delete(pending)
                     db.commit()
                     logger.info(f"[WEBHOOK] Successfully activated account for {pending.email}")
+                    
+                    # Log the new signup (after commit to ensure user exists)
+                    # Uses created_user which is set to either new_user or existing_user
+                    try:
+                        log_signup(
+                            user_id=created_user.id,
+                            name=created_user.name,
+                            email=pending.email,
+                            has_spouse_card=pending.include_spouse_card,
+                            amount_paid=amount,
+                            currency=session.get('currency', 'gbp').upper(),
+                            stripe_session_id=session_id,
+                            stripe_customer_id=created_user.stripe_customer_id,
+                            newsletter_subscribed=pending.newsletter
+                        )
+                        logger.info(f"[WEBHOOK] Signup logged for {pending.email}")
+                    except Exception as e:
+                        logger.error(f"[WEBHOOK] Failed to log signup for {pending.email}: {e}", exc_info=True)
+                        # Don't fail the webhook if logging fails
+                    
+                    # Send welcome and receipt email (uses created_user for both new and existing users)
+                    try:
+                        # Format expiry date nicely
+                        expiry_formatted = expiry.strftime('%B %d, %Y') if expiry else None
+                        
+                        email_sent = EmailConfig.send_welcome_receipt_email(
+                            to_email=created_user.email,
+                            to_name=created_user.name,
+                            amount_paid=amount,
+                            currency=session.get('currency', 'gbp').upper(),
+                            has_spouse_card=pending.include_spouse_card,
+                            membership_expiry=expiry_formatted
+                        )
+                        
+                        if email_sent:
+                            logger.info(f"[WEBHOOK] Welcome receipt email sent to {created_user.email}")
+                        else:
+                            logger.warning(f"[WEBHOOK] Failed to send welcome receipt email to {created_user.email}")
+                    except Exception as e:
+                        logger.error(f"[WEBHOOK] Error sending welcome receipt email: {e}", exc_info=True)
+                        # Don't fail the webhook if email fails
                 finally:
                     db.close()
         
