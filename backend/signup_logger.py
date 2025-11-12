@@ -6,7 +6,7 @@ Tracks all new member signups and generates weekly summary reports.
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float
 from database import Base, engine, get_db
 from datetime import datetime, timezone, timedelta
-from email_config import EmailConfig, _render_email_template
+from email_config import EmailConfig, render_email_template
 import logging
 
 logger = logging.getLogger(__name__)
@@ -219,7 +219,7 @@ To view member details, log in to the admin dashboard.
         })
     
     # HTML version using template
-    body_html = _render_email_template(
+    body_html = render_email_template(
         'emails/weekly_report.html',
         date_range=f"{oldest_signup.strftime('%d %B %Y')} - {newest_signup.strftime('%d %B %Y')}",
         total_signups=total_signups,

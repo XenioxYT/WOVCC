@@ -77,20 +77,6 @@ def stripe_webhook():
                     db.commit()
                     logger.info(f"[WEBHOOK] Successfully added additional card for {user.email}")
                     
-                    # Log spouse card purchase
-                    amount = session.get('amount_total', 0) / 100  # Convert from cents
-                    log_signup(
-                        user_id=user.id,
-                        name=user.name,
-                        email=user.email,
-                        has_spouse_card=True,
-                        amount_paid=amount,
-                        currency=session.get('currency', 'gbp').upper(),
-                        stripe_session_id=session_id,
-                        stripe_customer_id=user.stripe_customer_id,
-                        newsletter_subscribed=user.newsletter
-                    )
-                    
                     # Send extra card receipt email
                     try:
                         email_sent = EmailConfig.send_extra_card_receipt_email(
@@ -144,6 +130,7 @@ def stripe_webhook():
                         existing_user.membership_start_date = now
                         existing_user.membership_expiry_date = expiry
                         existing_user.updated_at = now
+                        existing_user.stripe_customer_id = session.get('customer')
                         created_user = existing_user
                         
                         # Subscribe to newsletter if requested and not already subscribed
@@ -168,7 +155,8 @@ def stripe_webhook():
                             payment_status='active',
                             has_spouse_card=pending.include_spouse_card,
                             membership_start_date=now,
-                            membership_expiry_date=expiry
+                            membership_expiry_date=expiry,
+                            stripe_customer_id=session.get('customer')
                         )
                         db.add(new_user)
                         db.flush()  # Flush to get the user ID before committing
