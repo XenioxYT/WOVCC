@@ -1,73 +1,9 @@
 from flask import Blueprint, request, jsonify, current_app
 import logging
-import smtplib
-from email.message import EmailMessage
-import os
 from mailchimp import subscribe_to_newsletter, is_mailchimp_configured
+from email_config import EmailConfig
 
 contact_bp = Blueprint("contact_api", __name__, url_prefix="/api")
-
-
-def _get_contact_recipient():
-    """
-    Resolve contact recipient email.
-
-    Order of precedence:
-    1. CONTACT_RECIPIENT in environment
-    2. MAIL_DEFAULT_SENDER (if configured)
-    3. Fallback hard-coded club address
-    """
-    return (
-        os.environ.get("CONTACT_RECIPIENT")
-        or os.environ.get("MAIL_DEFAULT_SENDER")
-        or "info@wovcc.co.uk"
-    )
-
-
-def _send_email_smtp(subject: str, body: str, reply_to: str = None):
-    """
-    Minimal SMTP-based sender using environment for configuration.
-    Expects:
-      - SMTP_HOST
-      - SMTP_PORT (optional, default 587)
-      - SMTP_USERNAME
-      - SMTP_PASSWORD
-      - SMTP_USE_TLS (optional, default true)
-    """
-    host = os.environ.get("SMTP_HOST")
-    username = os.environ.get("SMTP_USERNAME")
-    password = os.environ.get("SMTP_PASSWORD")
-
-    if not host or not username or not password:
-        current_app.logger.error(
-            "Contact API: SMTP not configured (SMTP_HOST/SMTP_USERNAME/SMTP_PASSWORD required)"
-        )
-        raise RuntimeError("Email delivery not configured")
-
-    port = int(os.environ.get("SMTP_PORT", "587"))
-    use_tls = os.environ.get("SMTP_USE_TLS", "true").lower() in ("1", "true", "yes")
-
-    recipient = _get_contact_recipient()
-    sender = os.environ.get("MAIL_DEFAULT_SENDER", username)
-
-    msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = sender
-    msg["To"] = recipient
-    if reply_to:
-        msg["Reply-To"] = reply_to
-    msg.set_content(body)
-
-    if use_tls:
-
-        with smtplib.SMTP(host, port) as server:
-            server.starttls()
-            server.login(username, password)
-            server.send_message(msg)
-    else:
-        with smtplib.SMTP(host, port) as server:
-            server.login(username, password)
-            server.send_message(msg)
 
 
 @contact_bp.route("/contact", methods=["POST"])
@@ -109,18 +45,45 @@ def submit_contact():
                 400,
             )
 
-        recipient = _get_contact_recipient()
-        full_subject = f"[WOVCC Contact] {subject}"
-        body = (
-            f"New contact form submission from WOVCC website:\n\n"
-            f"Name: {name}\n"
-            f"Email: {email}\n\n"
-            f"Subject: {subject}\n\n"
-            f"Message:\n{message}\n"
-        )
+        # Check if email is configured
+        if not EmailConfig.is_configured():
+            current_app.logger.error("Contact API: Email service not configured")
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Email service is not currently available. Please try again later.",
+                    }
+                ),
+                503,
+            )
 
+        # Send email using centralized email configuration
         try:
-            _send_email_smtp(full_subject, body, reply_to=email)
+            success = EmailConfig.send_contact_notification(
+                from_name=name,
+                from_email=email,
+                subject=subject,
+                message=message
+            )
+            
+            if not success:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "error": "Unable to send message at this time. Please try again later.",
+                        }
+                    ),
+                    500,
+                )
+            
+            current_app.logger.info(
+                "Contact API: Message from %s <%s> delivered successfully",
+                name,
+                email,
+            )
+            
         except Exception as send_err:  # noqa: BLE001
             current_app.logger.error(
                 "Contact API: Failed to send email: %s", send_err, exc_info=True
@@ -134,13 +97,6 @@ def submit_contact():
                 ),
                 500,
             )
-
-        current_app.logger.info(
-            "Contact API: Message from %s <%s> delivered to %s",
-            name,
-            email,
-            recipient,
-        )
 
         return jsonify({"success": True, "message": "Message sent successfully."})
     except Exception as exc:  # noqa: BLE001
