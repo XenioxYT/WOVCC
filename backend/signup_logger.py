@@ -6,7 +6,7 @@ Tracks all new member signups and generates weekly summary reports.
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float
 from database import Base, engine, get_db
 from datetime import datetime, timezone, timedelta
-from email_config import EmailConfig
+from email_config import EmailConfig, _render_email_template
 import logging
 
 logger = logging.getLogger(__name__)
@@ -206,226 +206,28 @@ This report was automatically generated.
 To view member details, log in to the admin dashboard.
 """
     
-    # HTML version
-    body_html = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {{
-            font-family: 'Inter', Arial, sans-serif;
-            line-height: 1.6;
-            color: #1a1a1a;
-            background-color: #f8f9fa;
-            margin: 0;
-            padding: 0;
-        }}
-        .container {{
-            max-width: 800px;
-            margin: 20px auto;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }}
-        .header {{
-            background: linear-gradient(135deg, #1a5f5f 0%, #144a4a 100%);
-            color: white;
-            padding: 40px 30px;
-            text-align: center;
-        }}
-        .header h1 {{
-            margin: 0;
-            font-size: 28px;
-            font-weight: 600;
-            letter-spacing: -0.02em;
-        }}
-        .header p {{
-            margin: 10px 0 0 0;
-            opacity: 0.95;
-            font-size: 14px;
-        }}
-        .summary {{
-            display: flex;
-            flex-wrap: wrap;
-            padding: 20px;
-            background-color: #f8f9fa;
-            border-bottom: 2px solid #e9ecef;
-        }}
-        .summary-item {{
-            flex: 1;
-            min-width: 150px;
-            padding: 15px;
-            text-align: center;
-        }}
-        .summary-item h3 {{
-            margin: 0;
-            font-size: 32px;
-            color: #1a5f5f;
-            font-weight: 600;
-        }}
-        .summary-item p {{
-            margin: 5px 0 0 0;
-            color: #6c757d;
-            font-size: 14px;
-        }}
-        .content {{
-            padding: 30px;
-        }}
-        .member-card {{
-            background-color: #f8f9fa;
-            border-left: 4px solid #1a5f5f;
-            padding: 20px;
-            margin-bottom: 15px;
-            border-radius: 6px;
-        }}
-        .member-card h3 {{
-            margin: 0 0 12px 0;
-            color: #1a5f5f;
-            font-size: 20px;
-            font-weight: 600;
-        }}
-        .member-details {{
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
-            margin-top: 12px;
-        }}
-        .detail-item {{
-            padding: 8px 0;
-        }}
-        .detail-label {{
-            font-weight: 600;
-            color: #6c757d;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }}
-        .detail-value {{
-            color: #1a1a1a;
-            font-size: 14px;
-            margin-top: 4px;
-        }}
-        .badge {{
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }}
-        .badge-yes {{
-            background-color: #d4edda;
-            color: #155724;
-        }}
-        .badge-no {{
-            background-color: #f8d7da;
-            color: #721c24;
-        }}
-        .footer {{
-            padding: 25px 30px;
-            text-align: center;
-            background-color: #f8f9fa;
-            border-top: 1px solid #e9ecef;
-            font-size: 12px;
-            color: #6c757d;
-        }}
-        .footer p {{
-            margin: 6px 0;
-        }}
-        .revenue {{
-            color: #28a745;
-            font-weight: 600;
-        }}
-        a {{
-            color: #1a5f5f;
-            text-decoration: none;
-        }}
-        a:hover {{
-            text-decoration: underline;
-        }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🏏 Weekly Signup Report</h1>
-            <p>{oldest_signup.strftime('%d %B %Y')} - {newest_signup.strftime('%d %B %Y')}</p>
-        </div>
-        
-        <div class="summary">
-            <div class="summary-item">
-                <h3>{total_signups}</h3>
-                <p>New Members</p>
-            </div>
-            <div class="summary-item">
-                <h3 class="revenue">£{total_revenue:.2f}</h3>
-                <p>Total Revenue</p>
-            </div>
-            <div class="summary-item">
-                <h3>{spouse_cards}</h3>
-                <p>Additional Cards</p>
-            </div>
-            <div class="summary-item">
-                <h3>{newsletter_subs}</h3>
-                <p>Newsletter Subs</p>
-            </div>
-        </div>
-        
-        <div class="content">
-            <h2 style="color: #1a5f5f; margin-top: 0; font-weight: 600;">Member Details</h2>
-"""
+    # Prepare signup data for template
+    signups_data = []
+    for signup in signups:
+        signups_data.append({
+            'name': signup.name,
+            'email': signup.email,
+            'amount_paid': f"{signup.amount_paid:.2f}",
+            'has_spouse_card': signup.has_spouse_card,
+            'newsletter_subscribed': signup.newsletter_subscribed,
+            'signup_date': signup.signup_date.strftime('%d %B %Y at %H:%M')
+        })
     
-    for i, signup in enumerate(signups, 1):
-        body_html += f"""
-            <div class="member-card">
-                <h3>{i}. {signup.name}</h3>
-                <div class="member-details">
-                    <div class="detail-item">
-                        <div class="detail-label">Email</div>
-                        <div class="detail-value">{signup.email}</div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">Amount Paid</div>
-                        <div class="detail-value revenue">£{signup.amount_paid:.2f}</div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">Additional Card</div>
-                        <div class="detail-value">
-                            <span class="badge {'badge-yes' if signup.has_spouse_card else 'badge-no'}">
-                                {'Yes' if signup.has_spouse_card else 'No'}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">Newsletter</div>
-                        <div class="detail-value">
-                            <span class="badge {'badge-yes' if signup.newsletter_subscribed else 'badge-no'}">
-                                {'Yes' if signup.newsletter_subscribed else 'No'}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">Signup Date</div>
-                        <div class="detail-value">{signup.signup_date.strftime('%d %B %Y at %H:%M')}</div>
-                    </div>
-                </div>
-            </div>
-"""
-    
-    body_html += """
-        </div>
-        
-        <div class="footer">
-            <p><strong>Wickersley Cricket Club</strong></p>
-            <p>This report was automatically generated by the WOVCC membership system.</p>
-            <p>To view full member details, log in to the admin dashboard at <a href="https://wovcc.co.uk/admin">wovcc.co.uk/admin</a></p>
-        </div>
-    </div>
-</body>
-</html>
-"""
+    # HTML version using template
+    body_html = _render_email_template(
+        'emails/weekly_report.html',
+        date_range=f"{oldest_signup.strftime('%d %B %Y')} - {newest_signup.strftime('%d %B %Y')}",
+        total_signups=total_signups,
+        total_revenue=f"{total_revenue:.2f}",
+        spouse_cards=spouse_cards,
+        newsletter_subs=newsletter_subs,
+        signups=signups_data
+    )
     
     return subject, body_text, body_html
 

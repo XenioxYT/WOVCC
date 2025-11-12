@@ -1,0 +1,23 @@
+{% extends "emails/base.html" %}
+
+{% block header %}
+<h1 style="color: white;">📧 New Contact Form Submission</h1>
+{% endblock %}
+
+{% block content %}
+<div style="background-color: #f8f9fa; padding: 20px; margin: 20px 0; border-left: 4px solid #1a5f5f; border-radius: 4px;">
+    <p style="margin: 8px 0;"><strong>From:</strong> {{ from_name }}</p>
+    <p style="margin: 8px 0;"><strong>Email:</strong> <a href="mailto:{{ from_email }}">{{ from_email }}</a></p>
+    <p style="margin: 8px 0;"><strong>Subject:</strong> {{ subject }}</p>
+</div>
+
+<div style="background-color: #ffffff; padding: 24px; margin: 20px 0; border: 1px solid #e9ecef; border-radius: 6px;">
+    <h3 style="color: #1a5f5f; margin-top: 0; margin-bottom: 16px;">Message:</h3>
+    <p style="white-space: pre-wrap;">{{ message }}</p>
+</div>
+{% endblock %}
+
+{% block footer %}
+<p style="color: #6c757d;"><strong>Wickersley Old Village Cricket Club</strong></p>
+<p style="color: #6c757d;">This is an automated notification.</p>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "emails/base.html" %}
+
+{% block header %}
+<h1 style="color: white;">✅ Purchase Confirmed</h1>
+<p style="color: white;">Additional Extra Card Activated</p>
+{% endblock %}
+
+{% block content %}
+<p class="greeting" style="color: #1a1a1a;">Dear {{ name }},</p>
+
+<div style="text-align: center;">
+    <div class="success-badge" style="color: #155724;">
+        ✓ Card Activated
+    </div>
+</div>
+
+<p style="font-size: 16px; margin: 25px 0; color: #495057;">
+    Thank you for purchasing an additional extra card for your WOVCC membership! Your payment has been processed and the card has been activated.
+</p>
+
+<div class="receipt-box">
+    <div class="receipt-title">Payment Receipt</div>
+    <div class="receipt-items">
+        <div class="receipt-item">
+            <span class="receipt-item-label">Additional Extra Card</span>
+            <span class="receipt-item-value">{{ currency_symbol }}{{ amount_paid }}</span>
+        </div>
+    </div>
+    <div class="receipt-total">
+        <div class="receipt-total-label">Total Paid</div>
+        <div class="receipt-total-value">{{ currency_symbol }}{{ amount_paid }}</div>
+    </div>
+</div>
+
+<div class="info-box">
+    <p style="color: #144a4a;">
+        Your additional card is now linked to your membership account. If you have any questions, feel free to contact us at <a href="mailto:info@wickersleycricket.com" style="color: #1a5f5f; font-weight: 600; text-decoration: none;">info@wickersleycricket.com</a>
+    </p>
+</div>
+
+<p style="margin-top: 30px; font-size: 15px; color: #495057;">
+    Thank you for your continued support of the club!
+</p>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "emails/base.html" %}
+
+{% block header %}
+<h1 style="color: white;">Welcome to WOVCC</h1>
+<p style="color: white;">Your membership is now active</p>
+{% endblock %}
+
+{% block content %}
+<p class="greeting" style="color: #1a1a1a;">Dear {{ name }},</p>
+
+<div style="text-align: center;">
+    <div class="success-badge" style="color: #155724;">
+        ✓ Membership Active
+    </div>
+</div>
+
+<p style="font-size: 16px; margin: 25px 0; color: #495057;">
+    Thank you for joining Wickersley Old Village Cricket Club! Your payment has been processed and your membership is now active.
+</p>
+
+<div class="receipt-box">
+    <div class="receipt-title">Payment Receipt</div>
+    <div class="receipt-items">
+        <div class="receipt-item">
+            <span class="receipt-item-label">Annual Membership</span>
+            <span class="receipt-item-value">{{ currency_symbol }}{{ base_membership_price }}</span>
+        </div>
+        {% if has_spouse_card %}
+        <div class="receipt-item">
+            <span class="receipt-item-label">Additional Extra Card</span>
+            <span class="receipt-item-value">{{ currency_symbol }}{{ extra_card_price }}</span>
+        </div>
+        {% endif %}
+        {% if membership_expiry %}
+        <div class="receipt-item">
+            <span class="receipt-item-label">Valid Until</span>
+            <span class="receipt-item-value">{{ membership_expiry }}</span>
+        </div>
+        {% endif %}
+    </div>
+    <div class="receipt-total">
+        <div class="receipt-total-label">Total Paid</div>
+        <div class="receipt-total-value">{{ currency_symbol }}{{ amount_paid }}</div>
+    </div>
+</div>
+
+<h2 class="section-title">What's Next?</h2>
+
+<div class="links-grid">
+    <a href="https://wovcc.co.uk/events" class="link-card">
+        <span class="link-icon">📅</span>
+        <p class="link-title">View Events</p>
+        <p class="link-desc">Upcoming club events</p>
+    </a>
+    <a href="https://wovcc.co.uk/matches" class="link-card">
+        <span class="link-icon">🏏</span>
+        <p class="link-title">Match Fixtures</p>
+        <p class="link-desc">See the schedule</p>
+    </a>
+    <a href="https://wovcc.co.uk/members" class="link-card">
+        <span class="link-icon">👤</span>
+        <p class="link-title">Member Area</p>
+        <p class="link-desc">Access your account</p>
+    </a>
+    <a href="https://wovcc.co.uk/contact" class="link-card">
+        <span class="link-icon">✉️</span>
+        <p class="link-title">Contact Us</p>
+        <p class="link-desc">Get in touch</p>
+    </a>
+</div>
+
+<div class="info-box">
+    <p style="color: #144a4a;">
+        Need help? If you have any questions about your membership, feel free to contact us at <a href="mailto:info@wickersleycricket.com" style="color: #1a5f5f; font-weight: 600; text-decoration: none;">info@wickersleycricket.com</a>
+    </p>
+</div>
+
+<p style="margin-top: 30px; font-size: 15px; color: #495057;">
+    We look forward to seeing you at the club!
+</p>
+{% endblock %}
