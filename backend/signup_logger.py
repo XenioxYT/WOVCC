@@ -470,13 +470,13 @@ def send_weekly_report(recipient_email: str = None) -> bool:
             db = next(get_db())
             try:
                 now = datetime.now(timezone.utc)
-                for signup in signups:
-                    db_signup = db.query(SignupActivity).filter(
-                        SignupActivity.id == signup.id
-                    ).first()
-                    if db_signup:
-                        db_signup.included_in_report = True
-                        db_signup.report_sent_date = now
+                signup_ids = [signup.id for signup in signups]
+                db.query(SignupActivity).filter(
+                    SignupActivity.id.in_(signup_ids)
+                ).update({
+                    'included_in_report': True,
+                    'report_sent_date': now
+                }, synchronize_session=False)
                 db.commit()
                 logger.info(f"Weekly report sent successfully to {recipient} - {len(signups)} signups")
             finally:

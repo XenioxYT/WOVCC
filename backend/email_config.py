@@ -19,7 +19,7 @@ class EmailConfig:
     # Brevo SMTP Settings
     SMTP_HOST = os.environ.get("SMTP_HOST", "smtp-relay.brevo.com")
     SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
-    SMTP_USERNAME = os.environ.get("SMTP_USERNAME", "9b575d001@smtp-brevo.com")
+    SMTP_USERNAME = os.environ.get("SMTP_USERNAME")
     SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
     SMTP_USE_TLS = os.environ.get("SMTP_USE_TLS", "true").lower() in ("1", "true", "yes")
     
@@ -836,7 +836,7 @@ If you have any questions, please contact us at info@wovcc.co.uk
 We look forward to seeing you at the club!
 
 Best regards,
-West of Valley Cricket Club
+Wickersley Old Village Cricket Club
         """
         
         body_html = f"""
@@ -1106,7 +1106,7 @@ This link will expire in 1 hour for security reasons.
 If you did not request a password reset, please ignore this email and your password will remain unchanged.
 
 Best regards,
-West of Valley Cricket Club
+Wickersley Old Village Cricket Club
         """
         
         body_html = f"""
