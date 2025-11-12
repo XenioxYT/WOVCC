@@ -939,8 +939,7 @@ West of Valley Cricket Club
             <p><strong>We look forward to seeing you at the club!</strong></p>
         </div>
         <div class="footer">
-            <p><strong>Wickersley Cricket Club</strong></p>
-            <p>West of Valley, Wickersley</p>
+            <p><strong>Wickersley Old Village Cricket Club</strong></p>
         </div>
     </div>
 </body>
