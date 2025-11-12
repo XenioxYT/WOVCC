@@ -1,408 +1,292 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="x-apple-disable-message-reformatting">
     <meta name="color-scheme" content="light dark">
     <meta name="supported-color-schemes" content="light dark">
-    <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6; 
-            color: #1a1a1a; 
-            margin: 0;
+    <title>{{ header_title }}</title>
+    <!--[if mso]>
+    <style type="text/css">
+        table {border-collapse: collapse; border-spacing: 0; border: 0; margin: 0;}
+        div, td {padding: 0;}
+        div {margin: 0 !important;}
+    </style>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+    <style type="text/css">
+        /* Reset styles */
+        body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+        table {
+            border-spacing: 0;
+            border-collapse: collapse;
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+        td {
             padding: 0;
-            background-color: #f8f9fa;
         }
-        .container { 
-            max-width: 600px; 
-            margin: 30px auto; 
-            background-color: #ffffff;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            border: 1px solid #e9ecef;
-        }
-        .header { 
-            background: linear-gradient(135deg, #1a5f5f 0%, #144a4a 100%);
-            color: white; 
-            padding: 50px 40px; 
-            text-align: center; 
-        }
-        .header h1 {
-            margin: 0 0 10px 0;
-            font-size: 32px;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            color: white;
-        }
-        .header p {
-            margin: 0;
-            font-size: 16px;
-            opacity: 0.95;
-            color: white;
-        }
-        .content { 
-            padding: 40px 40px 30px 40px; 
-            background-color: #ffffff; 
-        }
-        .greeting {
-            font-size: 18px;
-            color: #1a1a1a;
-            margin-bottom: 20px;
-        }
-        .success-badge {
-            display: inline-block;
-            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-            color: #155724;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 16px;
-            margin: 20px 0;
-            border-left: 4px solid #28a745;
-        }
-        .receipt-box {
-            background-color: #ffffff;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            padding: 0;
-            margin: 30px 0;
-            overflow: hidden;
-        }
-        .receipt-title {
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #6c757d;
-            font-weight: 600;
-            margin: 0;
-            padding: 20px 25px 15px 25px;
-            background-color: #f8f9fa;
-            border-bottom: 2px solid #e9ecef;
-        }
-        .receipt-items {
-            padding: 20px 25px;
-        }
-        .receipt-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #f8f9fa;
-            font-size: 15px;
-        }
-        .receipt-item:last-child {
-            border-bottom: none;
-            padding-bottom: 0;
-        }
-        .receipt-item-label {
-            color: #495057;
-            font-weight: 500;
-            flex: 1;
-            padding-right: 20px;
-        }
-        .receipt-item-value {
-            font-weight: 600;
-            color: #1a1a1a;
-            text-align: right;
-            white-space: nowrap;
-        }
-        .receipt-total {
-            background: linear-gradient(135deg, #1a5f5f 0%, #144a4a 100%);
-            color: white;
-            padding: 20px 25px;
-            font-size: 18px;
-            overflow: hidden;
-        }
-        .receipt-total-label {
-            font-weight: 600;
-            display: inline-block;
-            vertical-align: middle;
-        }
-        .receipt-total-value {
-            font-size: 28px;
-            font-weight: 700;
-            white-space: nowrap;
-            display: inline-block;
-            float: right;
-            vertical-align: middle;
-        }
-        .section-title {
-            color: #1a5f5f;
-            font-size: 20px;
-            font-weight: 700;
-            margin: 35px 0 20px 0;
-            padding-bottom: 10px;
-            border-bottom: 3px solid #d4a574;
-        }
-        .links-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin: 20px 0 30px 0;
-        }
-        .link-card {
-            display: block;
-            background-color: #f8f9fa;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            padding: 20px 15px;
-            text-align: center;
+        img {
+            border: 0;
+            line-height: 100%;
+            outline: none;
             text-decoration: none;
-            transition: all 0.3s ease;
+            -ms-interpolation-mode: bicubic;
         }
-        .link-card:hover {
-            border-color: #1a5f5f;
-            background-color: #ffffff;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(26, 95, 95, 0.15);
+        a {
+            text-decoration: none;
         }
-        .link-icon {
-            font-size: 32px;
-            margin-bottom: 8px;
-            display: block;
-        }
-        .link-title {
-            font-weight: 600;
-            color: #1a5f5f;
-            font-size: 15px;
-            margin: 0;
-        }
-        .link-desc {
-            font-size: 13px;
-            color: #6c757d;
-            margin: 4px 0 0 0;
-        }
-        .info-box {
-            background: linear-gradient(135deg, #e7f3ff 0%, #cfe8ff 100%);
-            border-left: 4px solid #1a5f5f;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 25px 0;
-        }
-        .info-box p {
-            margin: 0;
-            color: #144a4a;
-            font-size: 15px;
+        
+        /* Base styles */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             line-height: 1.6;
+            color: #1a1a1a;
+            background-color: #f8f9fa;
         }
-        .warning {
-            background-color: #fff3cd;
-            border-left: 4px solid #d4a574;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 25px 0;
-        }
-        .warning p {
-            margin: 0;
-            color: #856404;
-            font-size: 15px;
-            line-height: 1.6;
-        }
+        
+        /* Utility classes */
+        .text-center { text-align: center; }
+        .text-left { text-align: left; }
+        
+        /* Link styles */
+        a { color: #1a5f5f; }
+        a:hover { text-decoration: underline; }
+        
+        /* Button */
         .button {
             display: inline-block;
             padding: 14px 32px;
-            background: linear-gradient(135deg, #1a5f5f 0%, #144a4a 100%);
-            color: white !important;
+            background-color: #1a5f5f;
+            color: #ffffff !important;
             text-decoration: none;
             border-radius: 6px;
             font-weight: 500;
-            margin: 24px 0;
         }
-        .url-fallback {
-            font-size: 12px;
-            color: #6c757d;
-            word-break: break-all;
-            background-color: #f8f9fa;
-            padding: 12px;
-            border-radius: 4px;
-            border-left: 3px solid #d4a574;
-        }
-        .footer { 
-            padding: 30px 40px; 
-            text-align: center; 
-            font-size: 13px; 
-            color: #6c757d;
-            background-color: #f8f9fa;
-            border-top: 1px solid #e9ecef;
-        }
-        .footer p {
-            margin: 6px 0;
-            color: #6c757d;
-        }
-        .footer-brand {
-            font-weight: 700;
-            color: #1a5f5f;
-            font-size: 15px;
-        }
-        a {
-            color: #1a5f5f;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-        .badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        .badge-yes {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        .badge-no {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        .revenue {
-            color: #28a745;
-            font-weight: 600;
-        }
-
-        :root {
-            color-scheme: light dark;
-            supported-color-schemes: light dark;
-        }
-
+        
+        /* Dark mode */
         @media (prefers-color-scheme: dark) {
-            body, .container {
-                background-color: #1a1a1a !important;
-                color: #ffffff !important;
-            }
-
-            .content, .receipt-box {
-                background-color: #2a2a2a !important;
-            }
-
-            .header, .receipt-total {
-                background: linear-gradient(135deg, #1a5f5f 0%, #144a4a 100%) !important;
-            }
-
-            .greeting, .receipt-item-value {
-                color: #ffffff !important;
-            }
-
-            .receipt-title, .receipt-item-label, .link-desc, .footer, .footer p {
-                color: #aaaaaa !important;
-            }
-
-            .info-box {
-                background: linear-gradient(135deg, #1e3c50 0%, #142a38 100%) !important;
-                border-left-color: #1a5f5f !important;
-            }
-
-            .info-box p {
-                color: #d1eaff !important;
-            }
-
-            .link-card {
-                background-color: #333333 !important;
-                border-color: #444444 !important;
-            }
-
-            .link-card:hover {
-                border-color: #1a5f5f !important;
-                background-color: #383838 !important;
-            }
+            .light-bg { background-color: #2a2a2a !important; }
+            .dark-text { color: #ffffff !important; }
+            .gray-text { color: #aaaaaa !important; }
+            .info-box-dark { background-color: #1e3c50 !important; }
+            .info-text-dark { color: #d1eaff !important; }
+            .card-bg-dark { background-color: #333333 !important; }
         }
-
-        [data-ogsc] body, [data-ogsc] .container {
-            background-color: #1a1a1a !important;
-            color: #ffffff !important;
-        }
-
-        [data-ogsc] .content, [data-ogsc] .receipt-box {
-            background-color: #2a2a2a !important;
-        }
-
-        [data-ogsc] .header, [data-ogsc] .receipt-total {
-            background: linear-gradient(135deg, #1a5f5f 0%, #144a4a 100%) !important;
-        }
-
-        [data-ogsc] .greeting, [data-ogsc] .receipt-item-value {
-            color: #ffffff !important;
-        }
-
-        [data-ogsc] .receipt-title, [data-ogsc] .receipt-item-label, [data-ogsc] .link-desc, [data-ogsc] .footer, [data-ogsc] .footer p {
-            color: #aaaaaa !important;
-        }
-
-        [data-ogsc] .info-box {
-            background: linear-gradient(135deg, #1e3c50 0%, #142a38 100%) !important;
-            border-left-color: #1a5f5f !important;
-        }
-
-        [data-ogsc] .info-box p {
-            color: #d1eaff !important;
-        }
-
-        [data-ogsc] .link-card {
-            background-color: #333333 !important;
-            border-color: #444444 !important;
-        }
-
-        [data-ogsc] .link-card:hover {
-            border-color: #1a5f5f !important;
-            background-color: #383838 !important;
-        }
-
+        
+        [data-ogsc] .light-bg { background-color: #2a2a2a !important; }
+        [data-ogsc] .dark-text { color: #ffffff !important; }
+        [data-ogsc] .gray-text { color: #aaaaaa !important; }
+        [data-ogsc] .info-box-dark { background-color: #1e3c50 !important; }
+        [data-ogsc] .info-text-dark { color: #d1eaff !important; }
+        [data-ogsc] .card-bg-dark { background-color: #333333 !important; }
+        
+        /* Mobile responsive */
         @media only screen and (max-width: 600px) {
-            .container {
-                margin: 10px;
-                border-radius: 8px;
+            .container { width: 100% !important; }
+            .mobile-padding { padding: 20px !important; }
+            .mobile-stack { 
+                display: block !important; 
+                width: 100% !important; 
             }
-            .header {
-                padding: 40px 25px;
-            }
-            .header h1 {
-                font-size: 26px;
-            }
-            .content {
-                padding: 30px 25px 20px 25px;
-            }
-            .links-grid {
-                grid-template-columns: 1fr;
-            }
-            .receipt-title,
-            .receipt-items,
-            .receipt-total {
-                padding-left: 20px;
-                padding-right: 20px;
-            }
-            .footer {
-                padding: 25px 20px;
-            }
+            .mobile-hide { display: none !important; }
+            h1 { font-size: 26px !important; }
         }
     </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f8f9fa; color: #1a1a1a;">
-    <div class="container" style="background-color: #ffffff;">
-        <div class="header" style="color: white; background: linear-gradient(135deg, #1a5f5f 0%, #144a4a 100%);">
-            {% block header %}
-            <h1 style="color: white;">{{ header_title }}</h1>
-            {% if header_subtitle %}
-            <p style="color: white;">{{ header_subtitle }}</p>
-            {% endif %}
-            {% endblock %}
-        </div>
-        
-        <div class="content" style="color: #1a1a1a; background-color: #ffffff;">
-            {% block content %}{% endblock %}
-        </div>
-        
-        <div class="footer" style="color: #6c757d; background-color: #f8f9fa;">
-            {% block footer %}
-            <p class="footer-brand" style="color: #1a5f5f;">Wickersley Old Village Cricket Club</p>
-            <p style="color: #6c757d;">This is an automated confirmation email.</p>
-            <p style="margin-top: 15px; font-size: 12px; color: #6c757d;">
-                © 2025 WOVCC. All rights reserved.
-            </p>
-            {% endblock %}
-        </div>
-    </div>
+<body style="margin: 0; padding: 0; background-color: #f8f9fa;">
+    <!-- Wrapper table for Outlook -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8f9fa;">
+        <tr>
+            <td align="center" style="padding: 30px 15px;">
+                
+                <!-- Main container -->
+                <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border: 1px solid #e9ecef; border-radius: 12px;" bgcolor="#ffffff">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td class="header" style="background-color: #1a5f5f; color: #ffffff; padding: 50px 40px; text-align: center; border-radius: 12px 12px 0 0;" bgcolor="#1a5f5f" align="center">
+                            {% block header %}
+                            <h1 style="margin: 0 0 10px 0; font-size: 32px; font-weight: 700; color: #ffffff;">{{ header_title }}</h1>
+                            {% if header_subtitle %}
+                            <p style="margin: 0; font-size: 16px; color: #ffffff;">{{ header_subtitle }}</p>
+                            {% endif %}
+                            {% endblock %}
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td class="content mobile-padding light-bg" style="padding: 40px 40px 30px 40px; background-color: #ffffff;" bgcolor="#ffffff">
+                            {% block content %}
+                            
+                            <!-- Example: Greeting -->
+                            <p class="dark-text" style="font-size: 18px; color: #1a1a1a; margin: 0 0 20px 0;">Hi {{ first_name }},</p>
+                            
+                            <!-- Example: Success badge -->
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0;">
+                                <tr>
+                                    <td style="background-color: #d4edda; color: #155724; padding: 12px 24px; border-radius: 8px; border-left: 4px solid #28a745; font-weight: 600; font-size: 16px;" bgcolor="#d4edda">
+                                        ✓ Booking Confirmed
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Example: Receipt box -->
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 30px 0; border: 2px solid #e9ecef; border-radius: 8px; overflow: hidden;">
+                                <!-- Receipt title -->
+                                <tr>
+                                    <td style="padding: 20px 25px 15px 25px; background-color: #f8f9fa; border-bottom: 2px solid #e9ecef;" bgcolor="#f8f9fa">
+                                        <p class="gray-text" style="margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d; font-weight: 600;">Booking Details</p>
+                                    </td>
+                                </tr>
+                                <!-- Receipt items -->
+                                <tr>
+                                    <td class="light-bg" style="padding: 20px 25px; background-color: #ffffff;" bgcolor="#ffffff">
+                                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td style="padding: 12px 0; border-bottom: 1px solid #f8f9fa;">
+                                                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                                        <tr>
+                                                            <td class="gray-text" style="color: #495057; font-weight: 500; font-size: 15px;">Date</td>
+                                                            <td class="dark-text" align="right" style="color: #1a1a1a; font-weight: 600; font-size: 15px;">Saturday, 15th June</td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 12px 0; border-bottom: 1px solid #f8f9fa;">
+                                                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                                        <tr>
+                                                            <td class="gray-text" style="color: #495057; font-weight: 500; font-size: 15px;">Time</td>
+                                                            <td class="dark-text" align="right" style="color: #1a1a1a; font-weight: 600; font-size: 15px;">2:00 PM - 6:00 PM</td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 12px 0 0 0;">
+                                                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                                        <tr>
+                                                            <td class="gray-text" style="color: #495057; font-weight: 500; font-size: 15px;">Facility</td>
+                                                            <td class="dark-text" align="right" style="color: #1a1a1a; font-weight: 600; font-size: 15px;">Main Pitch</td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <!-- Receipt total -->
+                                <tr>
+                                    <td style="padding: 20px 25px; background-color: #1a5f5f; color: #ffffff; font-size: 18px;" bgcolor="#1a5f5f">
+                                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td style="color: #ffffff; font-weight: 600;">Total Amount</td>
+                                                <td align="right" style="color: #ffffff; font-size: 28px; font-weight: 700;">£45.00</td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Example: Section title -->
+                            <h2 style="color: #1a5f5f; font-size: 20px; font-weight: 700; margin: 35px 0 20px 0; padding-bottom: 10px; border-bottom: 3px solid #d4a574;">Quick Links</h2>
+                            
+                            <!-- Example: Link cards (2 column on desktop, stack on mobile) -->
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0 30px 0;">
+                                <tr>
+                                    <td class="mobile-stack" width="50%" style="padding-right: 6px;" valign="top">
+                                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px;" bgcolor="#f8f9fa">
+                                            <tr>
+                                                <td style="padding: 20px 15px; text-align: center;" align="center">
+                                                    <p style="font-size: 32px; margin: 0 0 8px 0;">📅</p>
+                                                    <p style="margin: 0; font-weight: 600; color: #1a5f5f; font-size: 15px;">View Fixtures</p>
+                                                    <p class="gray-text" style="margin: 4px 0 0 0; font-size: 13px; color: #6c757d;">See upcoming matches</p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                    <td class="mobile-stack" width="50%" style="padding-left: 6px;" valign="top">
+                                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px;" bgcolor="#f8f9fa">
+                                            <tr>
+                                                <td style="padding: 20px 15px; text-align: center;" align="center">
+                                                    <p style="font-size: 32px; margin: 0 0 8px 0;">⚙️</p>
+                                                    <p style="margin: 0; font-weight: 600; color: #1a5f5f; font-size: 15px;">My Account</p>
+                                                    <p class="gray-text" style="margin: 4px 0 0 0; font-size: 13px; color: #6c757d;">Manage bookings</p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Example: Info box -->
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 25px 0;">
+                                <tr>
+                                    <td class="info-box-dark" style="background-color: #e7f3ff; border-left: 4px solid #1a5f5f; padding: 20px; border-radius: 8px;" bgcolor="#e7f3ff">
+                                        <p class="info-text-dark" style="margin: 0; color: #144a4a; font-size: 15px; line-height: 1.6;"><strong>Note:</strong> Please arrive 15 minutes before your booking time. Bring appropriate cricket gear and equipment.</p>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Example: Warning box -->
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 25px 0;">
+                                <tr>
+                                    <td style="background-color: #fff3cd; border-left: 4px solid #d4a574; padding: 20px; border-radius: 8px;" bgcolor="#fff3cd">
+                                        <p style="margin: 0; color: #856404; font-size: 15px; line-height: 1.6;"><strong>Cancellation Policy:</strong> Free cancellation up to 24 hours before your booking.</p>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Example: Button -->
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0;">
+                                <tr>
+                                    <td style="border-radius: 6px; background-color: #1a5f5f;" bgcolor="#1a5f5f">
+                                        <a href="https://example.com" class="button" style="display: inline-block; padding: 14px 32px; background-color: #1a5f5f; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 500;">View Full Details</a>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <p class="dark-text" style="font-size: 15px; color: #1a1a1a; margin: 20px 0 0 0;">Thanks,<br>The WOVCC Team</p>
+                            
+                            {% endblock %}
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 30px 40px; text-align: center; font-size: 13px; color: #6c757d; background-color: #f8f9fa; border-top: 1px solid #e9ecef; border-radius: 0 0 12px 12px;" bgcolor="#f8f9fa" align="center">
+                            {% block footer %}
+                            <p style="margin: 6px 0; font-weight: 700; color: #1a5f5f; font-size: 15px;">Wickersley Old Village Cricket Club</p>
+                            <p style="margin: 6px 0; color: #6c757d;">This is an automated confirmation email.</p>
+                            <p style="margin: 15px 0 6px 0; font-size: 12px; color: #6c757d;">
+                                © 2025 WOVCC. All rights reserved.
+                            </p>
+                            {% endblock %}
+                        </td>
+                    </tr>
+                    
+                </table>
+                <!-- End main container -->
+                
+            </td>
+        </tr>
+    </table>
+    <!-- End wrapper -->
 </body>
 </html>
