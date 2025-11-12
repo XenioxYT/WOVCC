@@ -836,7 +836,7 @@ If you have any questions, please contact us at info@wovcc.co.uk
 We look forward to seeing you at the club!
 
 Best regards,
-West of Valley Cricket Club
+Wickersley Old Village Cricket Club
         """
         
         body_html = f"""
@@ -1107,7 +1107,7 @@ This link will expire in 1 hour for security reasons.
 If you did not request a password reset, please ignore this email and your password will remain unchanged.
 
 Best regards,
-West of Valley Cricket Club
+Wickersley Old Village Cricket Club
         """
         
         body_html = f"""
