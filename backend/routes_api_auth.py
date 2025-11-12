@@ -508,25 +508,20 @@ def change_email(user):
             logger.info(f"[CHANGE-EMAIL] Email updated from {old_email} to {new_email}")
             
             # Update Mailchimp if user is subscribed to newsletter
+            mailchimp_error = None
             if db_user.newsletter:
                 try:
-                    
-                    # Unsubscribe old email
-                    unsubscribe_result = unsubscribe_from_newsletter(old_email)
-                    logger.info(f"[CHANGE-EMAIL] Mailchimp unsubscribe result for {old_email}: {unsubscribe_result}")
-                    
-                    # Subscribe new email
-                    subscribe_result = subscribe_to_newsletter(new_email, db_user.name)
-                    logger.info(f"[CHANGE-EMAIL] Mailchimp subscribe result for {new_email}: {subscribe_result}")
-                    
+                    unsubscribe_from_newsletter(old_email)
+                    subscribe_to_newsletter(new_email, db_user.name)
                 except Exception as e:
                     logger.error(f"[CHANGE-EMAIL] Mailchimp update failed: {e}", exc_info=True)
-                    # Don't fail the request if Mailchimp update fails
-            
+                    mailchimp_error = "Your email was updated, but we failed to update your newsletter subscription. Please contact support."
+
             return jsonify({
                 'success': True,
                 'message': 'Email address updated successfully',
-                'user': db_user.to_dict()
+                'user': db_user.to_dict(),
+                'mailchimp_error': mailchimp_error
             })
             
         finally:
@@ -579,31 +574,30 @@ def delete_account(user):
         finally:
             db.close()
         
+        errors = []
         # Delete Stripe customer (if exists)
         if stripe_customer_id:
             try:
-                stripe_deleted = delete_stripe_customer(stripe_customer_id)
-                if stripe_deleted:
-                    logger.info(f"[DELETE-ACCOUNT] Stripe customer {stripe_customer_id} deleted")
-                else:
-                    logger.warning(f"[DELETE-ACCOUNT] Failed to delete Stripe customer {stripe_customer_id}")
+                delete_stripe_customer(stripe_customer_id)
+                logger.info(f"[DELETE-ACCOUNT] Stripe customer {stripe_customer_id} deleted")
             except Exception as e:
                 logger.error(f"[DELETE-ACCOUNT] Stripe deletion error: {e}", exc_info=True)
-                # Continue with deletion even if Stripe fails
-        
+                errors.append("Failed to delete your Stripe data. Please contact support.")
+
         # Unsubscribe from Mailchimp (if subscribed)
         if is_subscribed_newsletter:
             try:
-                mailchimp_result = unsubscribe_from_newsletter(user_email)
-                logger.info(f"[DELETE-ACCOUNT] Mailchimp unsubscribe result: {mailchimp_result}")
+                unsubscribe_from_newsletter(user_email)
+                logger.info(f"[DELETE-ACCOUNT] Mailchimp subscription removed for {user_email}")
             except Exception as e:
                 logger.error(f"[DELETE-ACCOUNT] Mailchimp unsubscribe error: {e}", exc_info=True)
-                # Continue with deletion even if Mailchimp fails
-        
+                errors.append("Failed to remove you from the newsletter. Please contact support.")
+
         # Create response with logout
         response = jsonify({
             'success': True,
-            'message': 'Your account has been permanently deleted'
+            'message': 'Your account has been permanently deleted',
+            'errors': errors if errors else None
         })
         
         # Clear refresh token cookie

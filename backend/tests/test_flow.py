@@ -18,7 +18,7 @@ email = f"testuser{int(time.time())}@test.com"
 password = "testpass123"
 name = "Test User"
 
-register_response = requests.post(f"{API_BASE}/auth/register", json={
+register_response = requests.post(f"{API_BASE}/auth/pre-register", json={
     "email": email,
     "password": password,
     "name": name,

@@ -31,7 +31,7 @@ class PlayCricketScraper:
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         })
         # Runtime controls
-        self.disable_cache: bool = True
+        self.disable_cache: bool = False
         self.request_delay_seconds: float = 0.0
         self.request_timeout_seconds: int = 15
         self.verbose: bool = False

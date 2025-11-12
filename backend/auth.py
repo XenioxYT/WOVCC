@@ -21,7 +21,7 @@ if not JWT_SECRET_KEY:
     )
 
 JWT_ALGORITHM = 'HS256'
-JWT_EXPIRATION_HOURS = 24 * 7  # 7 days
+JWT_EXPIRATION_MINUTES = 15  # 15 minutes
 JWT_REFRESH_EXPIRATION_DAYS = 30  # 30 days
 
 
@@ -50,7 +50,7 @@ def generate_token(user_id: int, email: str, is_admin: bool = False, include_ref
         'email': email,
         'is_admin': is_admin,
         'type': 'access',
-        'exp': now + timedelta(hours=JWT_EXPIRATION_HOURS),
+        'exp': now + timedelta(minutes=JWT_EXPIRATION_MINUTES),
         'iat': now
     }
     access_token = jwt.encode(access_payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
@@ -58,7 +58,7 @@ def generate_token(user_id: int, email: str, is_admin: bool = False, include_ref
     result = {
         'access_token': access_token,
         'token_type': 'Bearer',
-        'expires_in': JWT_EXPIRATION_HOURS * 3600  # in seconds
+        'expires_in': JWT_EXPIRATION_MINUTES * 60  # in seconds
     }
     
     # Refresh token (long-lived) - optionally included

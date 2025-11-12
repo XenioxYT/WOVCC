@@ -15,8 +15,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from database import init_db, SessionLocal, User
 from auth import hash_password
 
+
 def create_admin():
     """Create admin user"""
+    # Security check: Do not run in production
+    if os.environ.get('FLASK_ENV') == 'production':
+        print("This script is for development use only and cannot be run in production.")
+        sys.exit(1)
     init_db()
     db = SessionLocal()
     
