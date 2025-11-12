@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
@@ -260,6 +262,94 @@
             color: #28a745;
             font-weight: 600;
         }
+
+        :root {
+            color-scheme: light dark;
+            supported-color-schemes: light dark;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body, .container {
+                background-color: #1a1a1a !important;
+                color: #ffffff !important;
+            }
+
+            .content, .receipt-box {
+                background-color: #2a2a2a !important;
+            }
+
+            .header, .receipt-total {
+                background: linear-gradient(135deg, #1a5f5f 0%, #144a4a 100%) !important;
+            }
+
+            .greeting, .receipt-item-value {
+                color: #ffffff !important;
+            }
+
+            .receipt-title, .receipt-item-label, .link-desc, .footer, .footer p {
+                color: #aaaaaa !important;
+            }
+
+            .info-box {
+                background: linear-gradient(135deg, #1e3c50 0%, #142a38 100%) !important;
+                border-left-color: #1a5f5f !important;
+            }
+
+            .info-box p {
+                color: #d1eaff !important;
+            }
+
+            .link-card {
+                background-color: #333333 !important;
+                border-color: #444444 !important;
+            }
+
+            .link-card:hover {
+                border-color: #1a5f5f !important;
+                background-color: #383838 !important;
+            }
+        }
+
+        [data-ogsc] body, [data-ogsc] .container {
+            background-color: #1a1a1a !important;
+            color: #ffffff !important;
+        }
+
+        [data-ogsc] .content, [data-ogsc] .receipt-box {
+            background-color: #2a2a2a !important;
+        }
+
+        [data-ogsc] .header, [data-ogsc] .receipt-total {
+            background: linear-gradient(135deg, #1a5f5f 0%, #144a4a 100%) !important;
+        }
+
+        [data-ogsc] .greeting, [data-ogsc] .receipt-item-value {
+            color: #ffffff !important;
+        }
+
+        [data-ogsc] .receipt-title, [data-ogsc] .receipt-item-label, [data-ogsc] .link-desc, [data-ogsc] .footer, [data-ogsc] .footer p {
+            color: #aaaaaa !important;
+        }
+
+        [data-ogsc] .info-box {
+            background: linear-gradient(135deg, #1e3c50 0%, #142a38 100%) !important;
+            border-left-color: #1a5f5f !important;
+        }
+
+        [data-ogsc] .info-box p {
+            color: #d1eaff !important;
+        }
+
+        [data-ogsc] .link-card {
+            background-color: #333333 !important;
+            border-color: #444444 !important;
+        }
+
+        [data-ogsc] .link-card:hover {
+            border-color: #1a5f5f !important;
+            background-color: #383838 !important;
+        }
+
         @media only screen and (max-width: 600px) {
             .container {
                 margin: 10px;
