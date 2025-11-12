@@ -14,7 +14,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def _render_email_template(template_name: str, **context):
+def render_email_template(template_name: str, **context):
     """
     Safely render an email template, creating app context if needed.
     
@@ -219,7 +219,7 @@ Wickersley Old Village Cricket Club
         """
         
         # HTML version using template
-        body_html = _render_email_template(
+        body_html = render_email_template(
             'emails/welcome_receipt.html',
             name=to_name,
             currency_symbol=currency_symbol,
@@ -283,7 +283,7 @@ Wickersley Old Village Cricket Club
         """
         
         # HTML version using template
-        body_html = _render_email_template(
+        body_html = render_email_template(
             'emails/extra_card_receipt.html',
             name=to_name,
             currency_symbol=currency_symbol,
@@ -333,7 +333,7 @@ Wickersley Old Village Cricket Club
         """
         
         # HTML version using template
-        body_html = _render_email_template(
+        body_html = render_email_template(
             'emails/welcome.html',
             name=to_name
         )
@@ -381,7 +381,7 @@ Message:
         """
         
         # HTML version using template
-        body_html = _render_email_template(
+        body_html = render_email_template(
             'emails/contact_notification.html',
             from_name=from_name,
             from_email=from_email,
@@ -430,7 +430,7 @@ Wickersley Old Village Cricket Club
         """
         
         # HTML version using template
-        body_html = _render_email_template(
+        body_html = render_email_template(
             'emails/password_reset.html',
             name=to_name,
             reset_url=reset_url
