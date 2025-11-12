@@ -19,7 +19,7 @@ class EmailConfig:
     # Brevo SMTP Settings
     SMTP_HOST = os.environ.get("SMTP_HOST", "smtp-relay.brevo.com")
     SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
-    SMTP_USERNAME = os.environ.get("SMTP_USERNAME", "9b575d001@smtp-brevo.com")
+    SMTP_USERNAME = os.environ.get("SMTP_USERNAME")
     SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
     SMTP_USE_TLS = os.environ.get("SMTP_USE_TLS", "true").lower() in ("1", "true", "yes")
     
