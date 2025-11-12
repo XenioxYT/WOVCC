@@ -77,6 +77,7 @@ def stripe_webhook():
                     db.commit()
                     logger.info(f"[WEBHOOK] Successfully added additional card for {user.email}")
                     
+                    amount = session.get('amount_total', 0) / 100  # Convert from cents
                     # Send extra card receipt email
                     try:
                         email_sent = EmailConfig.send_extra_card_receipt_email(
@@ -130,6 +131,7 @@ def stripe_webhook():
                         existing_user.membership_start_date = now
                         existing_user.membership_expiry_date = expiry
                         existing_user.updated_at = now
+                        existing_user.has_spouse_card = existing_user.has_spouse_card or pending.include_spouse_card
                         existing_user.stripe_customer_id = session.get('customer')
                         created_user = existing_user
                         
