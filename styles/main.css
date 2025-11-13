@@ -587,6 +587,15 @@ p {
         height: 40px;
     }
     
+    /* Mobile fixture card - date at top */
+    .fixture-date-mobile {
+        display: block !important;
+    }
+    
+    .fixture-date-desktop {
+        display: none !important;
+    }
+    
     .nav-menu {
         top: 61px; /* Navbar height on small screens: 10px + 40px + 10px + 1px */
         height: calc(100vh - 61px);
@@ -707,6 +716,28 @@ p {
     box-shadow: var(--glass-shadow);
     transition: var(--transition);
     cursor: pointer;
+}
+
+/* Fixture card layout - desktop has date on the right */
+.fixture-card-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 20px;
+}
+
+.fixture-card-main {
+    flex: 1;
+}
+
+/* Hide mobile date on desktop */
+.fixture-date-mobile {
+    display: none;
+}
+
+/* Show desktop date on desktop */
+.fixture-date-desktop {
+    flex-shrink: 0;
 }
 .fixture-card-link,
 .result-card-link {
