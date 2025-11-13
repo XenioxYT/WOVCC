@@ -6,61 +6,76 @@
 {% endblock %}
 
 {% block content %}
-<div style="display: flex; flex-wrap: wrap; padding: 20px; background-color: #f8f9fa; border-bottom: 2px solid #e9ecef; margin: -40px -40px 30px -40px;">
-    <div style="flex: 1; min-width: 150px; padding: 15px; text-align: center;">
-        <h3 style="margin: 0; font-size: 32px; color: #1a5f5f; font-weight: 600;">{{ total_signups }}</h3>
-        <p style="margin: 5px 0 0 0; color: #6c757d; font-size: 14px;">New Members</p>
-    </div>
-    <div style="flex: 1; min-width: 150px; padding: 15px; text-align: center;">
-        <h3 style="margin: 0; font-size: 32px; color: #28a745; font-weight: 600;">£{{ total_revenue }}</h3>
-        <p style="margin: 5px 0 0 0; color: #6c757d; font-size: 14px;">Total Revenue</p>
-    </div>
-    <div style="flex: 1; min-width: 150px; padding: 15px; text-align: center;">
-        <h3 style="margin: 0; font-size: 32px; color: #1a5f5f; font-weight: 600;">{{ spouse_cards }}</h3>
-        <p style="margin: 5px 0 0 0; color: #6c757d; font-size: 14px;">Additional Cards</p>
-    </div>
-    <div style="flex: 1; min-width: 150px; padding: 15px; text-align: center;">
-        <h3 style="margin: 0; font-size: 32px; color: #1a5f5f; font-weight: 600;">{{ newsletter_subs }}</h3>
-        <p style="margin: 5px 0 0 0; color: #6c757d; font-size: 14px;">Newsletter Subs</p>
-    </div>
-</div>
+<!-- Stats Grid -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8f9fa; margin: -40px -40px 30px -40px; border-bottom: 2px solid #e9ecef;" bgcolor="#f8f9fa">
+    <tr>
+        <td class="stats-cell" width="25%" style="padding: 20px; text-align: center;" align="center">
+            <h3 style="margin: 0; font-size: 32px; color: #1a5f5f; font-weight: 600;">{{ total_signups }}</h3>
+            <p style="margin: 5px 0 0 0; color: #6c757d; font-size: 14px;">New Members</p>
+        </td>
+        <td class="stats-cell" width="25%" style="padding: 20px; text-align: center;" align="center">
+            <h3 style="margin: 0; font-size: 32px; color: #28a745; font-weight: 600;">£{{ total_revenue }}</h3>
+            <p style="margin: 5px 0 0 0; color: #6c757d; font-size: 14px;">Total Revenue</p>
+        </td>
+        <td class="stats-cell" width="25%" style="padding: 20px; text-align: center;" align="center">
+            <h3 style="margin: 0; font-size: 32px; color: #1a5f5f; font-weight: 600;">{{ spouse_cards }}</h3>
+            <p style="margin: 5px 0 0 0; color: #6c757d; font-size: 14px;">Additional Cards</p>
+        </td>
+        <td class="stats-cell" width="25%" style="padding: 20px; text-align: center;" align="center">
+            <h3 style="margin: 0; font-size: 32px; color: #1a5f5f; font-weight: 600;">{{ newsletter_subs }}</h3>
+            <p style="margin: 5px 0 0 0; color: #6c757d; font-size: 14px;">Newsletter Subs</p>
+        </td>
+    </tr>
+</table>
 
 <h2 style="color: #1a5f5f; margin-top: 0; font-weight: 600;">Member Details</h2>
 
 {% for signup in signups %}
-<div style="background-color: #f8f9fa; border-left: 4px solid #1a5f5f; padding: 20px; margin-bottom: 15px; border-radius: 6px;">
-    <h3 style="margin: 0 0 12px 0; color: #1a5f5f; font-size: 20px; font-weight: 600;">{{ loop.index }}. {{ signup.name }}</h3>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 12px;">
-        <div style="padding: 8px 0;">
-            <div style="font-weight: 600; color: #6c757d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Email</div>
-            <div style="color: #1a1a1a; font-size: 14px; margin-top: 4px;">{{ signup.email }}</div>
-        </div>
-        <div style="padding: 8px 0;">
-            <div style="font-weight: 600; color: #6c757d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Amount Paid</div>
-            <div style="color: #28a745; font-size: 14px; margin-top: 4px; font-weight: 600;">£{{ signup.amount_paid }}</div>
-        </div>
-        <div style="padding: 8px 0;">
-            <div style="font-weight: 600; color: #6c757d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Additional Card</div>
-            <div style="color: #1a1a1a; font-size: 14px; margin-top: 4px;">
-                <span class="badge {% if signup.has_spouse_card %}badge-yes{% else %}badge-no{% endif %}">
-                    {% if signup.has_spouse_card %}Yes{% else %}No{% endif %}
-                </span>
-            </div>
-        </div>
-        <div style="padding: 8px 0;">
-            <div style="font-weight: 600; color: #6c757d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Newsletter</div>
-            <div style="color: #1a1a1a; font-size: 14px; margin-top: 4px;">
-                <span class="badge {% if signup.newsletter_subscribed %}badge-yes{% else %}badge-no{% endif %}">
-                    {% if signup.newsletter_subscribed %}Yes{% else %}No{% endif %}
-                </span>
-            </div>
-        </div>
-        <div style="padding: 8px 0;">
-            <div style="font-weight: 600; color: #6c757d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Signup Date</div>
-            <div style="color: #1a1a1a; font-size: 14px; margin-top: 4px;">{{ signup.signup_date }}</div>
-        </div>
-    </div>
-</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 15px;">
+    <tr>
+        <td style="background-color: #f8f9fa; border-left: 4px solid #1a5f5f; padding: 20px; border-radius: 6px;" bgcolor="#f8f9fa">
+            <h3 style="margin: 0 0 12px 0; color: #1a5f5f; font-size: 20px; font-weight: 600;">{{ loop.index }}. {{ signup.name }}</h3>
+            
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 12px;">
+                <tr>
+                    <td style="padding: 8px 8px 8px 0; vertical-align: top;" valign="top">
+                        <div style="font-weight: 600; color: #6c757d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Email</div>
+                        <div style="color: #1a1a1a; font-size: 14px; margin-top: 4px;">{{ signup.email }}</div>
+                    </td>
+                    <td style="padding: 8px 8px 8px 0; vertical-align: top;" valign="top">
+                        <div style="font-weight: 600; color: #6c757d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Amount Paid</div>
+                        <div style="color: #28a745; font-size: 14px; margin-top: 4px; font-weight: 600;">£{{ signup.amount_paid }}</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 8px 8px 0; vertical-align: top;" valign="top">
+                        <div style="font-weight: 600; color: #6c757d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Additional Card</div>
+                        <div style="color: #1a1a1a; font-size: 14px; margin-top: 4px;">
+                            <span class="badge {% if signup.has_spouse_card %}badge-yes{% else %}badge-no{% endif %}" style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; background-color: {% if signup.has_spouse_card %}#d4edda{% else %}#f8d7da{% endif %}; color: {% if signup.has_spouse_card %}#155724{% else %}#721c24{% endif %};">
+                                {% if signup.has_spouse_card %}Yes{% else %}No{% endif %}
+                            </span>
+                        </div>
+                    </td>
+                    <td style="padding: 8px 8px 8px 0; vertical-align: top;" valign="top">
+                        <div style="font-weight: 600; color: #6c757d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Newsletter</div>
+                        <div style="color: #1a1a1a; font-size: 14px; margin-top: 4px;">
+                            <span class="badge {% if signup.newsletter_subscribed %}badge-yes{% else %}badge-no{% endif %}" style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; background-color: {% if signup.newsletter_subscribed %}#d4edda{% else %}#f8d7da{% endif %}; color: {% if signup.newsletter_subscribed %}#155724{% else %}#721c24{% endif %};">
+                                {% if signup.newsletter_subscribed %}Yes{% else %}No{% endif %}
+                            </span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 8px 8px 0; vertical-align: top;" valign="top">
+                        <div style="font-weight: 600; color: #6c757d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Signup Date</div>
+                        <div style="color: #1a1a1a; font-size: 14px; margin-top: 4px;">{{ signup.signup_date }}</div>
+                    </td>
+                    <td style="padding: 8px 8px 8px 0;"></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
 {% endfor %}
 {% endblock %}
 

@@ -6,37 +6,64 @@
 {% endblock %}
 
 {% block content %}
-<p class="greeting" style="color: #1a1a1a;">Dear {{ name }},</p>
+<p class="dark-text" style="font-size: 18px; color: #1a1a1a; margin: 0 0 20px 0;">Dear {{ name }},</p>
 
-<div style="text-align: center;">
-    <div class="success-badge" style="color: #155724;">
-        ✓ Card Activated
-    </div>
-</div>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 20px auto;">
+    <tr>
+        <td style="background-color: #d4edda; color: #155724; padding: 12px 24px; border-radius: 8px; border-left: 4px solid #28a745; font-weight: 600; font-size: 16px; text-align: center;" bgcolor="#d4edda" align="center">
+            ✓ Card Activated
+        </td>
+    </tr>
+</table>
 
 <p style="font-size: 16px; margin: 25px 0; color: #495057;">
     Thank you for purchasing an additional extra card for your WOVCC membership! Your payment has been processed and the card has been activated.
 </p>
 
-<div class="receipt-box">
-    <div class="receipt-title">Payment Receipt</div>
-    <div class="receipt-items">
-        <div class="receipt-item">
-            <span class="receipt-item-label">Additional Extra Card</span>
-            <span class="receipt-item-value">{{ currency_symbol }}{{ amount_paid }}</span>
-        </div>
-    </div>
-    <div class="receipt-total">
-        <div class="receipt-total-label">Total Paid</div>
-        <div class="receipt-total-value">{{ currency_symbol }}{{ amount_paid }}</div>
-    </div>
-</div>
+<!-- Receipt Box -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 30px 0; border: 2px solid #e9ecef; border-radius: 8px;">
+    <tr>
+        <td style="padding: 20px 25px 15px 25px; background-color: #f8f9fa; border-bottom: 2px solid #e9ecef;" bgcolor="#f8f9fa">
+            <p class="gray-text" style="margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d; font-weight: 600;">Payment Receipt</p>
+        </td>
+    </tr>
+    <tr>
+        <td class="light-bg" style="padding: 20px 25px; background-color: #ffffff;" bgcolor="#ffffff">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td style="padding: 12px 0;">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                                <td class="gray-text" style="color: #495057; font-weight: 500; font-size: 15px;">Additional Extra Card</td>
+                                <td class="dark-text" align="right" style="color: #1a1a1a; font-weight: 600; font-size: 15px;">{{ currency_symbol }}{{ amount_paid }}</td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td style="padding: 20px 25px; background-color: #1a5f5f; color: #ffffff; font-size: 18px;" bgcolor="#1a5f5f">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td style="color: #ffffff; font-weight: 600;">Total Paid</td>
+                    <td align="right" style="color: #ffffff; font-size: 28px; font-weight: 700;">{{ currency_symbol }}{{ amount_paid }}</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
 
-<div class="info-box">
-    <p style="color: #144a4a;">
-        Your additional card is now linked to your membership account. If you have any questions, feel free to contact us at <a href="mailto:info@wickersleycricket.com" style="color: #1a5f5f; font-weight: 600; text-decoration: none;">info@wickersleycricket.com</a>
-    </p>
-</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 25px 0;">
+    <tr>
+        <td class="info-box-dark" style="background-color: #e7f3ff; border-left: 4px solid #1a5f5f; padding: 20px; border-radius: 8px;" bgcolor="#e7f3ff">
+            <p class="info-text-dark" style="margin: 0; color: #144a4a; font-size: 15px; line-height: 1.6;">
+                Your additional card is now linked to your membership account. If you have any questions, feel free to contact us at <a href="mailto:info@wickersleycricket.com" style="color: #1a5f5f; font-weight: 600; text-decoration: none;">info@wickersleycricket.com</a>
+            </p>
+        </td>
+    </tr>
+</table>
 
 <p style="margin-top: 30px; font-size: 15px; color: #495057;">
     Thank you for your continued support of the club!
