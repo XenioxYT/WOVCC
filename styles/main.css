@@ -11,10 +11,10 @@
     --border-color: #e9ecef;
     --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --glass-bg: rgba(255, 255, 255, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.3);
-    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    --blur: blur(10px);
+    --glass-bg: rgba(255, 255, 255, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    --blur: blur(20px);
 }
 * {
     margin: 0;
@@ -145,20 +145,29 @@ p {
     border-bottom: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
     padding: 15px 0;
-    position: -webkit-sticky; /* Safari */
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 1000;
     margin: 0;
     width: 100%;
     box-sizing: border-box;
-    /* Ensure sticky works properly */
-    align-self: flex-start; /* For flexbox containers */
+    /* Ensure backdrop blur works properly */
+    -webkit-backdrop-filter: saturate(200%) blur(20px);
+    backdrop-filter: saturate(200%) blur(20px);
+    /* Force hardware acceleration for better performance */
+    transform: translateZ(0);
+    will-change: backdrop-filter;
 }
 .navbar .container {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 15px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
 }
 .navbar-brand {
     display: flex;
@@ -167,6 +176,7 @@ p {
     font-size: 1.3rem;
     font-weight: 600;
     color: var(--primary-color);
+    margin-right: auto; /* Push user menu to the right */
 }
 .navbar-brand img {
     width: 50px;
@@ -204,6 +214,11 @@ p {
     border: none;
     padding: 5px;
     outline: none;
+    position: relative;
+    width: 35px;
+    height: 35px;
+    justify-content: center;
+    align-items: center;
 }
 .nav-toggle:focus {
     outline: 2px solid var(--primary-color);
@@ -215,6 +230,19 @@ p {
     height: 3px;
     background-color: var(--primary-color);
     border-radius: 2px;
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+/* Hamburger to X animation */
+.nav-toggle.active span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+}
+.nav-toggle.active span:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+}
+.nav-toggle.active span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
 }
 .btn {
     display: inline-flex;
@@ -495,32 +523,42 @@ p {
     h3 {
         font-size: 1.5rem;
     }
+    /* Add padding to body to account for fixed navbar */
+    body {
+        padding-top: 71px;
+    }
     .nav-menu {
         position: fixed;
         top: 71px; /* Navbar height: 15px padding + 40px image + 15px padding + 1px border */
-        right: -100%;
+        left: -100%;
         width: 300px;
         max-width: 80vw;
         height: calc(100vh - 71px);
-        background-color: rgb(235, 235, 235);
-        backdrop-filter: var(--blur);
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: saturate(200%) blur(20px);
+        -webkit-backdrop-filter: saturate(200%) blur(20px);
         flex-direction: column;
         align-items: flex-start;
         padding: 30px;
-        transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
         visibility: hidden;
         opacity: 0;
         overflow-y: auto;
         overflow-x: hidden;
+        z-index: 999;
     }
     .nav-menu.active {
-        right: 0;
+        left: 0;
         visibility: visible;
         opacity: 1;
     }
     .nav-toggle {
         display: flex;
+        order: -1; /* Put hamburger first in flex order */
+    }
+    .navbar-brand {
+        order: 0; /* Logo comes after hamburger */
     }
     .navbar-brand span {
         display: none;
@@ -653,10 +691,8 @@ p {
     top: 100%;
     right: 0;
     margin-top: 8px;
-    min-width: 180px;
-    background: var(--glass-bg);
-    backdrop-filter: var(--blur);
-    -webkit-backdrop-filter: var(--blur);
+    min-width: 200px;
+    background: var(--white);
     border: 1px solid var(--glass-border);
     border-radius: 8px;
     box-shadow: var(--glass-shadow);
@@ -665,6 +701,9 @@ p {
     transform: translateY(-10px);
     transition: var(--transition);
     z-index: 1001;
+    /* Force hardware acceleration for better backdrop blur performance */
+    transform: translateY(-10px);
+    will-change: transform, opacity;
 }
 .user-menu:hover .dropdown-menu {
     opacity: 1;
@@ -673,9 +712,10 @@ p {
 }
 .dropdown-menu a {
     display: block;
-    padding: 12px 20px;
+    padding: 14px 24px;
     color: var(--text-dark);
-    font-size: 0.95rem;
+    font-size: 1.1rem;
+    font-weight: 500;
     transition: var(--transition);
 }
 .dropdown-menu a:hover {
@@ -687,6 +727,9 @@ p {
 }
 .dropdown-menu a:last-child {
     border-radius: 0 0 8px 8px;
+}
+.dropdown-menu a:only-child {
+    border-radius: 8px;
 }
 #live-match-section,
 #no-match-section {

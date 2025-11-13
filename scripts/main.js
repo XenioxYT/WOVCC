@@ -5,9 +5,12 @@ document.addEventListener("DOMContentLoaded", function () {
     const navToggle = document.querySelector(".nav-toggle");
     const navMenu = document.querySelector(".nav-menu");
     if (navToggle && navMenu) {
-        navToggle.addEventListener("click", function () {
+        // Toggle menu on hamburger click
+        navToggle.addEventListener("click", function (e) {
+            e.stopPropagation(); // Prevent event from bubbling
             const isActive = navMenu.classList.contains("active");
             navMenu.classList.toggle("active");
+            navToggle.classList.toggle("active"); // Animate hamburger to X
             navToggle.setAttribute("aria-expanded", !isActive);
             
             // Lock/unlock body scroll
@@ -17,24 +20,52 @@ document.addEventListener("DOMContentLoaded", function () {
                 document.body.style.overflow = '';
             }
         });
+        
+        // Close menu when clicking outside (on mobile only)
         document.addEventListener("click", function (event) {
-            if (!navToggle.contains(event.target) && !navMenu.contains(event.target)) {
-                navMenu.classList.remove("active");
-                navToggle.setAttribute("aria-expanded", "false");
-                document.body.style.overflow = '';
+            // Only handle this on mobile (when nav-toggle is visible)
+            if (window.getComputedStyle(navToggle).display === 'none') {
+                return; // Not on mobile, don't interfere
             }
+            
+            // Check if menu is active
+            if (!navMenu.classList.contains("active")) {
+                return; // Menu not open, nothing to do
+            }
+            
+            // If clicking inside the menu itself, do nothing (let nav links handle closing)
+            if (navMenu.contains(event.target)) {
+                return;
+            }
+            
+            // If clicking on the toggle button, do nothing (handled by toggle listener)
+            if (navToggle.contains(event.target)) {
+                return;
+            }
+            
+            // Otherwise, close the menu (this includes clicking on the overlay)
+            navMenu.classList.remove("active");
+            navToggle.classList.remove("active");
+            navToggle.setAttribute("aria-expanded", "false");
+            document.body.style.overflow = '';
         });
+        
+        // Close menu when clicking nav links
         const navLinks = navMenu.querySelectorAll(".nav-link");
         navLinks.forEach((link) => {
             link.addEventListener("click", function () {
                 navMenu.classList.remove("active");
+                navToggle.classList.remove("active");
                 navToggle.setAttribute("aria-expanded", "false");
                 document.body.style.overflow = '';
             });
         });
+        
+        // Close menu on Escape key
         document.addEventListener("keydown", function (event) {
             if (event.key === "Escape" && navMenu.classList.contains("active")) {
                 navMenu.classList.remove("active");
+                navToggle.classList.remove("active");
                 navToggle.setAttribute("aria-expanded", "false");
                 navToggle.focus();
                 document.body.style.overflow = '';
