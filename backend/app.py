@@ -16,6 +16,7 @@ from datetime import datetime
 
 # Import application modules
 from database import init_db
+from signup_logger import init_signup_activity_table
 
 # Configure logging
 logging.basicConfig(
@@ -37,6 +38,7 @@ CORS(app, supports_credentials=True, origins=['http://localhost:5000', 'http://1
 
 # Initialize database on startup
 init_db()
+init_signup_activity_table()
 
 # ========================================
 # Import and Register Blueprints
