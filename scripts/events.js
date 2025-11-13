@@ -158,8 +158,8 @@ async function loadCategories() {
       year: 'numeric' 
     });
     
-    // Time display
-    const timeDisplay = event.time ? `
+    // Time display - check for truthy value and non-empty string
+    const timeDisplay = (event.time && event.time.trim() !== '') ? `
       <div class="event-card-meta-item">
         <svg fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
@@ -168,8 +168,8 @@ async function loadCategories() {
       </div>
     ` : '';
     
-    // Location display
-    const locationDisplay = event.location ? `
+    // Location display - check for truthy value and non-empty string
+    const locationDisplay = (event.location && event.location.trim() !== '') ? `
       <div class="event-card-meta-item">
         <svg fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
@@ -292,6 +292,7 @@ async function loadCategories() {
 // Event detail page variables (always define these, check page type when needed)
 let currentEvent = null;
 let userInterested = false;
+let detailListenersInitialized = false;
 
 // Function to extract event ID from URL
 function getEventIdFromUrl() {
@@ -306,7 +307,7 @@ function initDetailPage() {
   const eventId = getEventIdFromUrl();
   if (eventId) {
     loadEventDetail(eventId);
-    setupDetailEventListeners();
+    // Note: setupDetailEventListeners() is called inside loadEventDetail() after rendering
   }
 }
 
@@ -326,10 +327,20 @@ if (document.readyState === 'loading') {
 // Re-initialize on page transitions
 document.addEventListener('pageTransitionComplete', function(e) {
   if (e.detail.path.startsWith('/events/') && e.detail.path !== '/events') {
+    // Reset state when navigating to a detail page
+    detailListenersInitialized = false;
+    currentEvent = null;
+    userInterested = false;
+    
     // Add a small delay to ensure DOM is ready
     setTimeout(() => {
       initDetailPage();
     }, 100);
+  } else if (!e.detail.path.startsWith('/events/')) {
+    // Reset state when navigating away from detail pages
+    detailListenersInitialized = false;
+    currentEvent = null;
+    userInterested = false;
   }
 });
 
@@ -340,12 +351,7 @@ async function loadEventDetail(eventId) {
     const content = document.getElementById('event-content');
     const error = document.getElementById('event-error');
     
-    if (skeleton) {
-      skeleton.style.display = 'block';
-      // Force reflow to ensure display change is applied
-      skeleton.offsetHeight;
-      skeleton.classList.add('active');
-    }
+    // Hide content and error first
     if (content) {
       content.classList.remove('loaded');
       content.style.display = 'none';
@@ -353,6 +359,17 @@ async function loadEventDetail(eventId) {
     if (error) {
       error.classList.remove('active');
       error.style.display = 'none';
+    }
+    
+    // Show skeleton with proper transition
+    if (skeleton) {
+      skeleton.style.display = 'block';
+      // Force reflow to ensure display change is applied before adding the active class
+      void skeleton.offsetHeight;
+      // Use requestAnimationFrame to ensure the transition triggers
+      requestAnimationFrame(() => {
+        skeleton.classList.add('active');
+      });
     }
     
       const headers = {};
@@ -382,7 +399,7 @@ async function loadEventDetail(eventId) {
     const content = document.getElementById('event-content');
     
     // Remove active class to fade out skeleton
-    if (skeleton) {
+    if (skeleton && skeleton.classList.contains('active')) {
       skeleton.classList.remove('active');
       
       // Wait for skeleton fade-out before showing content
@@ -390,16 +407,26 @@ async function loadEventDetail(eventId) {
         skeleton.style.display = 'none';
         
         // Show content with fade-in
-        content.style.display = 'block';
-        // Force reflow
-        content.offsetHeight;
-        content.classList.add('loaded');
+        if (content) {
+          content.style.display = 'block';
+          void content.offsetHeight;
+          requestAnimationFrame(() => {
+            content.classList.add('loaded');
+          });
+        }
       }, 300); // Match the CSS transition duration
     } else {
-      // Fallback if skeleton doesn't exist
-      content.style.display = 'block';
-      content.offsetHeight;
-      content.classList.add('loaded');
+      // Fallback if skeleton doesn't exist or wasn't shown
+      if (skeleton) {
+        skeleton.style.display = 'none';
+      }
+      if (content) {
+        content.style.display = 'block';
+        void content.offsetHeight;
+        requestAnimationFrame(() => {
+          content.classList.add('loaded');
+        });
+      }
     }
     
     // Set title
@@ -530,22 +557,41 @@ async function loadEventDetail(eventId) {
   }
 
   function setupDetailEventListeners() {
+    // Only set up listeners once to avoid duplicates
+    if (detailListenersInitialized) return;
+    detailListenersInitialized = true;
+    
     // Interest button
-    document.getElementById('interest-button').addEventListener('click', handleInterestClick);
+    const interestButton = document.getElementById('interest-button');
+    if (interestButton) {
+      interestButton.addEventListener('click', handleInterestClick);
+    }
     
     // Modal close buttons
-    document.getElementById('modal-close').addEventListener('click', closeModal);
-    document.getElementById('modal-cancel').addEventListener('click', closeModal);
+    const modalClose = document.getElementById('modal-close');
+    const modalCancel = document.getElementById('modal-cancel');
+    if (modalClose) {
+      modalClose.addEventListener('click', closeModal);
+    }
+    if (modalCancel) {
+      modalCancel.addEventListener('click', closeModal);
+    }
     
     // Interest form
-    document.getElementById('interest-form').addEventListener('submit', handleInterestSubmit);
+    const interestForm = document.getElementById('interest-form');
+    if (interestForm) {
+      interestForm.addEventListener('submit', handleInterestSubmit);
+    }
     
     // Close modal on outside click
-    document.getElementById('interest-modal').addEventListener('click', function(e) {
-      if (e.target === this) {
-        closeModal();
-      }
-    });
+    const interestModal = document.getElementById('interest-modal');
+    if (interestModal) {
+      interestModal.addEventListener('click', function(e) {
+        if (e.target === this) {
+          closeModal();
+        }
+      });
+    }
   }
 
   async function handleInterestClick() {
@@ -640,6 +686,12 @@ async function loadEventDetail(eventId) {
     const content = document.getElementById('event-content');
     const error = document.getElementById('event-error');
     
+    // Hide content first
+    if (content) {
+      content.classList.remove('loaded');
+      content.style.display = 'none';
+    }
+    
     // Fade out skeleton
     if (skeleton) {
       skeleton.classList.remove('active');
@@ -648,20 +700,23 @@ async function loadEventDetail(eventId) {
         skeleton.style.display = 'none';
         
         // Show error with fade-in
-        error.style.display = 'block';
-        error.offsetHeight;
-        error.classList.add('active');
+        if (error) {
+          error.style.display = 'block';
+          void error.offsetHeight;
+          requestAnimationFrame(() => {
+            error.classList.add('active');
+          });
+        }
       }, 300);
     } else {
-      // Fallback
-      error.style.display = 'block';
-      error.offsetHeight;
-      error.classList.add('active');
-    }
-    
-    if (content) {
-      content.classList.remove('loaded');
-      content.style.display = 'none';
+      // Fallback if skeleton doesn't exist
+      if (error) {
+        error.style.display = 'block';
+        void error.offsetHeight;
+        requestAnimationFrame(() => {
+          error.classList.add('active');
+        });
+      }
     }
   }
 

@@ -318,7 +318,13 @@
         document.getElementById('event-title').value = event.title;
         document.getElementById('event-short-description').value = event.short_description;
         document.getElementById('event-long-description').value = event.long_description;
-        document.getElementById('event-date').value = new Date(event.date).toISOString().slice(0, 16);
+        
+        // Set date only (not time) - date field expects YYYY-MM-DD format
+        document.getElementById('event-date').value = new Date(event.date).toISOString().slice(0, 10);
+        
+        // Set time if available
+        document.getElementById('event-time').value = event.time || '';
+        
         document.getElementById('event-location').value = event.location || '';
         document.getElementById('event-category').value = event.category || '';
         document.getElementById('event-is-recurring').checked = event.is_recurring || false;
@@ -381,7 +387,11 @@
         formData.append('title', document.getElementById('event-title').value);
         formData.append('short_description', document.getElementById('event-short-description').value);
         formData.append('long_description', document.getElementById('event-long-description').value);
+        
+        // Send date and time separately
         formData.append('date', document.getElementById('event-date').value);
+        formData.append('time', document.getElementById('event-time').value);
+        
         formData.append('location', document.getElementById('event-location').value);
         formData.append('category', document.getElementById('event-category').value);
         formData.append('is_recurring', isRecurring);

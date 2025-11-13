@@ -207,13 +207,20 @@ def create_event(user):
                 'error': 'Missing required fields: title, short_description, long_description, date'
             }), 400
         
-        # Parse date
+        # Parse date (now expects just a date, not datetime)
         try:
-            event_date = datetime.fromisoformat(data['date'].replace('Z', '+00:00'))
-        except ValueError:
+            # Handle both date-only (YYYY-MM-DD) and datetime formats for backward compatibility
+            date_str = data['date']
+            if 'T' in date_str or ' ' in date_str:
+                # Old datetime format
+                event_date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            else:
+                # New date-only format - set time to midnight UTC
+                event_date = datetime.strptime(date_str, '%Y-%m-%d').replace(tzinfo=timezone.utc)
+        except ValueError as e:
             return jsonify({
                 'success': False,
-                'error': 'Invalid date format'
+                'error': f'Invalid date format: {str(e)}'
             }), 400
         
         # Handle image upload
@@ -313,7 +320,14 @@ def update_event(user, event_id):
                 event.long_description = data['long_description']
             if 'date' in data:
                 try:
-                    event.date = datetime.fromisoformat(data['date'].replace('Z', '+00:00'))
+                    # Handle both date-only (YYYY-MM-DD) and datetime formats for backward compatibility
+                    date_str = data['date']
+                    if 'T' in date_str or ' ' in date_str:
+                        # Old datetime format
+                        event.date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                    else:
+                        # New date-only format - set time to midnight UTC
+                        event.date = datetime.strptime(date_str, '%Y-%m-%d').replace(tzinfo=timezone.utc)
                 except ValueError:
                     pass
             if 'time' in data:
@@ -724,7 +738,7 @@ def generate_event_descriptions_ai(user):
         
         openai_api_key = os.getenv('OPENAI_API_KEY')
         openai_base_url = os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1')
-        openai_model = os.getenv('OPENAI_MODEL', 'gpt-4o-mini')
+        openai_model = os.getenv('OPENAI_MODEL')
 
         if not openai_api_key:
             return jsonify({
