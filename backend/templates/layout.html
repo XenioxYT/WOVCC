@@ -35,6 +35,10 @@
   <link rel="stylesheet" href="/styles/main.css">
   <link rel="stylesheet" href="/styles/pages.css">
   {% block extra_css %}{% endblock %}
+  
+  <!-- Cloudflare Web Analytics -->
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "95d8e25530a8489f80473f230a0ea5b2"}'></script>
+  <!-- End Cloudflare Web Analytics -->
 </head>
 <body>
   <!-- Navigation Bar -->
@@ -112,7 +116,7 @@
         <div class="footer-section">
           <h3>Opening Hours</h3>
           <p style="font-size: 0.95rem; line-height: 1.8;">
-            {{ snippets.get('footer_opening_hours', 'Mon-Thu: 4pm-10pm<br>Tue: 4pm-10:30pm<br>Fri: 4pm-11pm<br>Sat: 12pm-11pm<br>Sun: 12pm-10pm') | safe }}
+            {{ snippets.get('footer_opening_hours', 'Mon-Thu: 4pm-10pm<br>Tue: 4pm-10:30pm<br>Fri: 4pm-11pm<br>Sat: 12pm-11pm<br>Sun: 12pm-10pm') }}
           </p>
         </div>
         
