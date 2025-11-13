@@ -8,6 +8,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Database configuration
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///wovcc.db')
