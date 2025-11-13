@@ -58,6 +58,9 @@
     
     async function loadAdminStats() {
         try {
+            // Scroll to top immediately when loading admin stats
+            window.scrollTo(0, 0);
+            
             if (!window.WOVCCAuth || !window.WOVCCAuth.authenticatedFetch) {
                 console.error('WOVCCAuth not available');
                 return;
@@ -175,6 +178,9 @@
     
     async function loadAdminUsers(page = 1) {
         try {
+            // Scroll to top immediately when loading admin users
+            window.scrollTo(0, 0);
+            
             if (!window.WOVCCAuth || !window.WOVCCAuth.authenticatedFetch) {
                 console.error('WOVCCAuth not available');
                 showUsersError('Authentication system not loaded');

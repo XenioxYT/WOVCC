@@ -8,6 +8,9 @@
     // Initialize via explicit wiring from admin-page.js / SPA transitions.
     // No inline handlers; use delegated bindings instead.
     async function loadAdminEvents() {
+        // Scroll to top immediately when loading admin events
+        window.scrollTo(0, 0);
+        
         console.log('loadAdminEvents called');
         try {
             showEventsLoading();

@@ -57,6 +57,9 @@
    * Handles user login and redirects to membership page on success
    */
   function initLoginPage() {
+    // Scroll to top immediately when initializing login page
+    window.scrollTo(0, 0);
+    
     var loginForm = document.getElementById('login-form');
     var loginError = document.getElementById('login-error');
 
@@ -129,6 +132,9 @@
    * Shows membership details for authenticated users
    */
   function initMembershipPage() {
+    // Scroll to top immediately when initializing membership page
+    window.scrollTo(0, 0);
+    
     if (!window.WOVCCAuth) {
       console.warn('[Membership] WOVCCAuth not available yet');
       return;
@@ -1067,6 +1073,9 @@
    * Extracted from inline IIFE (signup flow).
    */
   function initJoinPage() {
+    // Scroll to top immediately when initializing join page
+    window.scrollTo(0, 0);
+    
     var form = document.getElementById('signup-form');
     if (!form) return;
 
@@ -1388,6 +1397,9 @@
    * Handles contact form submission without inline JS and supports SPA transitions.
    */
   function initContactPage() {
+    // Scroll to top immediately when initializing contact page
+    window.scrollTo(0, 0);
+    
     var form = document.getElementById('contact-form');
     if (!form) return;
 

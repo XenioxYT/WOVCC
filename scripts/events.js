@@ -351,10 +351,6 @@ async function loadEventDetail(eventId) {
   try {
     // Immediately scroll to top - use instant scroll for better UX
     window.scrollTo(0, 0);
-    // Also try smooth scroll as backup
-    setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 50);
     
     // Show skeleton with fade-in
     const skeleton = document.getElementById('event-skeleton');

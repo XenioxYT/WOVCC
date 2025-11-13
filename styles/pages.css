@@ -1778,8 +1778,7 @@
   
   .interest-modal-content {
     max-height: 95vh;
-    width: calc(100vw - 20px);
-    max-width: calc(100vw - 20px);
+    width: 100%;
   }
   
   .interest-modal-header {
@@ -1888,8 +1887,7 @@
   
   .interest-modal-content {
     max-height: 98vh;
-    width: calc(100vw - 10px);
-    max-width: calc(100vw - 10px);
+    width: 100%;
     border-radius: 12px;
   }
   
