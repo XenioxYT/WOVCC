@@ -1,0 +1,13 @@
+# .dockerignore
+
+.git
+.vscode
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.env
+.env.example
+wovcc.db
+wovcc.db-journal*
+venv
