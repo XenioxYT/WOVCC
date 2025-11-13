@@ -58,6 +58,9 @@
     
     async function loadAdminStats() {
         try {
+            // Scroll to top immediately when loading admin stats
+            window.scrollTo(0, 0);
+            
             if (!window.WOVCCAuth || !window.WOVCCAuth.authenticatedFetch) {
                 console.error('WOVCCAuth not available');
                 return;
@@ -175,6 +178,9 @@
     
     async function loadAdminUsers(page = 1) {
         try {
+            // Scroll to top immediately when loading admin users
+            window.scrollTo(0, 0);
+            
             if (!window.WOVCCAuth || !window.WOVCCAuth.authenticatedFetch) {
                 console.error('WOVCCAuth not available');
                 showUsersError('Authentication system not loaded');
@@ -461,6 +467,7 @@
         document.getElementById('user-submit-btn').textContent = 'Update User';
         
         modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
     }
     
     function closeUserModal() {
@@ -468,6 +475,7 @@
         if (modal) {
             modal.style.display = 'none';
         }
+        document.body.style.overflow = '';
         currentEditingUser = null;
     }
     

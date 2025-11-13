@@ -304,6 +304,9 @@ function getEventIdFromUrl() {
 function initDetailPage() {
   if (!isDetailPage()) return;
   
+  // Scroll to top immediately when initializing detail page
+  window.scrollTo(0, 0);
+  
   const eventId = getEventIdFromUrl();
   if (eventId) {
     loadEventDetail(eventId);
@@ -346,6 +349,9 @@ document.addEventListener('pageTransitionComplete', function(e) {
 
 async function loadEventDetail(eventId) {
   try {
+    // Immediately scroll to top - use instant scroll for better UX
+    window.scrollTo(0, 0);
+    
     // Show skeleton with fade-in
     const skeleton = document.getElementById('event-skeleton');
     const content = document.getElementById('event-content');
@@ -604,6 +610,8 @@ async function loadEventDetail(eventId) {
     } else {
       // Show modal for non-members
       document.getElementById('interest-modal').style.display = 'flex';
+      // Lock body scroll
+      document.body.style.overflow = 'hidden';
     }
   }
 
@@ -679,6 +687,8 @@ async function loadEventDetail(eventId) {
   function closeModal() {
     document.getElementById('interest-modal').style.display = 'none';
     document.getElementById('interest-form').reset();
+    // Unlock body scroll
+    document.body.style.overflow = '';
   }
 
   function showError() {

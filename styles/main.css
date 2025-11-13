@@ -11,10 +11,10 @@
     --border-color: #e9ecef;
     --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --glass-bg: rgba(255, 255, 255, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.3);
-    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    --blur: blur(10px);
+    --glass-bg: rgba(255, 255, 255, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    --blur: blur(20px);
 }
 * {
     margin: 0;
@@ -25,7 +25,10 @@ html {
     scroll-behavior: smooth;
     margin: 0;
     padding: 0;
-    width: 100%;
+    overflow-x: hidden;
+    /* Ensure only the main page scrolls and sticky navbar can attach to viewport */
+    height: 100%;
+    min-height: 100%;
 }
 body {
     font-family: var(--font-family);
@@ -35,13 +38,12 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    max-width: 100vw;
     margin: 0;
     padding: 0;
-    overflow-x: hidden; /* Only on body, not html */
-    width: 100%;
+    overflow-x: hidden;
+    /* Ensure body is the scrolling container for sticky positioning */
+    position: relative;
+    height: 100%;
 }
 
 /* Prevent content flash on load */
@@ -146,17 +148,18 @@ p {
     position: -webkit-sticky; /* Safari */
     position: sticky;
     top: 0;
-    left: 0;
-    right: 0;
     z-index: 1000;
     margin: 0;
     width: 100%;
     box-sizing: border-box;
+    /* Ensure sticky works properly */
+    align-self: flex-start; /* For flexbox containers */
 }
 .navbar .container {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 15px;
 }
 .navbar-brand {
     display: flex;
@@ -165,6 +168,7 @@ p {
     font-size: 1.3rem;
     font-weight: 600;
     color: var(--primary-color);
+    margin-right: auto; /* Push user menu to the right */
 }
 .navbar-brand img {
     width: 50px;
@@ -202,6 +206,11 @@ p {
     border: none;
     padding: 5px;
     outline: none;
+    position: relative;
+    width: 35px;
+    height: 35px;
+    justify-content: center;
+    align-items: center;
 }
 .nav-toggle:focus {
     outline: 2px solid var(--primary-color);
@@ -213,6 +222,19 @@ p {
     height: 3px;
     background-color: var(--primary-color);
     border-radius: 2px;
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+/* Hamburger to X animation */
+.nav-toggle.active span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+}
+.nav-toggle.active span:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+}
+.nav-toggle.active span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
 }
 .btn {
     display: inline-flex;
@@ -496,28 +518,34 @@ p {
     .nav-menu {
         position: fixed;
         top: 71px; /* Navbar height: 15px padding + 40px image + 15px padding + 1px border */
-        right: 0;
-        width: 100%;
-        max-width: 300px;
+        left: -100%;
+        width: 300px;
+        max-width: 80vw;
         height: calc(100vh - 71px);
         background-color: rgb(235, 235, 235);
         backdrop-filter: var(--blur);
         flex-direction: column;
         align-items: flex-start;
         padding: 30px;
-        transition: var(--transition);
-        box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
-        transform: translateX(100%);
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
         visibility: hidden;
         opacity: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        z-index: 999;
     }
     .nav-menu.active {
-        transform: translateX(0);
+        left: 0;
         visibility: visible;
         opacity: 1;
     }
     .nav-toggle {
         display: flex;
+        order: -1; /* Put hamburger first in flex order */
+    }
+    .navbar-brand {
+        order: 0; /* Logo comes after hamburger */
     }
     .navbar-brand span {
         display: none;
@@ -599,7 +627,8 @@ p {
     .nav-menu {
         top: 61px; /* Navbar height on small screens: 10px + 40px + 10px + 1px */
         height: calc(100vh - 61px);
-        max-width: 280px;
+        width: 280px;
+        max-width: 80vw;
         padding: 20px;
     }
     
@@ -650,9 +679,7 @@ p {
     right: 0;
     margin-top: 8px;
     min-width: 180px;
-    background: var(--glass-bg);
-    backdrop-filter: var(--blur);
-    -webkit-backdrop-filter: var(--blur);
+    background: var(--white);
     border: 1px solid var(--glass-border);
     border-radius: 8px;
     box-shadow: var(--glass-shadow);
@@ -683,6 +710,9 @@ p {
 }
 .dropdown-menu a:last-child {
     border-radius: 0 0 8px 8px;
+}
+.dropdown-menu a:only-child {
+    border-radius: 8px;
 }
 #live-match-section,
 #no-match-section {

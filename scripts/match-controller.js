@@ -27,6 +27,9 @@
                 this.cleanup();
             }
             
+            // Scroll to top immediately when initializing match page
+            window.scrollTo(0, 0);
+            
             // Re-get elements in case of page transition
             this.liveSection = document.getElementById("live-match-section");
             this.noMatchSection = document.getElementById("no-match-section");

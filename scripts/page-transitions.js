@@ -33,10 +33,7 @@ class PageTransitions {
         style.textContent = `
             /* Page transition wrapper */
             #page-transition-wrapper {
-                position: relative;
-                min-height: 100vh;
-                display: flex;
-                flex-direction: column;
+                width: 100%;
             }
 
             /* Prevent layout shift during load */
@@ -51,19 +48,19 @@ class PageTransitions {
 
             /* Content wrapper to prevent footer jumping */
             .page-content-wrapper {
-                flex: 1 0 auto;
                 min-height: 60vh;
                 transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+                width: 100%;
             }
 
             /* Footer stays at bottom */
             .footer {
-                flex-shrink: 0;
+                width: 100%;
             }
 
             /* Newsletter section stays at bottom */
             .newsletter-section {
-                flex-shrink: 0;
+                width: 100%;
             }
 
             /* Transition states */
@@ -110,12 +107,14 @@ class PageTransitions {
                 100% { transform: translateX(100%); }
             }
 
-            /* Ensure navbar stays fixed during transitions */
-            .navbar {
+            /* Ensure navbar stays sticky during transitions */
+            /* Navbar must be a direct child of body for sticky to work properly */
+            body > .navbar {
+                position: -webkit-sticky;
                 position: sticky;
                 top: 0;
                 z-index: 1000;
-                will-change: transform;
+                will-change: transform; /* Hint to browser for better sticky performance */
             }
 
             /* Prevent flash of login screen on auth pages during page load/transitions */
@@ -139,6 +138,11 @@ class PageTransitions {
     }
 
     wrapContent() {
+        // Check if content is already wrapped
+        if (document.querySelector('#page-transition-wrapper')) {
+            return; // Already wrapped, don't wrap again
+        }
+        
         // Find the main content block (everything except navbar)
         const navbar = document.querySelector('.navbar');
         const newsletter = document.querySelector('.newsletter-section');
@@ -149,7 +153,7 @@ class PageTransitions {
         let currentElement = navbar ? navbar.nextElementSibling : document.body.firstElementChild;
         
         while (currentElement && currentElement !== newsletter) {
-            if (currentElement.tagName !== 'SCRIPT') {
+            if (currentElement.tagName !== 'SCRIPT' && currentElement !== navbar) {
                 contentElements.push(currentElement);
             }
             currentElement = currentElement.nextElementSibling;
@@ -178,7 +182,7 @@ class PageTransitions {
             wrapper.appendChild(footer);
         }
         
-        // Insert wrapper
+        // Insert wrapper AFTER navbar (keeping navbar as direct child of body)
         if (navbar) {
             navbar.parentNode.insertBefore(wrapper, navbar.nextSibling);
         } else {
@@ -307,6 +311,13 @@ class PageTransitions {
             await this.sleep(100);
             document.body.classList.remove('page-transitioning');
             this.isTransitioning = false;
+            
+            // Force a final reflow to ensure navbar sticky positioning is correct
+            // This fixes issues where navbar gets "stuck" mid-scroll
+            const navbar = document.querySelector('.navbar');
+            if (navbar) {
+                void navbar.offsetHeight;
+            }
         }
     }
 
@@ -405,6 +416,10 @@ class PageTransitions {
             contentSections.forEach(section => {
                 currentContent.appendChild(section.cloneNode(true));
             });
+            
+            // Force reflow to ensure sticky navbar positioning is recalculated
+            // This prevents the navbar from getting "stuck" during dynamic content updates
+            void currentContent.offsetHeight;
             
             // Load external scripts first (in order)
             this.loadScriptsSequentially(scriptsToLoad).then(() => {
