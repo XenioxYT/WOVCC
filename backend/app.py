@@ -13,6 +13,8 @@ from flask_cors import CORS
 import os
 import logging
 from datetime import datetime
+from markupsafe import Markup
+import bleach
 
 # Import application modules
 from database import init_db
@@ -129,22 +131,66 @@ init_cms_content_if_needed()
 
 
 # ========================================
+# HTML Sanitization
+# ========================================
+# Define allowed HTML tags and attributes for CMS content
+ALLOWED_TAGS = ['p', 'br', 'strong', 'em', 'b', 'i', 'u', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']
+ALLOWED_ATTRIBUTES = {
+    'a': ['href', 'title', 'target'],
+    '*': ['class']  # Allow class attribute on all allowed tags
+}
+ALLOWED_PROTOCOLS = ['http', 'https', 'mailto']
+
+def sanitize_html(content):
+    """Sanitize HTML content to prevent XSS attacks"""
+    if not content:
+        return ''
+    
+    # Use bleach to sanitize HTML, allowing only safe tags and attributes
+    clean_content = bleach.clean(
+        content,
+        tags=ALLOWED_TAGS,
+        attributes=ALLOWED_ATTRIBUTES,
+        protocols=ALLOWED_PROTOCOLS,
+        strip=True  # Strip disallowed tags rather than escaping them
+    )
+    
+    # Return as Markup so Jinja2 doesn't escape it again
+    return Markup(clean_content)
+
+
+class SafeSnippets(dict):
+    """Dictionary wrapper that auto-sanitizes HTML content"""
+    def get(self, key, default=''):
+        value = super().get(key, default)
+        return sanitize_html(value)
+
+
+# ========================================
 # Template Context Processor
 # ========================================
 @app.context_processor
 def inject_snippets():
-    """Inject content snippets into all templates"""
+    """Inject content snippets into all templates with automatic sanitization"""
     from database import get_db, ContentSnippet
     try:
         db = next(get_db())
         try:
             snippets = db.query(ContentSnippet).all()
-            return {'snippets': {snippet.key: snippet.content for snippet in snippets}}
+            snippet_dict = {snippet.key: snippet.content for snippet in snippets}
+            return {'snippets': SafeSnippets(snippet_dict)}
         finally:
             db.close()
     except Exception as e:
         logger.error(f"Error loading content snippets: {e}")
-        return {'snippets': {}}
+        return {'snippets': SafeSnippets({})}
+
+
+# Register custom Jinja2 filter for explicit sanitization if needed
+@app.template_filter('safe_html')
+def safe_html_filter(content):
+    """Jinja2 filter to sanitize HTML content"""
+    return sanitize_html(content)
 
 
 # ========================================
