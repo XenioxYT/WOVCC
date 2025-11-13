@@ -145,29 +145,21 @@ p {
     border-bottom: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
     padding: 15px 0;
-    position: fixed;
+    position: -webkit-sticky; /* Safari */
+    position: sticky;
     top: 0;
-    left: 0;
-    right: 0;
     z-index: 1000;
     margin: 0;
     width: 100%;
     box-sizing: border-box;
-    /* Ensure backdrop blur works properly */
-    -webkit-backdrop-filter: saturate(200%) blur(20px);
-    backdrop-filter: saturate(200%) blur(20px);
-    /* Force hardware acceleration for better performance */
-    transform: translateZ(0);
-    will-change: backdrop-filter;
+    /* Ensure sticky works properly */
+    align-self: flex-start; /* For flexbox containers */
 }
 .navbar .container {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 15px;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
 }
 .navbar-brand {
     display: flex;
@@ -523,10 +515,6 @@ p {
     h3 {
         font-size: 1.5rem;
     }
-    /* Add padding to body to account for fixed navbar */
-    body {
-        padding-top: 71px;
-    }
     .nav-menu {
         position: fixed;
         top: 71px; /* Navbar height: 15px padding + 40px image + 15px padding + 1px border */
@@ -534,14 +522,13 @@ p {
         width: 300px;
         max-width: 80vw;
         height: calc(100vh - 71px);
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: saturate(200%) blur(20px);
-        -webkit-backdrop-filter: saturate(200%) blur(20px);
+        background-color: rgb(235, 235, 235);
+        backdrop-filter: var(--blur);
         flex-direction: column;
         align-items: flex-start;
         padding: 30px;
         transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
         visibility: hidden;
         opacity: 0;
         overflow-y: auto;
@@ -691,7 +678,7 @@ p {
     top: 100%;
     right: 0;
     margin-top: 8px;
-    min-width: 200px;
+    min-width: 180px;
     background: var(--white);
     border: 1px solid var(--glass-border);
     border-radius: 8px;
@@ -701,9 +688,6 @@ p {
     transform: translateY(-10px);
     transition: var(--transition);
     z-index: 1001;
-    /* Force hardware acceleration for better backdrop blur performance */
-    transform: translateY(-10px);
-    will-change: transform, opacity;
 }
 .user-menu:hover .dropdown-menu {
     opacity: 1;
@@ -712,10 +696,9 @@ p {
 }
 .dropdown-menu a {
     display: block;
-    padding: 14px 24px;
+    padding: 12px 20px;
     color: var(--text-dark);
-    font-size: 1.1rem;
-    font-weight: 500;
+    font-size: 0.95rem;
     transition: var(--transition);
 }
 .dropdown-menu a:hover {
