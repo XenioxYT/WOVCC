@@ -173,11 +173,20 @@
         }
 
         // Trigger events/admin modules as before
+        if (tabName === 'dashboard' && window.AdminDashboard && typeof window.AdminDashboard.init === 'function') {
+          window.AdminDashboard.init();
+        }
         if (tabName === 'events' && window.AdminEvents && typeof window.AdminEvents.loadAdminEvents === 'function') {
           window.AdminEvents.loadAdminEvents();
         }
         if (tabName === 'users' && window.AdminUsers && typeof window.AdminUsers.loadUsers === 'function') {
           // Users script already lazy-loads on tab click; we just ensure tab content is visible
+        }
+        if (tabName === 'content' && window.AdminContent && typeof window.AdminContent.loadContentSnippets === 'function') {
+          window.AdminContent.loadContentSnippets();
+        }
+        if (tabName === 'help' && window.AdminHelp && typeof window.AdminHelp.initChat === 'function') {
+          window.AdminHelp.initChat();
         }
       });
     });
@@ -187,6 +196,11 @@
     await loadCurrentConfig();
     await loadFixtures();
     setupEventListeners();
+    
+    // Initialize dashboard since it's the default tab
+    if (window.AdminDashboard && typeof window.AdminDashboard.init === 'function') {
+      window.AdminDashboard.init();
+    }
   }
 
   async function loadCurrentConfig() {
