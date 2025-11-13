@@ -12,6 +12,10 @@ class PageTransitions {
     }
 
     init() {
+        if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual';
+        }
+
         // Add page transition CSS
         this.injectStyles();
         
@@ -285,8 +289,17 @@ class PageTransitions {
             // Wait for fade-out transition to complete
             await this.sleep(300);
             
-            // Scroll to top immediately after fade-out, before new content loads
-            window.scrollTo({ top: 0, behavior: 'instant' });
+            // --- REMOVED SCROLL FROM HERE ---
+
+            // Update content
+            this.updateContent(html, path);
+
+            // --- MOVED SCROLL TO HERE ---
+            // Scroll to top *after* new content is in the DOM.
+            // We set all three possible scroll targets to be 100% certain.
+            document.documentElement.scrollTop = 0; // The <html> element
+            document.body.scrollTop = 0; // For Safari/older browsers
+            window.scrollTo(0, 0); // Fallback
             
             // Update content
             this.updateContent(html, path);
