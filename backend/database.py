@@ -210,11 +210,11 @@ def init_db():
     """Initialize database - create all tables"""
     try:
         Base.metadata.create_all(bind=engine, checkfirst=True)
-        print("Database initialized successfully")
+        logger.info("Database initialized successfully")
     except Exception as e:
         # Handle race condition where multiple workers try to create tables simultaneously
         if "already exists" in str(e).lower() or "duplicate" in str(e).lower():
-            print("Database tables already exist (race condition handled)")
+            logger.info("Database tables already exist (race condition handled)")
         else:
             raise
 
