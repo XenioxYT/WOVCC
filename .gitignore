@@ -82,11 +82,4 @@ test-*.html
 # *FIX*.md
 # *CHANGES*.md
 
-
-
-
-
-
-
-backend/scraped_data.json
 backend/scraped_data.json
