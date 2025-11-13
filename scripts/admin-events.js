@@ -307,6 +307,7 @@
         btn.textContent = 'Preview';
         
         modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
     }
 
     function openEditEventModal(event) {
@@ -348,6 +349,7 @@
         document.getElementById('event-modal-title').textContent = 'Edit Event';
         document.getElementById('event-submit-btn').textContent = 'Update Event';
         modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
     }
 
     function closeEventModal() {
@@ -355,6 +357,7 @@
         if (modal) {
             modal.style.display = 'none';
         }
+        document.body.style.overflow = '';
         currentEditingEvent = null;
         selectedImage = null;
         imagePreviewUrl = null;
@@ -507,6 +510,7 @@
             container.innerHTML = `<div style="margin-bottom:15px;color:var(--text-light);"><strong>${safeCount}</strong> ${safeCount===1?'person has':'people have'} shown interest in this event.</div><div style="max-height:400px;overflow-y:auto;">${userRows}</div>`;
         }
         modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
     }
 
     function closeInterestedUsersModal() {
@@ -514,6 +518,7 @@
         if (modal) {
             modal.style.display = 'none';
         }
+        document.body.style.overflow = '';
     }
 
     function handleImageSelect(e) {

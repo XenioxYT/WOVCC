@@ -470,11 +470,13 @@
     // Show modal when delete button clicked
     deleteBtn.addEventListener('click', function() {
       modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
     });
     
     // Hide modal when cancel clicked
     cancelBtn.addEventListener('click', function() {
       modal.style.display = 'none';
+      document.body.style.overflow = '';
     });
     
     // Handle account deletion
@@ -493,6 +495,7 @@
         confirmBtn.textContent = originalText;
         cancelBtn.disabled = false;
         modal.style.display = 'none';
+        document.body.style.overflow = '';
         return;
       }
       
@@ -524,6 +527,7 @@
             confirmBtn.textContent = originalText;
             cancelBtn.disabled = false;
             modal.style.display = 'none';
+            document.body.style.overflow = '';
           }
         })
         .catch(function(error) {
@@ -533,6 +537,7 @@
           confirmBtn.textContent = originalText;
           cancelBtn.disabled = false;
           modal.style.display = 'none';
+          document.body.style.overflow = '';
         });
     });
     
@@ -540,6 +545,7 @@
     modal.addEventListener('click', function(e) {
       if (e.target === modal) {
         modal.style.display = 'none';
+        document.body.style.overflow = '';
       }
     });
   }

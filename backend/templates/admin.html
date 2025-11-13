@@ -856,11 +856,13 @@
         padding: 10px;
         align-items: flex-start;
         padding-top: 20px;
+        overflow-y: auto;
       }
       
       .modal-content {
         max-height: 95vh;
-        width: calc(100% - 20px);
+        width: calc(100vw - 20px);
+        max-width: calc(100vw - 20px);
         margin: 0 auto;
       }
       
@@ -928,7 +930,8 @@
       
       .modal-content {
         max-height: 98vh;
-        width: calc(100% - 10px);
+        width: calc(100vw - 10px);
+        max-width: calc(100vw - 10px);
         border-radius: 8px;
       }
       

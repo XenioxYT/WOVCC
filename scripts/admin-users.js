@@ -461,6 +461,7 @@
         document.getElementById('user-submit-btn').textContent = 'Update User';
         
         modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
     }
     
     function closeUserModal() {
@@ -468,6 +469,7 @@
         if (modal) {
             modal.style.display = 'none';
         }
+        document.body.style.overflow = '';
         currentEditingUser = null;
     }
     

@@ -1684,7 +1684,8 @@
   
   /* Events listing responsive */
   .events-hero {
-    height: 220px;
+    height: 120px;
+    min-height: 120px !important;
   }
   
   .events-hero::before {
@@ -1772,11 +1773,13 @@
     padding: 10px;
     align-items: flex-start;
     padding-top: 20px;
+    overflow-y: auto;
   }
   
   .interest-modal-content {
     max-height: 95vh;
-    width: calc(100% - 20px);
+    width: calc(100vw - 20px);
+    max-width: calc(100vw - 20px);
   }
   
   .interest-modal-header {
@@ -1885,7 +1888,8 @@
   
   .interest-modal-content {
     max-height: 98vh;
-    width: calc(100% - 10px);
+    width: calc(100vw - 10px);
+    max-width: calc(100vw - 10px);
     border-radius: 12px;
   }
   

@@ -25,7 +25,10 @@ html {
     scroll-behavior: smooth;
     margin: 0;
     padding: 0;
-    width: 100%;
+    overflow-x: hidden;
+    /* Ensure only the main page scrolls and sticky navbar can attach to viewport */
+    height: 100%;
+    min-height: 100%;
 }
 body {
     font-family: var(--font-family);
@@ -35,13 +38,12 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    max-width: 100vw;
     margin: 0;
     padding: 0;
-    overflow-x: hidden; /* Only on body, not html */
-    width: 100%;
+    overflow-x: hidden;
+    /* Ensure body is the scrolling container for sticky positioning */
+    position: relative;
+    height: 100%;
 }
 
 /* Prevent content flash on load */
@@ -146,12 +148,12 @@ p {
     position: -webkit-sticky; /* Safari */
     position: sticky;
     top: 0;
-    left: 0;
-    right: 0;
     z-index: 1000;
     margin: 0;
     width: 100%;
     box-sizing: border-box;
+    /* Ensure sticky works properly */
+    align-self: flex-start; /* For flexbox containers */
 }
 .navbar .container {
     display: flex;
@@ -496,23 +498,24 @@ p {
     .nav-menu {
         position: fixed;
         top: 71px; /* Navbar height: 15px padding + 40px image + 15px padding + 1px border */
-        right: 0;
-        width: 100%;
-        max-width: 300px;
+        right: -100%;
+        width: 300px;
+        max-width: 80vw;
         height: calc(100vh - 71px);
         background-color: rgb(235, 235, 235);
         backdrop-filter: var(--blur);
         flex-direction: column;
         align-items: flex-start;
         padding: 30px;
-        transition: var(--transition);
+        transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
-        transform: translateX(100%);
         visibility: hidden;
         opacity: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
     }
     .nav-menu.active {
-        transform: translateX(0);
+        right: 0;
         visibility: visible;
         opacity: 1;
     }
@@ -599,7 +602,8 @@ p {
     .nav-menu {
         top: 61px; /* Navbar height on small screens: 10px + 40px + 10px + 1px */
         height: calc(100vh - 61px);
-        max-width: 280px;
+        width: 280px;
+        max-width: 80vw;
         padding: 20px;
     }
     

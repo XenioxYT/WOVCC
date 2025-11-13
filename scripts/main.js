@@ -9,11 +9,19 @@ document.addEventListener("DOMContentLoaded", function () {
             const isActive = navMenu.classList.contains("active");
             navMenu.classList.toggle("active");
             navToggle.setAttribute("aria-expanded", !isActive);
+            
+            // Lock/unlock body scroll
+            if (!isActive) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
         });
         document.addEventListener("click", function (event) {
             if (!navToggle.contains(event.target) && !navMenu.contains(event.target)) {
                 navMenu.classList.remove("active");
                 navToggle.setAttribute("aria-expanded", "false");
+                document.body.style.overflow = '';
             }
         });
         const navLinks = navMenu.querySelectorAll(".nav-link");
@@ -21,6 +29,7 @@ document.addEventListener("DOMContentLoaded", function () {
             link.addEventListener("click", function () {
                 navMenu.classList.remove("active");
                 navToggle.setAttribute("aria-expanded", "false");
+                document.body.style.overflow = '';
             });
         });
         document.addEventListener("keydown", function (event) {
@@ -28,6 +37,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 navMenu.classList.remove("active");
                 navToggle.setAttribute("aria-expanded", "false");
                 navToggle.focus();
+                document.body.style.overflow = '';
             }
         });
     }
