@@ -775,6 +775,20 @@ p {
     display: block;
     margin-bottom: 0;
 }
+
+/* Small LIVE badge shown on fixtures that link to live/results pages */
+.live-badge {
+    display: inline-block;
+    margin-left: 8px;
+    background: #e53935;
+    color: #ffffff;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    vertical-align: middle;
+}
 .fixture-card-link:hover .fixture-card,
 .result-card-link:hover .result-card {
     transform: translateX(8px);
