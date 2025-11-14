@@ -8,6 +8,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Database configuration
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///wovcc.db')
@@ -187,10 +190,36 @@ class EventInterest(Base):
         }
 
 
+class ContentSnippet(Base):
+    """Content snippets for CMS - editable text content on the site"""
+    __tablename__ = 'content_snippets'
+    
+    key = Column(String(100), primary_key=True)  # e.g., 'homepage_welcome'
+    content = Column(Text, nullable=False)  # The actual content
+    description = Column(String(255), nullable=True)  # Description of what this snippet is for
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        """Convert content snippet to dictionary"""
+        return {
+            'key': self.key,
+            'content': self.content,
+            'description': self.description,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+
 def init_db():
     """Initialize database - create all tables"""
-    Base.metadata.create_all(bind=engine)
-    print("Database initialized successfully")
+    try:
+        Base.metadata.create_all(bind=engine, checkfirst=True)
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        # Handle race condition where multiple workers try to create tables simultaneously
+        if "already exists" in str(e).lower() or "duplicate" in str(e).lower():
+            logger.info("Database tables already exist (race condition handled)")
+        else:
+            raise
 
 
 def get_db():

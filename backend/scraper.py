@@ -404,8 +404,10 @@ if __name__ == "__main__":
     
     print("--- Running WOVCC Scraper in Standalone Mode ---")
     
-    # Default runtime configuration (no CLI args)
-    # Caching is disabled by default; adjust attributes below if needed.
+    # Get the directory where this script is located (i.e., the backend/ directory)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Define the output path to be in the same directory
+    output_filename = os.path.join(script_dir, "scraped_data.json")
 
     all_data = {
         'last_updated': datetime.now().isoformat()
@@ -453,7 +455,6 @@ if __name__ == "__main__":
         all_data['results'] = []
 
     # 4. Save all data to a file
-    output_filename = "scraped_data.json"
     print(f"\nSaving all data to {output_filename}...")
     try:
         with open(output_filename, 'w', encoding='utf-8') as f:
@@ -461,4 +462,3 @@ if __name__ == "__main__":
         print("--- Scrape complete. Data saved. ---")
     except Exception as e:
         print(f"Fatal error saving data to JSON: {e}")
-

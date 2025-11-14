@@ -13,6 +13,8 @@ from flask_cors import CORS
 import os
 import logging
 from datetime import datetime
+from markupsafe import Markup
+import bleach
 
 # Import application modules
 from database import init_db
@@ -39,6 +41,157 @@ CORS(app, supports_credentials=True, origins=['http://localhost:5000', 'http://1
 # Initialize database on startup
 init_db()
 init_signup_activity_table()
+
+
+# ========================================
+# Initialize CMS Content Snippets
+# ========================================
+def init_cms_content_if_needed():
+    """Initialize CMS content snippets if the table is empty"""
+    from database import get_db, ContentSnippet
+    
+    DEFAULT_SNIPPETS = [
+        {
+            'key': 'homepage_hero_title',
+            'content': 'Welcome to Wickersley Old Village CC',
+            'description': 'Homepage hero section - main title'
+        },
+        {
+            'key': 'homepage_hero_subtitle',
+            'content': 'A Village cricket club offering ECB Premier League Cricket, Women\'s Cricket & Junior Cricket including Dynamos and All Stars',
+            'description': 'Homepage hero section - subtitle/tagline'
+        },
+        {
+            'key': 'homepage_about_p1',
+            'content': 'We\'re a Village cricket club offering a variety of cricket from ECB Premier League Cricket, Women\'s Cricket & Junior Cricket including Dynamos and All Stars. We have 3 senior teams playing in the Yorkshire Cricket Southern Premier League in the Championship, Division 1 & Division 5.',
+            'description': 'Homepage about section - paragraph 1'
+        },
+        {
+            'key': 'homepage_about_p2',
+            'content': 'Our Women\'s section - The Vixens, have 3 teams in the Yorkshire Cricket Premier League competing in Division 1 for Hardball and Softball, and also in Division 3 Softball.',
+            'description': 'Homepage about section - paragraph 2'
+        },
+        {
+            'key': 'homepage_about_p3',
+            'content': 'We have junior teams in the Ben Jessop Junior Cricket League: U9s, U11s, U13s, U15s, U18s plus our Junior Vixens. Our successful All Stars programme will be back again this year along with Dynamos cricket.',
+            'description': 'Homepage about section - paragraph 3'
+        },
+        {
+            'key': 'homepage_about_p4',
+            'content': 'Join WOVCC for just £15 (first year) and enjoy drink discounts, member benefits, and access to exclusive content. Renewals are £10/year. Thank you to all our members, guests and sponsors for making each season a great success.',
+            'description': 'Homepage about section - paragraph 4'
+        },
+        {
+            'key': 'footer_opening_hours',
+            'content': 'Mon-Thu: 4pm-10pm<br>Tue: 4pm-10:30pm<br>Fri: 4pm-11pm<br>Sat: 12pm-11pm<br>Sun: 12pm-10pm',
+            'description': 'Footer - Opening hours (supports HTML <br> tags)'
+        }
+    ]
+    
+    try:
+        db = next(get_db())
+        try:
+            # Check if content snippets table is empty
+            count = db.query(ContentSnippet).count()
+            
+            if count == 0:
+                logger.info("CMS content snippets table is empty. Initializing with default content...")
+                
+                try:
+                    for snippet_data in DEFAULT_SNIPPETS:
+                        new_snippet = ContentSnippet(
+                            key=snippet_data['key'],
+                            content=snippet_data['content'],
+                            description=snippet_data['description']
+                        )
+                        db.add(new_snippet)
+                    
+                    db.commit()
+                    logger.info(f"✅ Initialized {len(DEFAULT_SNIPPETS)} CMS content snippets")
+                except Exception as insert_error:
+                    db.rollback()
+                    # Handle race condition where another worker already inserted
+                    if "duplicate" in str(insert_error).lower() or "already exists" in str(insert_error).lower():
+                        logger.info("CMS content snippets already initialized by another worker")
+                    else:
+                        raise
+            else:
+                logger.info(f"CMS content snippets already initialized ({count} snippets found)")
+                
+        finally:
+            db.close()
+    except Exception as e:
+        # Don't crash the app if CMS init fails
+        if "duplicate" not in str(e).lower() and "already exists" not in str(e).lower():
+            logger.error(f"Error initializing CMS content snippets: {e}")
+
+
+# Initialize CMS content on startup
+init_cms_content_if_needed()
+
+
+# ========================================
+# HTML Sanitization
+# ========================================
+# Define allowed HTML tags and attributes for CMS content
+ALLOWED_TAGS = ['p', 'br', 'strong', 'em', 'b', 'i', 'u', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']
+ALLOWED_ATTRIBUTES = {
+    'a': ['href', 'title', 'target'],
+    '*': ['class']  # Allow class attribute on all allowed tags
+}
+ALLOWED_PROTOCOLS = ['http', 'https', 'mailto']
+
+def sanitize_html(content):
+    """Sanitize HTML content to prevent XSS attacks"""
+    if not content:
+        return ''
+    
+    # Use bleach to sanitize HTML, allowing only safe tags and attributes
+    clean_content = bleach.clean(
+        content,
+        tags=ALLOWED_TAGS,
+        attributes=ALLOWED_ATTRIBUTES,
+        protocols=ALLOWED_PROTOCOLS,
+        strip=True  # Strip disallowed tags rather than escaping them
+    )
+    
+    # Return as Markup so Jinja2 doesn't escape it again
+    return Markup(clean_content)
+
+
+class SafeSnippets(dict):
+    """Dictionary wrapper that auto-sanitizes HTML content"""
+    def get(self, key, default=''):
+        value = super().get(key, default)
+        return sanitize_html(value)
+
+
+# ========================================
+# Template Context Processor
+# ========================================
+@app.context_processor
+def inject_snippets():
+    """Inject content snippets into all templates with automatic sanitization"""
+    from database import get_db, ContentSnippet
+    try:
+        db = next(get_db())
+        try:
+            snippets = db.query(ContentSnippet).all()
+            snippet_dict = {snippet.key: snippet.content for snippet in snippets}
+            return {'snippets': SafeSnippets(snippet_dict)}
+        finally:
+            db.close()
+    except Exception as e:
+        logger.error(f"Error loading content snippets: {e}")
+        return {'snippets': SafeSnippets({})}
+
+
+# Register custom Jinja2 filter for explicit sanitization if needed
+@app.template_filter('safe_html')
+def safe_html_filter(content):
+    """Jinja2 filter to sanitize HTML content"""
+    return sanitize_html(content)
+
 
 # ========================================
 # Import and Register Blueprints
