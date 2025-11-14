@@ -189,7 +189,7 @@ def clear_cache(user):
     try:
         # Manually run the scraper script safely using subprocess
         import subprocess
-        subprocess.run(['python', 'backend/scraper.py'], check=True)
+        subprocess.run(['python', 'scraper.py'], check=True)
         
         # Clear the old cache directory which is no longer used by the API
         cache_dir = 'cache'
