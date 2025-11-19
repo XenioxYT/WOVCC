@@ -11,6 +11,7 @@
 <script src="/scripts/admin-events.js"></script>
 <script src="/scripts/admin-users.js"></script>
 <script src="/scripts/admin-content.js"></script>
+<script src="/scripts/admin-sponsors.js"></script>
 <script src="/scripts/admin-help.js"></script>
 <script src="/scripts/admin-page.js"></script>
 
@@ -406,6 +407,83 @@
   input:checked + .toggle-slider:before {
     transform: translateX(26px);
   }
+  
+  /* Notification Toast Styles */
+  .notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10001;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 400px;
+  }
+  
+  .notification-toast {
+    padding: 16px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.4;
+    animation: slideInRight 0.3s ease-out;
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  }
+  
+  @keyframes slideInRight {
+    from {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  .notification-toast.notification-hide {
+    opacity: 0;
+    transform: translateX(400px);
+  }
+  
+  .notification-toast.notification-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-left: 4px solid #065f46;
+  }
+  
+  .notification-toast.notification-error {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    border-left: 4px solid #991b1b;
+  }
+  
+  .notification-toast.notification-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    border-left: 4px solid #92400e;
+  }
+  
+  .notification-toast.notification-info {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border-left: 4px solid #1e40af;
+  }
+  
+  @media screen and (max-width: 575px) {
+    .notification-container {
+      top: 10px;
+      right: 10px;
+      left: 10px;
+      max-width: none;
+    }
+    
+    .notification-toast {
+      font-size: 0.9rem;
+      padding: 14px 16px;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -445,6 +523,7 @@
           <button class="admin-tab" data-tab="live-matches">Live Matches</button>
           <button class="admin-tab" data-tab="users" id="users-tab">User Management</button>
           <button class="admin-tab" data-tab="events" id="events-tab">Events</button>
+          <button class="admin-tab" data-tab="sponsors" id="sponsors-tab">Sponsors</button>
           <button class="admin-tab" data-tab="content" id="content-tab">Content</button>
           <button class="admin-tab" data-tab="help" id="help-tab">Help
 </button>
@@ -704,6 +783,47 @@
             </div>
           </div>
         </div> <!-- End events-tab-content -->
+        
+        <!-- Sponsors Tab Content -->
+        <div id="sponsors-tab-content" class="tab-content" style="display: none;">
+          <div class="card" style="margin-bottom: 30px;">
+            <div class="card-body">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                <div>
+                  <h3 style="color: var(--primary-color); margin: 0 0 8px 0;">Sponsor Management</h3>
+                  <p style="color: var(--text-light); margin: 0; font-size: 0.9rem;">Manage sponsors displayed in the footer band</p>
+                </div>
+                <button data-admin-sponsors-action="open-create-modal" class="btn btn-primary">
+                  <svg style="width: 18px; height: 18px; margin-right: 8px;" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+                  </svg>
+                  Add Sponsor
+                </button>
+              </div>
+              
+              <!-- Filters and Search -->
+              <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
+                <input 
+                  type="text" 
+                  id="sponsors-search" 
+                  placeholder="Search sponsors..."
+                  class="form-input"
+                  style="flex: 1; min-width: 250px; max-width: 400px;">
+                
+                <select id="sponsors-filter" class="form-input" style="width: auto; min-width: 150px;">
+                  <option value="all">All Sponsors</option>
+                  <option value="active">Active Only</option>
+                  <option value="inactive">Inactive Only</option>
+                </select>
+              </div>
+              
+              <!-- Sponsors List -->
+              <div id="admin-sponsors-list">
+                <!-- Sponsors table will be loaded here -->
+              </div>
+            </div>
+          </div>
+        </div> <!-- End sponsors-tab-content -->
         
         <!-- Content Tab Content -->
         <div id="content-tab-content" class="tab-content" style="display: none;">
@@ -1091,6 +1211,81 @@
               Cancel
             </button>
             <button type="submit" id="user-submit-btn" class="btn btn-primary">Update User</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sponsor Modal -->
+  <div id="sponsor-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 700px;">
+      <div class="modal-header">
+        <h3 id="sponsor-modal-title">Create Sponsor</h3>
+        <button data-admin-sponsors-action="close-modal" class="modal-close" type="button">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="sponsor-form">
+          <div class="form-group">
+            <label class="form-label" for="sponsor-name">Sponsor Name *</label>
+            <input 
+              type="text" 
+              id="sponsor-name" 
+              class="form-input" 
+              required 
+              placeholder="e.g., Acme Corporation">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="sponsor-website">Website URL</label>
+            <input 
+              type="url" 
+              id="sponsor-website" 
+              class="form-input" 
+              placeholder="https://example.com">
+            <small style="color: var(--text-light); font-size: 0.85rem;">Optional - Opens when sponsor logo is clicked</small>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="sponsor-logo">Sponsor Logo *</label>
+            <input 
+              type="file" 
+              id="sponsor-logo" 
+              class="form-input" 
+              accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml,image/avif">
+            <small style="color: var(--text-light); font-size: 0.85rem;">PNG, JPG, WebP, SVG, or AVIF. Max 5MB. Will be converted to WebP and resized to 80px height.</small>
+            
+            <!-- Logo Preview -->
+            <div id="sponsor-logo-preview" style="margin-top: 15px; display: none;">
+              <p style="font-size: 0.9rem; font-weight: 600; color: var(--text-dark); margin-bottom: 8px;">Preview:</p>
+              <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; text-align: center;">
+                <img id="sponsor-logo-preview-img" src="" alt="Logo preview" style="max-height: 80px; max-width: 300px; height: auto; width: auto;">
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="sponsor-display-order">Display Order</label>
+            <input 
+              type="number" 
+              id="sponsor-display-order" 
+              class="form-input" 
+              min="0" 
+              value="0"
+              placeholder="0">
+            <small style="color: var(--text-light); font-size: 0.85rem;">Lower numbers appear first. Default: 0</small>
+          </div>
+          
+          <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+              <input type="checkbox" id="sponsor-is-active" checked>
+              <span class="form-label" style="margin: 0;">Active (visible on website)</span>
+            </label>
+          </div>
+          
+          <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+            <button type="button" class="btn btn-outline" data-admin-sponsors-action="close-modal">Cancel</button>
+            <button type="submit" id="sponsor-submit-btn" class="btn btn-primary">Create Sponsor</button>
           </div>
         </form>
       </div>

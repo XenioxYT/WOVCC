@@ -77,6 +77,44 @@
   {% block content %}{% endblock %}
 
   <!-- Newsletter Section -->
+  <!-- Sponsors Band -->
+  {% if sponsors and sponsors|length > 0 %}
+  <div class="sponsors-band-container">
+    <h3 class="sponsors-title">Our Sponsors</h3>
+    <div class="sponsors-band-wrapper">
+      <div class="sponsors-band">
+        {% for sponsor in sponsors %}
+        <a 
+          href="{{ sponsor.website_url if sponsor.website_url else '#' }}" 
+          {% if sponsor.website_url %}target="_blank" rel="noopener noreferrer"{% else %}onclick="return false;" style="cursor: default;"{% endif %}
+          class="sponsor-logo-link"
+          title="{{ sponsor.name }}">
+          <img 
+            src="{{ sponsor.logo_url }}" 
+            alt="{{ sponsor.name }}" 
+            class="sponsor-logo"
+            loading="lazy">
+        </a>
+        {% endfor %}
+        <!-- Duplicate for seamless loop -->
+        {% for sponsor in sponsors %}
+        <a 
+          href="{{ sponsor.website_url if sponsor.website_url else '#' }}" 
+          {% if sponsor.website_url %}target="_blank" rel="noopener noreferrer"{% else %}onclick="return false;" style="cursor: default;"{% endif %}
+          class="sponsor-logo-link"
+          title="{{ sponsor.name }}">
+          <img 
+            src="{{ sponsor.logo_url }}" 
+            alt="{{ sponsor.name }}" 
+            class="sponsor-logo"
+            loading="lazy">
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <section class="newsletter-section section">
     <div class="container">
       <div class="newsletter-content">
