@@ -124,11 +124,18 @@
             if (!token) {
                 throw new Error('No access token available');
             }
+            // Build headers, but don't set Content-Type if body is FormData
+            // (browser needs to set it with the boundary)
             const headers = {
-                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
                 ...options.headers
             };
+            
+            // Only set Content-Type for non-FormData requests
+            if (!(options.body instanceof FormData)) {
+                headers['Content-Type'] = 'application/json';
+            }
+            
             return fetch(`${API_BASE}${endpoint}`, {
                 ...options,
                 credentials: 'include',

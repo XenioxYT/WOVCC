@@ -182,6 +182,9 @@
         if (tabName === 'users' && window.AdminUsers && typeof window.AdminUsers.loadUsers === 'function') {
           // Users script already lazy-loads on tab click; we just ensure tab content is visible
         }
+        if (tabName === 'sponsors' && window.AdminSponsors && typeof window.AdminSponsors.loadSponsors === 'function') {
+          window.AdminSponsors.loadSponsors();
+        }
         if (tabName === 'content' && window.AdminContent && typeof window.AdminContent.loadContentSnippets === 'function') {
           window.AdminContent.loadContentSnippets();
         }
