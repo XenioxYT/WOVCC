@@ -186,6 +186,24 @@ def inject_snippets():
         return {'snippets': SafeSnippets({})}
 
 
+@app.context_processor
+def inject_sponsors():
+    """Inject active sponsors into all templates"""
+    from database import get_db, Sponsor
+    try:
+        db = next(get_db())
+        try:
+            sponsors = db.query(Sponsor).filter(
+                Sponsor.is_active == True
+            ).order_by(Sponsor.display_order.asc(), Sponsor.name.asc()).all()
+            return {'sponsors': [s.to_dict() for s in sponsors]}
+        finally:
+            db.close()
+    except Exception as e:
+        logger.error(f"Error loading sponsors: {e}")
+        return {'sponsors': []}
+
+
 # Register custom Jinja2 filter for explicit sanitization if needed
 @app.template_filter('safe_html')
 def safe_html_filter(content):
@@ -203,6 +221,7 @@ from routes_api_admin import admin_api_bp
 from routes_api_events import events_api_bp
 from routes_api_webhooks import webhooks_api_bp
 from routes_api_contact import contact_bp
+from routes_api_sponsors import sponsors_api_bp
 
 app.register_blueprint(pages_bp)
 app.register_blueprint(cricket_api_bp)
@@ -211,6 +230,7 @@ app.register_blueprint(admin_api_bp)
 app.register_blueprint(events_api_bp)
 app.register_blueprint(webhooks_api_bp)
 app.register_blueprint(contact_bp)
+app.register_blueprint(sponsors_api_bp)
 
 
 # ========================================
