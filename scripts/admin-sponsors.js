@@ -1,4 +1,4 @@
-(function() {
+(function () {
   'use strict';
 
   // Admin Sponsors Management Module
@@ -147,7 +147,7 @@
     // Search input
     const searchInput = document.getElementById('sponsors-search');
     if (searchInput) {
-      searchInput.addEventListener('input', debounce(function(e) {
+      searchInput.addEventListener('input', debounce(function (e) {
         currentSearch = e.target.value.trim();
         loadSponsors();
       }, 300));
@@ -156,7 +156,7 @@
     // Filter dropdown
     const filterSelect = document.getElementById('sponsors-filter');
     if (filterSelect) {
-      filterSelect.addEventListener('change', function(e) {
+      filterSelect.addEventListener('change', function (e) {
         currentFilter = e.target.value;
         loadSponsors();
       });
@@ -164,7 +164,7 @@
   }
 
   // Delegated event listeners for buttons
-  document.addEventListener('click', function(e) {
+  document.addEventListener('click', function (e) {
     const btn = e.target.closest('[data-admin-sponsors-action]');
     if (!btn) return;
 
@@ -196,18 +196,18 @@
   // Open create modal
   function openCreateModal() {
     currentEditingSponsor = null;
-    
+
     document.getElementById('sponsor-modal-title').textContent = 'Create Sponsor';
     document.getElementById('sponsor-submit-btn').textContent = 'Create Sponsor';
     document.getElementById('sponsor-form').reset();
     document.getElementById('sponsor-is-active').checked = true;
-    
+
     // Hide logo preview
     document.getElementById('sponsor-logo-preview').style.display = 'none';
-    
+
     // Mark logo as required for create
     document.getElementById('sponsor-logo').required = true;
-    
+
     document.getElementById('sponsor-modal').style.display = 'flex';
     document.body.style.overflow = 'hidden';
   }
@@ -215,24 +215,24 @@
   // Open edit modal
   function openEditModal(sponsor) {
     currentEditingSponsor = sponsor;
-    
+
     document.getElementById('sponsor-modal-title').textContent = 'Edit Sponsor';
     document.getElementById('sponsor-submit-btn').textContent = 'Update Sponsor';
-    
+
     // Populate form
     document.getElementById('sponsor-name').value = sponsor.name || '';
     document.getElementById('sponsor-website').value = sponsor.website_url || '';
     document.getElementById('sponsor-display-order').value = sponsor.display_order || 0;
     document.getElementById('sponsor-is-active').checked = sponsor.is_active;
-    
+
     // Show current logo
     const previewImg = document.getElementById('sponsor-logo-preview-img');
     previewImg.src = sponsor.logo_url;
     document.getElementById('sponsor-logo-preview').style.display = 'block';
-    
+
     // Logo not required for edit
     document.getElementById('sponsor-logo').required = false;
-    
+
     document.getElementById('sponsor-modal').style.display = 'flex';
     document.body.style.overflow = 'hidden';
   }
@@ -246,64 +246,73 @@
   }
 
   // Handle form submit
-  document.getElementById('sponsor-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
+  // Handle form submit
+  const sponsorForm = document.getElementById('sponsor-form');
+  if (sponsorForm && !sponsorForm.dataset.listenerAttached) {
+    sponsorForm.dataset.listenerAttached = 'true';
 
-    const formData = new FormData();
-    formData.append('name', document.getElementById('sponsor-name').value.trim());
-    formData.append('website_url', document.getElementById('sponsor-website').value.trim());
-    formData.append('display_order', document.getElementById('sponsor-display-order').value);
-    formData.append('is_active', document.getElementById('sponsor-is-active').checked ? 'true' : 'false');
+    sponsorForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
 
-    const logoInput = document.getElementById('sponsor-logo');
-    if (logoInput.files.length > 0) {
-      formData.append('logo', logoInput.files[0]);
-    }
+      const submitBtn = document.getElementById('sponsor-submit-btn');
+      if (submitBtn.disabled) return;
 
-    const submitBtn = document.getElementById('sponsor-submit-btn');
-    const originalText = submitBtn.textContent;
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Saving...';
+      const formData = new FormData();
+      formData.append('name', document.getElementById('sponsor-name').value.trim());
+      formData.append('website_url', document.getElementById('sponsor-website').value.trim());
+      formData.append('display_order', document.getElementById('sponsor-display-order').value);
+      formData.append('is_active', document.getElementById('sponsor-is-active').checked ? 'true' : 'false');
 
-    try {
-      let url, method;
-      if (currentEditingSponsor) {
-        url = `/sponsors/admin/${currentEditingSponsor.id}`;
-        method = 'PUT';
-      } else {
-        url = '/sponsors/admin';
-        method = 'POST';
+      const logoInput = document.getElementById('sponsor-logo');
+      if (logoInput.files.length > 0) {
+        formData.append('logo', logoInput.files[0]);
       }
 
-      const response = await window.WOVCCAuth.authenticatedFetch(url, {
-        method: method,
-        body: formData
-      });
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Saving...';
 
-      const data = await response.json();
+      try {
+        let url, method;
+        if (currentEditingSponsor) {
+          url = `/sponsors/admin/${currentEditingSponsor.id}`;
+          method = 'PUT';
+        } else {
+          url = '/sponsors/admin';
+          method = 'POST';
+        }
 
-      if (data.success) {
-        showSuccess(currentEditingSponsor ? 'Sponsor updated successfully' : 'Sponsor created successfully');
-        closeModal();
-        loadSponsors();
-      } else {
-        showError('Failed to save sponsor: ' + (data.error || 'Unknown error'));
+        const response = await window.WOVCCAuth.authenticatedFetch(url, {
+          method: method,
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showSuccess(currentEditingSponsor ? 'Sponsor updated successfully' : 'Sponsor created successfully');
+          closeModal();
+          loadSponsors();
+        } else {
+          showError('Failed to save sponsor: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Error saving sponsor:', error);
+        showError('Failed to save sponsor');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
       }
-    } catch (error) {
-      console.error('Error saving sponsor:', error);
-      showError('Failed to save sponsor');
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.textContent = originalText;
-    }
-  });
+    });
+  }
 
   // Logo preview on file select
-  document.getElementById('sponsor-logo').addEventListener('change', function(e) {
+  document.getElementById('sponsor-logo').addEventListener('change', function (e) {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = function(event) {
+      reader.onload = function (event) {
         const previewImg = document.getElementById('sponsor-logo-preview-img');
         previewImg.src = event.target.result;
         document.getElementById('sponsor-logo-preview').style.display = 'block';
