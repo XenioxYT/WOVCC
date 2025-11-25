@@ -446,7 +446,17 @@
         }
     }
     async function deleteEvent(eventId) {
-        if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
+        // Use mobile-friendly modal instead of blocking confirm
+        const confirmed = await window.WOVCCModal.confirm({
+            title: 'Delete Event?',
+            message: 'Are you sure you want to delete this event? This action cannot be undone.',
+            type: 'danger',
+            confirmText: 'Delete',
+            cancelText: 'Cancel',
+            dangerous: true
+        });
+        
+        if (!confirmed) {
             return;
         }
         try {

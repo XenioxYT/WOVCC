@@ -246,7 +246,10 @@
       window.showNotification(message, 'error');
     } else {
       console.error(message);
-      alert(message);
+      // Use mobile-friendly modal as fallback
+      if (window.WOVCCModal) {
+        window.WOVCCModal.alert({ title: 'Error', message: message, type: 'danger' });
+      }
     }
   }
 

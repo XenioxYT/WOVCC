@@ -112,6 +112,7 @@
 
   var currentConfig = {};
   var allFixtures = [];
+  var tabsInitialized = false; // Track if tabs have been setup to prevent duplicate listeners
 
   function checkAdminAccess() {
     try {
@@ -149,6 +150,10 @@
   }
 
   function setupTabs() {
+    // Prevent duplicate event listeners on SPA transitions
+    if (tabsInitialized) return;
+    tabsInitialized = true;
+    
     var tabs = document.querySelectorAll('.admin-tab');
     if (!tabs || !tabs.length) return;
 
@@ -460,7 +465,12 @@
   }
 
   async function clearConfiguration() {
-    if (!window.confirm('Are you sure you want to clear all configuration? This will turn off the live section.')) {
+    // Use mobile-friendly modal instead of blocking confirm
+    const confirmed = await window.WOVCCModal.confirmClear(
+      'Are you sure you want to clear all configuration? This will turn off the live section.'
+    );
+    
+    if (!confirmed) {
       return;
     }
 

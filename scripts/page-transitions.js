@@ -301,9 +301,6 @@ class PageTransitions {
             document.body.scrollTop = 0; // For Safari/older browsers
             window.scrollTo(0, 0); // Fallback
             
-            // Update content
-            this.updateContent(html, path);
-            
             // Update browser history
             if (pushState) {
                 history.pushState({ path }, '', path);

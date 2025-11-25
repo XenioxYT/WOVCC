@@ -323,7 +323,13 @@
 
   // Delete sponsor
   async function deleteSponsor(sponsor) {
-    if (!confirm(`Are you sure you want to delete "${sponsor.name}"?\n\nThis will permanently remove the sponsor and their logo. This action cannot be undone.`)) {
+    // Use mobile-friendly modal instead of blocking confirm
+    const confirmed = await window.WOVCCModal.confirmDelete(
+      sponsor.name,
+      'This will permanently remove the sponsor and their logo. This action cannot be undone.'
+    );
+    
+    if (!confirmed) {
       return;
     }
 
@@ -367,7 +373,10 @@
       window.showDomNotification(message, 'error');
     } else {
       console.error(message);
-      alert('Error: ' + message);
+      // Use mobile-friendly modal as fallback
+      if (window.WOVCCModal) {
+        window.WOVCCModal.alert({ title: 'Error', message: message, type: 'danger' });
+      }
     }
   }
 
@@ -379,7 +388,6 @@
       window.showDomNotification(message, 'success');
     } else {
       console.log(message);
-      alert(message);
     }
   }
 

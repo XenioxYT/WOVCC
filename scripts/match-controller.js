@@ -20,6 +20,7 @@
             this.currentTeam = "all";
             this.pollInterval = null;
             this.initialized = false;
+            this._boundTeamChange = null; // Store bound handler for cleanup
         }
         async init() {
             if (this.initialized) {
@@ -49,6 +50,11 @@
                 clearInterval(this.pollInterval);
                 this.pollInterval = null;
             }
+            // Remove team selector event listener to prevent memory leaks
+            if (this.teamSelector && this._boundTeamChange) {
+                this.teamSelector.removeEventListener("change", this._boundTeamChange);
+                this._boundTeamChange = null;
+            }
             this.initialized = false;
         }
         async setupTeamSelector() {
@@ -64,10 +70,12 @@
                     option.textContent = team.name;
                     this.teamSelector.appendChild(option);
                 });
-                this.teamSelector.addEventListener("change", () => {
+                // Store bound handler for cleanup
+                this._boundTeamChange = () => {
                     this.currentTeam = this.teamSelector.value;
                     this.loadData();
-                });
+                };
+                this.teamSelector.addEventListener("change", this._boundTeamChange);
                 this.teamSelector.style.opacity = "1";
                 this.teamSelector.disabled = false;
             } catch (error) {

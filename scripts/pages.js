@@ -970,22 +970,25 @@
 
     function switchTab(tab) {
       currentTab = tab;
-      [fixturesTabBtn, resultsTabBtn].forEach(function(btn) {
-        btn.classList.remove('active');
-      });
-      if (tab === 'fixtures') {
-        fixturesTabBtn.classList.add('active');
-      } else {
-        resultsTabBtn.classList.add('active');
+      
+      // Determine which elements should be active
+      var targetBtn = (tab === 'fixtures') ? fixturesTabBtn : resultsTabBtn;
+      var targetContent = (tab === 'fixtures') ? fixturesContent : resultsContent;
+      
+      // Only modify classes if the target isn't already active
+      // This prevents re-triggering CSS animations on page load
+      if (!targetBtn.classList.contains('active')) {
+        [fixturesTabBtn, resultsTabBtn].forEach(function(btn) {
+          btn.classList.remove('active');
+        });
+        targetBtn.classList.add('active');
       }
 
-      [fixturesContent, resultsContent].forEach(function(el) {
-        el.classList.remove('active');
-      });
-      if (tab === 'fixtures') {
-        fixturesContent.classList.add('active');
-      } else {
-        resultsContent.classList.add('active');
+      if (!targetContent.classList.contains('active')) {
+        [fixturesContent, resultsContent].forEach(function(el) {
+          el.classList.remove('active');
+        });
+        targetContent.classList.add('active');
       }
     }
 
