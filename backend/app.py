@@ -261,12 +261,12 @@ def add_security_headers(response):
     # - Update this if you introduce new domains.
     csp = (
         "default-src 'self'; "
-        "script-src 'self' https://cdn.jsdelivr.net; "
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "script-src 'self' https://cdn.jsdelivr.net https://www.play-cricket.com; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.play-cricket.com; "
         "font-src 'self' https://fonts.gstatic.com; "
-        "connect-src 'self' http://localhost:5000 http://127.0.0.1:5000 https://wovcc.xeniox.uk https://wovcc.xeniox.uk; "
-        "img-src 'self' data: https://maps.googleapis.com https://*.googleapis.com; "
-        "frame-src https://www.google.com https://maps.google.com; "
+        "connect-src 'self' http://localhost:5000 http://127.0.0.1:5000 https://wovcc.xeniox.uk; "
+        "img-src 'self' data: https://maps.googleapis.com https://*.googleapis.com https://www.play-cricket.com; "
+        "frame-src https://www.google.com https://maps.google.com https://www.youtube.com https://player.vimeo.com; "
         "object-src 'none';"
     )
     response.headers['Content-Security-Policy'] = csp
