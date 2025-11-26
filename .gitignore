@@ -83,3 +83,5 @@ test-*.html
 # *CHANGES*.md
 
 backend/scraped_data.json
+sponsors/*
+assets/sponsors/*

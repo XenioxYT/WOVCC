@@ -6,9 +6,14 @@
 
   let conversationHistory = [];
   let isProcessing = false;
+  let chatInitialized = false; // Prevent duplicate initialization
 
   // Initialize chat
   function initChat() {
+    // Prevent duplicate listeners on SPA transitions
+    if (chatInitialized) return;
+    chatInitialized = true;
+    
     const form = document.getElementById('help-chat-form');
     const input = document.getElementById('help-chat-input');
     

@@ -209,6 +209,163 @@ class ContentSnippet(Base):
         }
 
 
+class Sponsor(Base):
+    """Sponsor model for club sponsors displayed in footer"""
+    __tablename__ = 'sponsors'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    logo_url = Column(String(500), nullable=False)  # WebP image path
+    website_url = Column(String(500), nullable=True)
+    display_order = Column(Integer, default=0, index=True)  # Manual ordering (lower = first)
+    is_active = Column(Boolean, default=True, index=True)  # Show/hide toggle
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        """Convert sponsor to dictionary"""
+        return {
+            'id': self.id,
+            'name': self.name,
+            'logo_url': self.logo_url,
+            'website_url': self.website_url,
+            'display_order': self.display_order,
+            'is_active': self.is_active,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+
+class LiveConfig(Base):
+    """Live match streaming configuration - stored in database for persistence across container restarts"""
+    __tablename__ = 'live_config'
+    
+    id = Column(Integer, primary_key=True, default=1)  # Single row configuration
+    is_live = Column(Boolean, default=False, nullable=False)
+    livestream_url = Column(String(500), default='', nullable=False)
+    selected_match_data = Column(Text, nullable=True)  # JSON string for match object
+    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        """Convert live config to dictionary"""
+        import json
+        selected_match = None
+        if self.selected_match_data:
+            try:
+                selected_match = json.loads(self.selected_match_data)
+            except json.JSONDecodeError:
+                selected_match = None
+        
+        return {
+            'is_live': self.is_live,
+            'livestream_url': self.livestream_url,
+            'selected_match': selected_match,
+            'last_updated': self.last_updated.isoformat() if self.last_updated else None
+        }
+    
+    @classmethod
+    def from_dict(cls, data):
+        """Create or update from dictionary"""
+        import json
+        selected_match_data = None
+        if data.get('selected_match'):
+            selected_match_data = json.dumps(data['selected_match'])
+        
+        return cls(
+            id=1,  # Always use id=1 for single-row config
+            is_live=data.get('is_live', False),
+            livestream_url=data.get('livestream_url', ''),
+            selected_match_data=selected_match_data
+        )
+
+
+class ScrapedData(Base):
+    """
+    Cached cricket data from Play-Cricket scraper.
+    Stored in database for persistence across container restarts.
+    Implements stale-while-revalidate pattern: old data is preserved if scraper fails.
+    """
+    __tablename__ = 'scraped_data'
+    
+    id = Column(Integer, primary_key=True, default=1)  # Single row for all data
+    teams_data = Column(Text, nullable=True)  # JSON array of teams
+    fixtures_data = Column(Text, nullable=True)  # JSON array of fixtures
+    results_data = Column(Text, nullable=True)  # JSON array of results
+    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_scrape_success = Column(Boolean, default=True)  # Track if last scrape was successful
+    scrape_error_message = Column(Text, nullable=True)  # Store error message if scrape failed
+    
+    def to_dict(self):
+        """Convert scraped data to dictionary format matching the old JSON file structure"""
+        import json
+        
+        teams = []
+        fixtures = []
+        results = []
+        
+        if self.teams_data:
+            try:
+                teams = json.loads(self.teams_data)
+            except json.JSONDecodeError:
+                pass
+        
+        if self.fixtures_data:
+            try:
+                fixtures = json.loads(self.fixtures_data)
+            except json.JSONDecodeError:
+                pass
+        
+        if self.results_data:
+            try:
+                results = json.loads(self.results_data)
+            except json.JSONDecodeError:
+                pass
+        
+        return {
+            'teams': teams,
+            'fixtures': fixtures,
+            'results': results,
+            'last_updated': self.last_updated.isoformat() if self.last_updated else None,
+            'last_scrape_success': self.last_scrape_success,
+            'scrape_error_message': self.scrape_error_message
+        }
+    
+    @classmethod
+    def update_from_scrape(cls, db_session, teams=None, fixtures=None, results=None, 
+                           success=True, error_message=None):
+        """
+        Update scraped data in database with stale-while-revalidate logic.
+        If scrape failed, keeps old data and logs the error.
+        """
+        import json
+        
+        # Get or create the single row
+        data_row = db_session.query(cls).filter(cls.id == 1).first()
+        if not data_row:
+            data_row = cls(id=1)
+            db_session.add(data_row)
+        
+        # Only update data if scrape was successful
+        if success:
+            if teams is not None:
+                data_row.teams_data = json.dumps(teams)
+            if fixtures is not None:
+                data_row.fixtures_data = json.dumps(fixtures)
+            if results is not None:
+                data_row.results_data = json.dumps(results)
+            data_row.last_scrape_success = True
+            data_row.scrape_error_message = None
+        else:
+            # Scrape failed - keep old data, log error
+            data_row.last_scrape_success = False
+            data_row.scrape_error_message = error_message
+        
+        data_row.last_updated = datetime.utcnow()
+        db_session.commit()
+        
+        return data_row
+
+
 def init_db():
     """Initialize database - create all tables"""
     try:

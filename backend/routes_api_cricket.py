@@ -2,8 +2,9 @@
 
 """
 WOVCC Flask Application - Cricket Data API Routes
-Reads pre-scraped data from scraped_data.json for high performance.
-The scraper is run periodically by a background job.
+Reads pre-scraped data from PostgreSQL database for high performance.
+The scraper runs as a daemon service, updating the database periodically.
+Falls back to scraped_data.json if database is empty (migration support).
 """
 
 from flask import Blueprint, jsonify, request
@@ -15,7 +16,7 @@ import shutil
 
 # The scraper is now only used for its utility functions by other modules if needed,
 # but not for live scraping within the API requests.
-from scraper import scraper
+from scraper import scraper, scrape_to_database
 from auth import require_admin
 
 logger = logging.getLogger(__name__)
@@ -23,33 +24,57 @@ cricket_api_bp = Blueprint('cricket_api', __name__, url_prefix='/api')
 
 # --- Helper Function to Load Scraped Data ---
 
-# Define the path to the data file
+# Define the path to the data file (fallback)
 SCRAPED_DATA_PATH = os.path.join(os.path.dirname(__file__), 'scraped_data.json')
-_scraped_data_cache = None
-_cache_load_time = None
+
+# In-memory cache for database data (refreshes every 60 seconds)
+_db_cache = None
+_db_cache_time = None
+_DB_CACHE_TTL = 60  # seconds
+
 
 def get_scraped_data():
     """
-    Loads cricket data from scraped_data.json with in-memory caching.
-    This avoids reading the file from disk on every single request.
+    Loads cricket data from database with in-memory caching.
+    Falls back to JSON file if database is empty (for migration support).
     """
-    global _scraped_data_cache, _cache_load_time
-
+    global _db_cache, _db_cache_time
+    
+    import time
+    now = time.time()
+    
+    # Return cached data if still fresh
+    if _db_cache and _db_cache_time and (now - _db_cache_time) < _DB_CACHE_TTL:
+        return _db_cache
+    
+    # Try to load from database
     try:
-        # Check if the file has been modified since last cache read
+        from database import get_db, ScrapedData
+        db = next(get_db())
+        try:
+            data_row = db.query(ScrapedData).filter(ScrapedData.id == 1).first()
+            if data_row and data_row.teams_data:
+                data = data_row.to_dict()
+                _db_cache = data
+                _db_cache_time = now
+                logger.debug("Loaded scraped data from database")
+                return data
+        finally:
+            db.close()
+    except Exception as e:
+        logger.warning(f"Could not load from database, falling back to JSON: {e}")
+    
+    # Fallback to JSON file
+    try:
         file_mod_time = os.path.getmtime(SCRAPED_DATA_PATH)
-        if _scraped_data_cache and _cache_load_time and _cache_load_time >= file_mod_time:
-            return _scraped_data_cache
-
-        # File is new or has been updated, so re-read it
         with open(SCRAPED_DATA_PATH, 'r', encoding='utf-8') as f:
             data = json.load(f)
-            _scraped_data_cache = data
-            _cache_load_time = file_mod_time
+            _db_cache = data
+            _db_cache_time = now
+            logger.debug("Loaded scraped data from JSON file (fallback)")
             return data
-            
     except (FileNotFoundError, json.JSONDecodeError) as e:
-        logger.error(f"Could not load or parse scraped_data.json: {e}")
+        logger.error(f"Could not load scraped data from any source: {e}")
         # Return a default empty structure to prevent crashes
         return {'teams': [], 'fixtures': [], 'results': [], 'last_updated': None}
 
@@ -141,66 +166,87 @@ def match_status():
 
 @cricket_api_bp.route('/live-config', methods=['GET'])
 def get_live_config():
-    """Get current live match configuration"""
+    """Get current live match configuration from database"""
+    from database import get_db, LiveConfig
     try:
-        config_file = os.path.join(os.path.dirname(__file__), 'live_config.json')
-        if os.path.exists(config_file):
-            with open(config_file, 'r', encoding='utf-8') as f:
-                config = json.load(f)
-        else:
-            config = {'is_live': False, 'livestream_url': '', 'selected_match': None}
-        return jsonify({'success': True, 'config': config})
+        db = next(get_db())
+        try:
+            config_row = db.query(LiveConfig).filter(LiveConfig.id == 1).first()
+            if config_row:
+                config = config_row.to_dict()
+            else:
+                config = {'is_live': False, 'livestream_url': '', 'selected_match': None}
+            return jsonify({'success': True, 'config': config})
+        finally:
+            db.close()
     except Exception as e:
+        logger.error(f"Error getting live config: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @cricket_api_bp.route('/live-config', methods=['POST'])
 @require_admin
 def update_live_config(user):
-    """Update live match configuration (admin only)"""
+    """Update live match configuration in database (admin only)"""
+    from database import get_db, LiveConfig
+    import json as json_lib
     try:
         data = request.get_json()
-        config_file = os.path.join(os.path.dirname(__file__), 'live_config.json')
-        
-        if os.path.exists(config_file):
-            with open(config_file, 'r', encoding='utf-8') as f:
-                config = json.load(f)
-        else:
-            config = {}
-
-        config['is_live'] = data.get('is_live', config.get('is_live', False))
-        config['livestream_url'] = data.get('livestream_url', config.get('livestream_url', ''))
-        config['selected_match'] = data.get('selected_match', config.get('selected_match', None))
-        config['last_updated'] = datetime.now().isoformat()
-
-        with open(config_file, 'w', encoding='utf-8') as f:
-            json.dump(config, f, indent=2)
+        db = next(get_db())
+        try:
+            config_row = db.query(LiveConfig).filter(LiveConfig.id == 1).first()
             
-        return jsonify({'success': True, 'message': 'Live configuration updated', 'config': config})
+            if not config_row:
+                # Create new config row
+                config_row = LiveConfig(id=1)
+                db.add(config_row)
+            
+            # Update fields
+            config_row.is_live = data.get('is_live', config_row.is_live if config_row.is_live is not None else False)
+            config_row.livestream_url = data.get('livestream_url', config_row.livestream_url or '')
+            
+            if 'selected_match' in data:
+                if data['selected_match']:
+                    config_row.selected_match_data = json_lib.dumps(data['selected_match'])
+                else:
+                    config_row.selected_match_data = None
+            
+            config_row.last_updated = datetime.now()
+            
+            db.commit()
+            
+            config = config_row.to_dict()
+            return jsonify({'success': True, 'message': 'Live configuration updated', 'config': config})
+        finally:
+            db.close()
     except Exception as e:
+        logger.error(f"Error updating live config: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @cricket_api_bp.route('/clear-cache', methods=['POST'])
 @require_admin
 def clear_cache(user):
     """
-    This now serves as a manual trigger for the scraper.
-    It runs the scraper script and clears the old scraper cache directory.
+    Manual trigger to refresh scraped data.
+    Runs the scraper and saves directly to database.
     """
     try:
-        # Manually run the scraper script safely using subprocess
-        import subprocess
-        subprocess.run(['python', 'scraper.py'], check=True)
+        # Run the scraper and save to database
+        success = scrape_to_database()
         
-        # Clear the old cache directory which is no longer used by the API
-        cache_dir = 'cache'
+        # Clear the in-memory cache to force a reload
+        global _db_cache, _db_cache_time
+        _db_cache = None
+        _db_cache_time = None
+        
+        # Clear the old file-based cache directory
+        cache_dir = os.path.join(os.path.dirname(__file__), 'cache')
         if os.path.exists(cache_dir):
             shutil.rmtree(cache_dir)
-        
-        # Clear the in-memory cache to force a reload from the new JSON file
-        global _scraped_data_cache, _cache_load_time
-        _scraped_data_cache = None
-        _cache_load_time = None
 
-        return jsonify({'success': True, 'message': 'Scraper data refreshed successfully'})
+        if success:
+            return jsonify({'success': True, 'message': 'Scraper data refreshed successfully'})
+        else:
+            return jsonify({'success': True, 'message': 'Scrape had errors but old data preserved (stale-while-revalidate)'})
     except Exception as e:
+        logger.error(f"Error in clear-cache: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500

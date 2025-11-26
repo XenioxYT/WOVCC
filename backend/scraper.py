@@ -3,7 +3,7 @@ WOVCC Play-Cricket Web Scraper
 Scrapes fixture and result data from Play-Cricket pages
 
 Can be imported as a module or run standalone to generate
-a 'scraped_data.json' file.
+a 'scraped_data.json' file, or run in daemon mode for continuous updates.
 """
 
 import requests
@@ -11,12 +11,29 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import json
 import os
+import sys
 import time
+import logging
+import argparse
 from typing import List, Dict, Optional, Any
+
+# Add backend directory to path for imports when run as standalone
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+# Load environment variables
+from dotenv import load_dotenv
+load_dotenv()
 
 CLUB_ID = 6908
 BASE_URL = "https://wov.play-cricket.com"
 CACHE_DIR = "cache"
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Ensure cache directory exists
 os.makedirs(CACHE_DIR, exist_ok=True)
@@ -393,22 +410,81 @@ class PlayCricketScraper:
 # Singleton instance
 scraper = PlayCricketScraper()
 
-# --- Standalone execution ---
 
-if __name__ == "__main__":
+def scrape_to_database():
     """
-    This block runs when the script is executed directly
-    (e.g., python scraper.py)
-    It fetches all data and saves it to a single JSON file.
+    Scrape all data and save to database with stale-while-revalidate logic.
+    Returns True if successful, False otherwise.
     """
+    from database import get_db, ScrapedData
     
-    print("--- Running WOVCC Scraper in Standalone Mode ---")
+    logger.info("Starting database scrape...")
     
-    # Get the directory where this script is located (i.e., the backend/ directory)
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    # Define the output path to be in the same directory
-    output_filename = os.path.join(script_dir, "scraped_data.json")
+    teams_data = None
+    fixtures_data = None
+    results_data = None
+    success = True
+    error_message = None
+    
+    try:
+        # 1. Fetch all teams
+        logger.info("Fetching all teams...")
+        _t0 = time.perf_counter()
+        teams_data = scraper.get_teams()
+        _dt = time.perf_counter() - _t0
+        cache_note = " (from cache)" if scraper.last_cache_hit else ""
+        logger.info(f"Found {len(teams_data)} teams{cache_note} in {_dt:.2f}s.")
+        
+        # 2. Fetch all fixtures
+        logger.info("Fetching all fixtures...")
+        _t0 = time.perf_counter()
+        fixtures_data = scraper.get_team_fixtures(team_id=None)
+        _dt = time.perf_counter() - _t0
+        cache_note = " (from cache)" if scraper.last_cache_hit else ""
+        logger.info(f"Found {len(fixtures_data)} upcoming fixtures{cache_note} in {_dt:.2f}s.")
+        
+        # 3. Fetch all results
+        logger.info("Fetching all results...")
+        _t0 = time.perf_counter()
+        results_data = scraper.get_team_results(team_id=None, limit=9999)
+        _dt = time.perf_counter() - _t0
+        cache_note = " (from cache)" if scraper.last_cache_hit else ""
+        logger.info(f"Found {len(results_data)} recent results{cache_note} in {_dt:.2f}s.")
+        
+    except Exception as e:
+        success = False
+        error_message = str(e)
+        logger.error(f"Scrape failed: {e}", exc_info=True)
+    
+    # 4. Save to database (with stale-while-revalidate)
+    try:
+        db = next(get_db())
+        try:
+            ScrapedData.update_from_scrape(
+                db,
+                teams=teams_data,
+                fixtures=fixtures_data,
+                results=results_data,
+                success=success,
+                error_message=error_message
+            )
+            if success:
+                logger.info("✅ Data saved to database successfully!")
+            else:
+                logger.warning("⚠️ Scrape failed - old data preserved in database")
+        finally:
+            db.close()
+    except Exception as e:
+        logger.error(f"Failed to save to database: {e}", exc_info=True)
+        return False
+    
+    return success
 
+
+def scrape_to_file(output_filename: str):
+    """
+    Original functionality: scrape all data and save to JSON file.
+    """
     all_data = {
         'last_updated': datetime.now().isoformat()
     }
@@ -429,7 +505,6 @@ if __name__ == "__main__":
     # 2. Fetch all fixtures
     print("Fetching all fixtures...")
     try:
-        # Pass team_id=None to get all fixtures
         _t0 = time.perf_counter()
         fixtures_data = scraper.get_team_fixtures(team_id=None)
         _dt = time.perf_counter() - _t0
@@ -443,7 +518,6 @@ if __name__ == "__main__":
     # 3. Fetch all results
     print("Fetching all results...")
     try:
-        # Pass team_id=None and a high limit to get all results
         _t0 = time.perf_counter()
         results_data = scraper.get_team_results(team_id=None, limit=9999)
         _dt = time.perf_counter() - _t0
@@ -462,3 +536,71 @@ if __name__ == "__main__":
         print("--- Scrape complete. Data saved. ---")
     except Exception as e:
         print(f"Fatal error saving data to JSON: {e}")
+
+
+def run_daemon(interval_hours: float = 6.0):
+    """
+    Run scraper in daemon mode - continuously scrape at specified interval.
+    """
+    logger.info("=" * 60)
+    logger.info("🏏 WOVCC Cricket Scraper - Daemon Mode")
+    logger.info("=" * 60)
+    logger.info(f"Scrape interval: {interval_hours} hours")
+    logger.info("Data will be saved to PostgreSQL database")
+    logger.info("Using stale-while-revalidate: old data preserved on errors")
+    logger.info("=" * 60)
+    
+    # Initial scrape
+    logger.info("Running initial scrape...")
+    scrape_to_database()
+    
+    # Calculate interval in seconds
+    interval_seconds = interval_hours * 3600
+    
+    logger.info(f"Next scrape in {interval_hours} hours")
+    logger.info("Press Ctrl+C to stop")
+    
+    try:
+        while True:
+            time.sleep(interval_seconds)
+            logger.info("=" * 40)
+            logger.info("Running scheduled scrape...")
+            scrape_to_database()
+            logger.info(f"Next scrape in {interval_hours} hours")
+    except KeyboardInterrupt:
+        logger.info("\n" + "=" * 60)
+        logger.info("Scraper daemon stopped by user")
+        logger.info("=" * 60)
+
+
+# --- Standalone execution ---
+
+if __name__ == "__main__":
+    """
+    This block runs when the script is executed directly.
+    Supports multiple modes:
+      - Default: scrape to JSON file (legacy)
+      - --daemon: run continuously, save to database
+      - --db: single scrape to database
+    """
+    
+    parser = argparse.ArgumentParser(description="WOVCC Play-Cricket Scraper")
+    parser.add_argument("--daemon", action="store_true", 
+                       help="Run in daemon mode (continuous scraping to database)")
+    parser.add_argument("--db", action="store_true",
+                       help="Single scrape to database instead of JSON file")
+    parser.add_argument("--interval", type=float, default=6.0,
+                       help="Scrape interval in hours (daemon mode only, default: 6)")
+    args = parser.parse_args()
+    
+    if args.daemon:
+        run_daemon(interval_hours=args.interval)
+    elif args.db:
+        print("--- Running WOVCC Scraper - Database Mode ---")
+        success = scrape_to_database()
+        sys.exit(0 if success else 1)
+    else:
+        print("--- Running WOVCC Scraper in Standalone Mode ---")
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        output_filename = os.path.join(script_dir, "scraped_data.json")
+        scrape_to_file(output_filename)

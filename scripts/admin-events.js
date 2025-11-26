@@ -1,6 +1,11 @@
 (function() {
     'use strict';
-    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5000/api' : 'https://wovcc.xeniox.uk/api';
+    // Use server-injected config if available, fallback to hostname detection
+    const API_BASE = window.APP_CONFIG ? window.APP_CONFIG.apiBase : (
+        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:5000/api'
+            : 'https://wovcc.xeniox.uk/api'
+    );
     let allEvents = [];
     let currentEditingEvent = null;
     let selectedImage = null;
@@ -446,7 +451,17 @@
         }
     }
     async function deleteEvent(eventId) {
-        if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
+        // Use mobile-friendly modal instead of blocking confirm
+        const confirmed = await window.WOVCCModal.confirm({
+            title: 'Delete Event?',
+            message: 'Are you sure you want to delete this event? This action cannot be undone.',
+            type: 'danger',
+            confirmText: 'Delete',
+            cancelText: 'Cancel',
+            dangerous: true
+        });
+        
+        if (!confirmed) {
             return;
         }
         try {

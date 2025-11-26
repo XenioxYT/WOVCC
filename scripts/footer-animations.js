@@ -8,6 +8,7 @@ class FooterAnimations {
   constructor() {
     this.newsletterSection = null;
     this.footerSection = null;
+    this.sponsorsSection = null;
     this.animated = false;
     this.observer = null;
     this.init();
@@ -47,6 +48,7 @@ class FooterAnimations {
     style.textContent = `
       /* Footer animation initial state */
       .newsletter-section,
+      .sponsors-band-container,
       .footer {
         opacity: 0;
         transform: translateY(30px);
@@ -56,6 +58,7 @@ class FooterAnimations {
 
       /* Transitioning state - fade out quickly with page content */
       .newsletter-section.footer-transitioning,
+      .sponsors-band-container.footer-transitioning,
       .footer.footer-transitioning {
         opacity: 0 !important;
         transform: translateY(0) !important;
@@ -64,22 +67,28 @@ class FooterAnimations {
 
       /* Animated state */
       .newsletter-section.footer-animated,
+      .sponsors-band-container.footer-animated,
       .footer.footer-animated {
         opacity: 1;
         transform: translateY(0);
       }
 
-      /* Stagger the newsletter slightly before footer */
+      /* Stagger animations: newsletter -> sponsors -> footer */
       .newsletter-section.footer-animated {
-        transition-delay: 0.1s;
+        transition-delay: 0s;
+      }
+
+      .sponsors-band-container.footer-animated {
+        transition-delay: 0s;
       }
 
       .footer.footer-animated {
-        transition-delay: 0.2s;
+        transition-delay: 0s;
       }
 
       /* Ensure footer content doesn't jump */
-      .newsletter-section {
+      .newsletter-section,
+      .sponsors-band-container {
         will-change: opacity, transform;
       }
 
@@ -89,6 +98,7 @@ class FooterAnimations {
 
       /* Prevent flash of unstyled content */
       body:not(.page-loaded) .newsletter-section,
+      body:not(.page-loaded) .sponsors-band-container,
       body:not(.page-loaded) .footer {
         opacity: 0;
       }
@@ -115,19 +125,19 @@ class FooterAnimations {
 
       /* Stagger footer sections */
       .footer.footer-animated .footer-section:nth-child(1) {
-        transition-delay: 0.35s;
+        transition-delay: 0s;
       }
 
       .footer.footer-animated .footer-section:nth-child(2) {
-        transition-delay: 0.45s;
+        transition-delay: 0s;
       }
 
       .footer.footer-animated .footer-section:nth-child(3) {
-        transition-delay: 0.55s;
+        transition-delay: 0s;
       }
 
       .footer.footer-animated .footer-section:nth-child(4) {
-        transition-delay: 0.65s;
+        transition-delay: 0s;
       }
 
       /* Newsletter content animation */
@@ -143,19 +153,19 @@ class FooterAnimations {
       .newsletter-section.footer-animated .newsletter-content h2 {
         opacity: 1;
         transform: translateY(0);
-        transition-delay: 0.25s;
+        transition-delay: 0s;
       }
 
       .newsletter-section.footer-animated .newsletter-content p {
         opacity: 1;
         transform: translateY(0);
-        transition-delay: 0.35s;
+        transition-delay: 0s;
       }
 
       .newsletter-section.footer-animated .newsletter-form-main {
         opacity: 1;
         transform: translateY(0);
-        transition-delay: 0.45s;
+        transition-delay: 0s;
       }
 
       /* Reset newsletter content during transition */
@@ -188,27 +198,27 @@ class FooterAnimations {
       }
 
       .footer.footer-animated .social-link:nth-child(1) {
-        transition-delay: 0.7s;
+        transition-delay: 0s;
       }
 
       .footer.footer-animated .social-link:nth-child(2) {
-        transition-delay: 0.75s;
+        transition-delay: 0s;
       }
 
       .footer.footer-animated .social-link:nth-child(3) {
-        transition-delay: 0.8s;
+        transition-delay: 0s;
       }
 
       .footer.footer-animated .social-link:nth-child(4) {
-        transition-delay: 0.85s;
+        transition-delay: 0s;
       }
 
       /* Footer bottom animation */
       .footer-bottom {
         opacity: 0;
         transform: translateY(10px);
-        transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.75s,
-                    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.75s;
+        transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0s,
+                    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0s;
       }
 
       .footer.footer-animated .footer-bottom {
@@ -252,6 +262,7 @@ class FooterAnimations {
 
   setupFooterElements() {
     this.newsletterSection = document.querySelector('.newsletter-section');
+    this.sponsorsSection = document.querySelector('.sponsors-band-container');
     this.footerSection = document.querySelector('.footer');
   }
 
@@ -260,6 +271,11 @@ class FooterAnimations {
     if (this.newsletterSection) {
       this.newsletterSection.classList.remove('footer-animated');
       this.newsletterSection.classList.add('footer-transitioning');
+    }
+    
+    if (this.sponsorsSection) {
+      this.sponsorsSection.classList.remove('footer-animated');
+      this.sponsorsSection.classList.add('footer-transitioning');
     }
     
     if (this.footerSection) {
@@ -279,6 +295,10 @@ class FooterAnimations {
     
     if (this.newsletterSection) {
       this.newsletterSection.classList.remove('footer-animated', 'footer-transitioning');
+    }
+    
+    if (this.sponsorsSection) {
+      this.sponsorsSection.classList.remove('footer-animated', 'footer-transitioning');
     }
     
     if (this.footerSection) {
@@ -310,17 +330,17 @@ class FooterAnimations {
     }
 
     // Ensure elements are set up
-    if (!this.newsletterSection || !this.footerSection) {
+    if (!this.newsletterSection || !this.sponsorsSection || !this.footerSection) {
       this.setupFooterElements();
     }
 
     // If elements still don't exist, bail out
-    if (!this.newsletterSection && !this.footerSection) return;
+    if (!this.newsletterSection && !this.sponsorsSection && !this.footerSection) return;
 
     // Create intersection observer
     const options = {
       root: null, // viewport
-      rootMargin: '0px 0px -100px 0px', // Trigger when element is 100px from bottom of viewport
+      rootMargin: '0px 0px 50px 0px', // Trigger when element is 100px from bottom of viewport
       threshold: 0.15 // Trigger when 15% of element is visible
     };
 
@@ -435,7 +455,7 @@ class FooterAnimations {
     this.animated = true;
 
     // Ensure elements are set up
-    if (!this.newsletterSection || !this.footerSection) {
+    if (!this.newsletterSection || !this.sponsorsSection || !this.footerSection) {
       this.setupFooterElements();
     }
 
@@ -444,7 +464,9 @@ class FooterAnimations {
       if (this.newsletterSection) {
         this.newsletterSection.classList.add('footer-animated');
       }
-      
+      if (this.sponsorsSection) {
+        this.sponsorsSection.classList.add('footer-animated');
+      }
       if (this.footerSection) {
         this.footerSection.classList.add('footer-animated');
       }
@@ -454,6 +476,9 @@ class FooterAnimations {
     setTimeout(() => {
       if (this.newsletterSection) {
         this.newsletterSection.style.willChange = 'auto';
+      }
+      if (this.sponsorsSection) {
+        this.sponsorsSection.style.willChange = 'auto';
       }
       if (this.footerSection) {
         this.footerSection.style.willChange = 'auto';

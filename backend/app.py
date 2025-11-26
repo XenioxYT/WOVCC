@@ -186,6 +186,45 @@ def inject_snippets():
         return {'snippets': SafeSnippets({})}
 
 
+@app.context_processor
+def inject_app_config():
+    """Inject application configuration into all templates for JavaScript usage"""
+    # Determine API base URL from environment or default
+    api_base_url = os.environ.get('API_BASE_URL', '')
+    if not api_base_url:
+        # Default based on environment
+        if DEBUG:
+            api_base_url = 'http://localhost:5000/api'
+        else:
+            api_base_url = 'https://wovcc.xeniox.uk/api'
+    
+    return {
+        'app_config': {
+            'api_base_url': api_base_url,
+            'is_debug': DEBUG,
+            'environment': os.environ.get('ENVIRONMENT', 'development' if DEBUG else 'production')
+        }
+    }
+
+
+@app.context_processor
+def inject_sponsors():
+    """Inject active sponsors into all templates"""
+    from database import get_db, Sponsor
+    try:
+        db = next(get_db())
+        try:
+            sponsors = db.query(Sponsor).filter(
+                Sponsor.is_active == True
+            ).order_by(Sponsor.display_order.asc(), Sponsor.name.asc()).all()
+            return {'sponsors': [s.to_dict() for s in sponsors]}
+        finally:
+            db.close()
+    except Exception as e:
+        logger.error(f"Error loading sponsors: {e}")
+        return {'sponsors': []}
+
+
 # Register custom Jinja2 filter for explicit sanitization if needed
 @app.template_filter('safe_html')
 def safe_html_filter(content):
@@ -203,6 +242,7 @@ from routes_api_admin import admin_api_bp
 from routes_api_events import events_api_bp
 from routes_api_webhooks import webhooks_api_bp
 from routes_api_contact import contact_bp
+from routes_api_sponsors import sponsors_api_bp
 
 app.register_blueprint(pages_bp)
 app.register_blueprint(cricket_api_bp)
@@ -211,6 +251,7 @@ app.register_blueprint(admin_api_bp)
 app.register_blueprint(events_api_bp)
 app.register_blueprint(webhooks_api_bp)
 app.register_blueprint(contact_bp)
+app.register_blueprint(sponsors_api_bp)
 
 
 # ========================================
@@ -241,12 +282,12 @@ def add_security_headers(response):
     # - Update this if you introduce new domains.
     csp = (
         "default-src 'self'; "
-        "script-src 'self' https://cdn.jsdelivr.net; "
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "script-src 'self' https://cdn.jsdelivr.net https://www.play-cricket.com; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.play-cricket.com; "
         "font-src 'self' https://fonts.gstatic.com; "
-        "connect-src 'self' http://localhost:5000 http://127.0.0.1:5000 https://wovcc.xeniox.uk https://wovcc.xeniox.uk; "
-        "img-src 'self' data: https://maps.googleapis.com https://*.googleapis.com; "
-        "frame-src https://www.google.com https://maps.google.com; "
+        "connect-src 'self' http://localhost:5000 http://127.0.0.1:5000 https://wovcc.xeniox.uk; "
+        "img-src 'self' data: https://maps.googleapis.com https://*.googleapis.com https://www.play-cricket.com; "
+        "frame-src https://www.google.com https://maps.google.com https://www.youtube.com https://player.vimeo.com; "
         "object-src 'none';"
     )
     response.headers['Content-Security-Policy'] = csp

@@ -1,6 +1,7 @@
 (function() {
     'use strict';
-    const DEBUG_API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    // Use server-injected config if available, fallback to hostname detection
+    const DEBUG_API = window.APP_CONFIG ? window.APP_CONFIG.isDebug : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     const debugApi = {
         log: (...args) => DEBUG_API && console.log(...args),
         warn: (...args) => DEBUG_API && console.warn(...args),
@@ -8,7 +9,7 @@
         info: (...args) => DEBUG_API && console.info(...args)
     };
     const API_CONFIG = {
-        baseURL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5000/api' : 'https://wovcc.xeniox.uk/api',
+        baseURL: window.APP_CONFIG ? window.APP_CONFIG.apiBase : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5000/api' : 'https://wovcc.xeniox.uk/api'),
         timeout: 10000
     };
     class WOVCCApi {
@@ -19,6 +20,7 @@
             this.cacheTimestamp = null;
             this.cacheMaxAge = 5 * 60 * 1000;
             this.lastUpdated = null;
+            this._fetchPromise = null; // Prevent duplicate concurrent fetches
         }
         formatRelativeTime(isoString) {
             if (!isoString) return 'Unknown';
@@ -80,12 +82,18 @@
                 debugApi.log('Using cached data');
                 return this.cachedData;
             }
+            // Prevent duplicate concurrent fetches - return existing promise if one is in progress
+            if (this._fetchPromise) {
+                debugApi.log('Fetch already in progress, returning existing promise');
+                return this._fetchPromise;
+            }
             try {
                 debugApi.log('Fetching fresh data from API...');
-                const data = await this._fetch('/data?source=file');
+                this._fetchPromise = this._fetch('/data?source=file');
+                const data = await this._fetchPromise;
                 if (data.success) {
                     this.cachedData = data;
-                    this.cacheTimestamp = now;
+                    this.cacheTimestamp = Date.now();
                     this.lastUpdated = data.last_updated || null;
                     console.log(`Data fetched successfully(last updated:${data.last_updated})`);
                     return data;
@@ -99,6 +107,8 @@
                     return this.cachedData;
                 }
                 throw error;
+            } finally {
+                this._fetchPromise = null;
             }
         }
         async healthCheck() {

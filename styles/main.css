@@ -34,7 +34,7 @@ body {
     font-family: var(--font-family);
     color: var(--text-dark);
     line-height: 1.6;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background-color: var(--secondary-bg);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
@@ -378,6 +378,10 @@ p {
     height: 18px;
     cursor: pointer;
 }
+
+/* ========================================
+   Footer
+   ======================================== */
 .footer {
     background-color: var(--primary-color);
     color: var(--white);
@@ -387,6 +391,112 @@ p {
     box-sizing: border-box;
     overflow-x: hidden;
 }
+
+/* ========================================
+   Sponsors Band
+   ======================================== */
+.sponsors-band-container {
+    background: var(--secondary-bg);
+    padding: 40px 0;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+}
+
+.sponsors-title {
+    text-align: center;
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 30px 0;
+}
+
+.sponsors-band-wrapper {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    padding: 10px 0;
+}
+
+.sponsors-band {
+    display: flex;
+    align-items: center;
+    gap: 60px;
+    width: max-content;
+    animation: scroll-sponsors 30s linear infinite;
+    will-change: transform;
+}
+
+.sponsors-band:hover {
+    animation-play-state: paused;
+}
+
+@keyframes scroll-sponsors {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+.sponsor-logo-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    text-decoration: none;
+    transition: transform 0.3s ease;
+    padding: 10px;
+}
+
+.sponsor-logo-link:hover {
+    transform: scale(1.1);
+}
+
+.sponsor-logo-link[onclick="return false;"] {
+    cursor: default;
+}
+
+.sponsor-logo {
+    height: 60px;
+    width: auto;
+    max-width: 200px;
+    object-fit: contain;
+    display: block;
+    transition: all 0.3s ease;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+    .sponsors-band {
+        animation: none;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .sponsors-band-container {
+        padding: 30px 0;
+    }
+    
+    .sponsors-title {
+        font-size: 1.25rem;
+        margin-bottom: 20px;
+    }
+    
+    .sponsors-band {
+        gap: 40px;
+        animation-duration: 20s;
+    }
+    
+    .sponsor-logo {
+        height: 50px;
+    }
+}
+
 .footer-content {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -555,6 +665,19 @@ p {
     }
     .newsletter-form {
         flex-direction: column;
+    }
+    
+    /* Sponsors band responsive */
+    .sponsors-band {
+        gap: 40px;
+    }
+    
+    .sponsor-logo {
+        height: 50px;
+    }
+    
+    .sponsors-title {
+        font-size: 1.1rem;
     }
     
     /* Mobile touch target improvements */

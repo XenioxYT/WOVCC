@@ -77,6 +77,44 @@
   {% block content %}{% endblock %}
 
   <!-- Newsletter Section -->
+  <!-- Sponsors Band -->
+  {% if sponsors and sponsors|length > 0 %}
+  <div class="sponsors-band-container">
+    <h3 class="sponsors-title">Our Sponsors</h3>
+    <div class="sponsors-band-wrapper">
+      <div class="sponsors-band">
+        {% for sponsor in sponsors %}
+        <a 
+          href="{{ sponsor.website_url if sponsor.website_url else '#' }}" 
+          {% if sponsor.website_url %}target="_blank" rel="noopener noreferrer"{% else %}onclick="return false;" style="cursor: default;"{% endif %}
+          class="sponsor-logo-link"
+          title="{{ sponsor.name }}">
+          <img 
+            src="{{ sponsor.logo_url }}" 
+            alt="{{ sponsor.name }}" 
+            class="sponsor-logo"
+            loading="lazy">
+        </a>
+        {% endfor %}
+        <!-- Duplicate for seamless loop -->
+        {% for sponsor in sponsors %}
+        <a 
+          href="{{ sponsor.website_url if sponsor.website_url else '#' }}" 
+          {% if sponsor.website_url %}target="_blank" rel="noopener noreferrer"{% else %}onclick="return false;" style="cursor: default;"{% endif %}
+          class="sponsor-logo-link"
+          title="{{ sponsor.name }}">
+          <img 
+            src="{{ sponsor.logo_url }}" 
+            alt="{{ sponsor.name }}" 
+            class="sponsor-logo"
+            loading="lazy">
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <section class="newsletter-section section">
     <div class="container">
       <div class="newsletter-content">
@@ -154,9 +192,19 @@
   </footer>
 
   <!-- Scripts -->
+  <!-- Server-injected configuration for JavaScript -->
+  <script>
+    window.APP_CONFIG = {
+      apiBase: "{{ app_config.api_base_url }}",
+      isDebug: {{ app_config.is_debug | tojson }},
+      environment: "{{ app_config.environment }}"
+    };
+  </script>
   <script src="/scripts/sanitizer.js"></script>
+  <script src="/scripts/modal-utils.js"></script>
   <script src="/scripts/page-transitions.js"></script>
   <script src="/scripts/footer-animations.js"></script>
+  <script src="/scripts/sponsor-carousel.js"></script>
   <script src="/scripts/auth.js"></script>
   <script src="/scripts/main.js"></script>
   {% block extra_js %}{% endblock %}

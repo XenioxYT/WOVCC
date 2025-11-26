@@ -112,6 +112,7 @@
 
   var currentConfig = {};
   var allFixtures = [];
+  var tabsInitialized = false; // Track if tabs have been setup to prevent duplicate listeners
 
   function checkAdminAccess() {
     try {
@@ -149,6 +150,10 @@
   }
 
   function setupTabs() {
+    // Prevent duplicate event listeners on SPA transitions
+    if (tabsInitialized) return;
+    tabsInitialized = true;
+    
     var tabs = document.querySelectorAll('.admin-tab');
     if (!tabs || !tabs.length) return;
 
@@ -181,6 +186,9 @@
         }
         if (tabName === 'users' && window.AdminUsers && typeof window.AdminUsers.loadUsers === 'function') {
           // Users script already lazy-loads on tab click; we just ensure tab content is visible
+        }
+        if (tabName === 'sponsors' && window.AdminSponsors && typeof window.AdminSponsors.loadSponsors === 'function') {
+          window.AdminSponsors.loadSponsors();
         }
         if (tabName === 'content' && window.AdminContent && typeof window.AdminContent.loadContentSnippets === 'function') {
           window.AdminContent.loadContentSnippets();
@@ -457,7 +465,12 @@
   }
 
   async function clearConfiguration() {
-    if (!window.confirm('Are you sure you want to clear all configuration? This will turn off the live section.')) {
+    // Use mobile-friendly modal instead of blocking confirm
+    const confirmed = await window.WOVCCModal.confirmClear(
+      'Are you sure you want to clear all configuration? This will turn off the live section.'
+    );
+    
+    if (!confirmed) {
       return;
     }
 

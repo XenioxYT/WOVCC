@@ -6,6 +6,12 @@ A professional website and membership portal for Wickersley Old Village Cricket 
 
 This project provides a full-featured, production-ready website for the cricket club. It includes a complete membership system with payments, an administrative backend for site management, and dynamic content modules for events and match data.
 
+## DB Migrations
+
+```
+docker-compose exec web alembic upgrade head
+```
+
 ## Features
 
 * Full member authentication (Join, Login, Password Reset) using a PostgreSQL database and JWT.

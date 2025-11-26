@@ -1,6 +1,7 @@
 (function() {
     'use strict';
-    const DEBUG_AUTH = !window.location.hostname || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    // Use server-injected config if available, fallback to hostname detection
+    const DEBUG_AUTH = window.APP_CONFIG ? window.APP_CONFIG.isDebug : (!window.location.hostname || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     const debugAuth = {
         log: (...args) => DEBUG_AUTH && console.log(...args),
         warn: (...args) => DEBUG_AUTH && console.warn(...args),
@@ -38,7 +39,8 @@
             clear: () => { Object.keys(memStorage).forEach(k => delete memStorage[k]); }
         };
     })();
-    const API_BASE = (() => {
+    // Use server-injected config if available, fallback to hostname detection
+    const API_BASE = window.APP_CONFIG ? window.APP_CONFIG.apiBase : (() => {
         const hostname = window.location.hostname;
         if (!hostname || hostname === 'localhost' || hostname === '127.0.0.1') {
             return 'http://localhost:5000/api';
@@ -124,11 +126,18 @@
             if (!token) {
                 throw new Error('No access token available');
             }
+            // Build headers, but don't set Content-Type if body is FormData
+            // (browser needs to set it with the boundary)
             const headers = {
-                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
                 ...options.headers
             };
+            
+            // Only set Content-Type for non-FormData requests
+            if (!(options.body instanceof FormData)) {
+                headers['Content-Type'] = 'application/json';
+            }
+            
             return fetch(`${API_BASE}${endpoint}`, {
                 ...options,
                 credentials: 'include',

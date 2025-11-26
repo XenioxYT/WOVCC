@@ -527,7 +527,13 @@
     }
     
     async function deleteUser(userId, userName) {
-        if (!confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) {
+        // Use mobile-friendly modal instead of blocking confirm
+        const confirmed = await window.WOVCCModal.confirmDelete(
+            userName,
+            'This action cannot be undone.'
+        );
+        
+        if (!confirmed) {
             return;
         }
         
