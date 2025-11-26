@@ -1,6 +1,7 @@
 /**
  * Page Transitions & SPA Navigation
  * Handles smooth page transitions and prevents navbar/footer jumping
+ * Includes proper cleanup to prevent memory leaks
  */
 
 class PageTransitions {
@@ -8,6 +9,11 @@ class PageTransitions {
         this.isTransitioning = false;
         this.currentPage = window.location.pathname;
         this.cache = new Map();
+        
+        // Store bound handlers for cleanup
+        this._clickHandler = this._handleClick.bind(this);
+        this._popstateHandler = this._handlePopstate.bind(this);
+        
         this.init();
     }
 
@@ -32,8 +38,37 @@ class PageTransitions {
         document.body.classList.add('page-loaded');
     }
 
+    /**
+     * Cleanup method to remove event listeners and clear resources
+     * Call this before creating a new instance to prevent memory leaks
+     */
+    destroy() {
+        // Remove event listeners
+        document.removeEventListener('click', this._clickHandler);
+        window.removeEventListener('popstate', this._popstateHandler);
+        
+        // Clear page cache
+        this.cache.clear();
+        
+        // Remove injected styles
+        const style = document.getElementById('page-transition-styles');
+        if (style) {
+            style.remove();
+        }
+        
+        // Reset state
+        this.isTransitioning = false;
+        this.currentPage = null;
+    }
+
     injectStyles() {
+        // Check if styles already exist to prevent duplicates
+        if (document.getElementById('page-transition-styles')) {
+            return;
+        }
+        
         const style = document.createElement('style');
+        style.id = 'page-transition-styles';
         style.textContent = `
             /* Page transition wrapper */
             #page-transition-wrapper {
@@ -194,67 +229,78 @@ class PageTransitions {
         }
     }
 
+    /**
+     * Internal click handler - extracted for cleanup
+     */
+    _handleClick(e) {
+        const link = e.target.closest('a');
+        
+        if (!link) return;
+        
+        const href = link.getAttribute('href');
+        console.log('[PageTransitions] Link clicked:', href);
+        
+        // Skip if:
+        // - External link
+        // - Hash link
+        // - Special link (logout, etc)
+        // - Download link
+        // - Has target attribute
+        // - URL has query parameters (like success=true from Stripe or token= for activation)
+        if (!href || 
+            href.startsWith('http') || 
+            href.startsWith('#') || 
+            href.startsWith('mailto:') ||
+            href.startsWith('tel:') ||
+            href.includes('?') || // Skip ALL URLs with query parameters to preserve them
+            link.hasAttribute('target') ||
+            link.hasAttribute('download') ||
+            link.id === 'logout-btn') {
+            console.log('[PageTransitions] Skipping navigation (external/special):', href);
+            return;
+        }
+        
+        // Check if it's a navigation link in the navbar
+        const isNavLink = link.classList.contains('nav-link') || 
+                        link.closest('.navbar') ||
+                        link.closest('.btn');
+        
+        // Check if it's an event card or other internal navigation
+        const isEventCard = link.closest('.event-card') || 
+                          href.startsWith('/events/') ||
+                          href.startsWith('/matches') ||
+                          href.startsWith('/members') ||
+                          href.startsWith('/join') ||
+                          href.startsWith('/admin') ||
+                          href === '/';
+        
+        if (isNavLink || isEventCard) {
+            console.log('[PageTransitions] Intercepting navigation to:', href);
+            e.preventDefault();
+            this.navigateToPage(href);
+        } else {
+            console.log('[PageTransitions] Not intercepting (not nav/event link):', href);
+        }
+    }
+
     setupNavigationInterceptors() {
-        // Intercept all internal link clicks
-        document.addEventListener('click', (e) => {
-            const link = e.target.closest('a');
-            
-            if (!link) return;
-            
-            const href = link.getAttribute('href');
-            console.log('[PageTransitions] Link clicked:', href);
-            
-            // Skip if:
-            // - External link
-            // - Hash link
-            // - Special link (logout, etc)
-            // - Download link
-            // - Has target attribute
-            // - URL has query parameters (like success=true from Stripe or token= for activation)
-            if (!href || 
-                href.startsWith('http') || 
-                href.startsWith('#') || 
-                href.startsWith('mailto:') ||
-                href.startsWith('tel:') ||
-                href.includes('?') || // Skip ALL URLs with query parameters to preserve them
-                link.hasAttribute('target') ||
-                link.hasAttribute('download') ||
-                link.id === 'logout-btn') {
-                console.log('[PageTransitions] Skipping navigation (external/special):', href);
-                return;
-            }
-            
-            // Check if it's a navigation link in the navbar
-            const isNavLink = link.classList.contains('nav-link') || 
-                            link.closest('.navbar') ||
-                            link.closest('.btn');
-            
-            // Check if it's an event card or other internal navigation
-            const isEventCard = link.closest('.event-card') || 
-                              href.startsWith('/events/') ||
-                              href.startsWith('/matches') ||
-                              href.startsWith('/members') ||
-                              href.startsWith('/join') ||
-                              href.startsWith('/admin') ||
-                              href === '/';
-            
-            if (isNavLink || isEventCard) {
-                console.log('[PageTransitions] Intercepting navigation to:', href);
-                e.preventDefault();
-                this.navigateToPage(href);
-            } else {
-                console.log('[PageTransitions] Not intercepting (not nav/event link):', href);
-            }
-        });
+        // Intercept all internal link clicks using bound handler for cleanup
+        document.addEventListener('click', this._clickHandler);
+    }
+
+    /**
+     * Internal popstate handler - extracted for cleanup
+     */
+    _handlePopstate(e) {
+        console.log('[PageTransitions] Popstate event:', e.state);
+        if (e.state && e.state.path) {
+            this.navigateToPage(e.state.path, false);
+        }
     }
 
     setupHistoryNavigation() {
-        window.addEventListener('popstate', (e) => {
-            console.log('[PageTransitions] Popstate event:', e.state);
-            if (e.state && e.state.path) {
-                this.navigateToPage(e.state.path, false);
-            }
-        });
+        // Use bound handler for cleanup
+        window.addEventListener('popstate', this._popstateHandler);
         
         // Store initial state (preserve query parameters!)
         const fullPath = window.location.pathname + window.location.search;
@@ -555,11 +601,18 @@ class PageTransitions {
     }
 }
 
+// Singleton pattern: destroy existing instance before creating new one
+function initPageTransitions() {
+    // Destroy existing instance if present to prevent memory leaks
+    if (window.pageTransitions && typeof window.pageTransitions.destroy === 'function') {
+        window.pageTransitions.destroy();
+    }
+    window.pageTransitions = new PageTransitions();
+}
+
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        window.pageTransitions = new PageTransitions();
-    });
+    document.addEventListener('DOMContentLoaded', initPageTransitions);
 } else {
-    window.pageTransitions = new PageTransitions();
+    initPageTransitions();
 }

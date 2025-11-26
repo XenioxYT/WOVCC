@@ -141,42 +141,60 @@ def match_status():
 
 @cricket_api_bp.route('/live-config', methods=['GET'])
 def get_live_config():
-    """Get current live match configuration"""
+    """Get current live match configuration from database"""
+    from database import get_db, LiveConfig
     try:
-        config_file = os.path.join(os.path.dirname(__file__), 'live_config.json')
-        if os.path.exists(config_file):
-            with open(config_file, 'r', encoding='utf-8') as f:
-                config = json.load(f)
-        else:
-            config = {'is_live': False, 'livestream_url': '', 'selected_match': None}
-        return jsonify({'success': True, 'config': config})
+        db = next(get_db())
+        try:
+            config_row = db.query(LiveConfig).filter(LiveConfig.id == 1).first()
+            if config_row:
+                config = config_row.to_dict()
+            else:
+                config = {'is_live': False, 'livestream_url': '', 'selected_match': None}
+            return jsonify({'success': True, 'config': config})
+        finally:
+            db.close()
     except Exception as e:
+        logger.error(f"Error getting live config: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @cricket_api_bp.route('/live-config', methods=['POST'])
 @require_admin
 def update_live_config(user):
-    """Update live match configuration (admin only)"""
+    """Update live match configuration in database (admin only)"""
+    from database import get_db, LiveConfig
+    import json as json_lib
     try:
         data = request.get_json()
-        config_file = os.path.join(os.path.dirname(__file__), 'live_config.json')
-        
-        if os.path.exists(config_file):
-            with open(config_file, 'r', encoding='utf-8') as f:
-                config = json.load(f)
-        else:
-            config = {}
-
-        config['is_live'] = data.get('is_live', config.get('is_live', False))
-        config['livestream_url'] = data.get('livestream_url', config.get('livestream_url', ''))
-        config['selected_match'] = data.get('selected_match', config.get('selected_match', None))
-        config['last_updated'] = datetime.now().isoformat()
-
-        with open(config_file, 'w', encoding='utf-8') as f:
-            json.dump(config, f, indent=2)
+        db = next(get_db())
+        try:
+            config_row = db.query(LiveConfig).filter(LiveConfig.id == 1).first()
             
-        return jsonify({'success': True, 'message': 'Live configuration updated', 'config': config})
+            if not config_row:
+                # Create new config row
+                config_row = LiveConfig(id=1)
+                db.add(config_row)
+            
+            # Update fields
+            config_row.is_live = data.get('is_live', config_row.is_live if config_row.is_live is not None else False)
+            config_row.livestream_url = data.get('livestream_url', config_row.livestream_url or '')
+            
+            if 'selected_match' in data:
+                if data['selected_match']:
+                    config_row.selected_match_data = json_lib.dumps(data['selected_match'])
+                else:
+                    config_row.selected_match_data = None
+            
+            config_row.last_updated = datetime.now()
+            
+            db.commit()
+            
+            config = config_row.to_dict()
+            return jsonify({'success': True, 'message': 'Live configuration updated', 'config': config})
+        finally:
+            db.close()
     except Exception as e:
+        logger.error(f"Error updating live config: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @cricket_api_bp.route('/clear-cache', methods=['POST'])

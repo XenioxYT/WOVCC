@@ -1,6 +1,11 @@
 (function() {
     'use strict';
-    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5000/api' : 'https://wovcc.xeniox.uk/api';
+    // Use server-injected config if available, fallback to hostname detection
+    const API_BASE = window.APP_CONFIG ? window.APP_CONFIG.apiBase : (
+        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:5000/api'
+            : 'https://wovcc.xeniox.uk/api'
+    );
     let allEvents = [];
     let currentEditingEvent = null;
     let selectedImage = null;

@@ -236,6 +236,49 @@ class Sponsor(Base):
         }
 
 
+class LiveConfig(Base):
+    """Live match streaming configuration - stored in database for persistence across container restarts"""
+    __tablename__ = 'live_config'
+    
+    id = Column(Integer, primary_key=True, default=1)  # Single row configuration
+    is_live = Column(Boolean, default=False, nullable=False)
+    livestream_url = Column(String(500), default='', nullable=False)
+    selected_match_data = Column(Text, nullable=True)  # JSON string for match object
+    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        """Convert live config to dictionary"""
+        import json
+        selected_match = None
+        if self.selected_match_data:
+            try:
+                selected_match = json.loads(self.selected_match_data)
+            except json.JSONDecodeError:
+                selected_match = None
+        
+        return {
+            'is_live': self.is_live,
+            'livestream_url': self.livestream_url,
+            'selected_match': selected_match,
+            'last_updated': self.last_updated.isoformat() if self.last_updated else None
+        }
+    
+    @classmethod
+    def from_dict(cls, data):
+        """Create or update from dictionary"""
+        import json
+        selected_match_data = None
+        if data.get('selected_match'):
+            selected_match_data = json.dumps(data['selected_match'])
+        
+        return cls(
+            id=1,  # Always use id=1 for single-row config
+            is_live=data.get('is_live', False),
+            livestream_url=data.get('livestream_url', ''),
+            selected_match_data=selected_match_data
+        )
+
+
 def init_db():
     """Initialize database - create all tables"""
     try:

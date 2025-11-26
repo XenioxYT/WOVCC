@@ -192,6 +192,14 @@
   </footer>
 
   <!-- Scripts -->
+  <!-- Server-injected configuration for JavaScript -->
+  <script>
+    window.APP_CONFIG = {
+      apiBase: "{{ app_config.api_base_url }}",
+      isDebug: {{ app_config.is_debug | tojson }},
+      environment: "{{ app_config.environment }}"
+    };
+  </script>
   <script src="/scripts/sanitizer.js"></script>
   <script src="/scripts/modal-utils.js"></script>
   <script src="/scripts/page-transitions.js"></script>

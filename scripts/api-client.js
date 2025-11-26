@@ -1,6 +1,7 @@
 (function() {
     'use strict';
-    const DEBUG_API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    // Use server-injected config if available, fallback to hostname detection
+    const DEBUG_API = window.APP_CONFIG ? window.APP_CONFIG.isDebug : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     const debugApi = {
         log: (...args) => DEBUG_API && console.log(...args),
         warn: (...args) => DEBUG_API && console.warn(...args),
@@ -8,7 +9,7 @@
         info: (...args) => DEBUG_API && console.info(...args)
     };
     const API_CONFIG = {
-        baseURL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5000/api' : 'https://wovcc.xeniox.uk/api',
+        baseURL: window.APP_CONFIG ? window.APP_CONFIG.apiBase : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5000/api' : 'https://wovcc.xeniox.uk/api'),
         timeout: 10000
     };
     class WOVCCApi {

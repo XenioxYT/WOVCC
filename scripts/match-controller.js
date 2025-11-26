@@ -1,9 +1,11 @@
 (function () {
     "use strict";
-    const DEBUG_MATCH =
+    // Use server-injected config if available, fallback to hostname detection
+    const DEBUG_MATCH = window.APP_CONFIG ? window.APP_CONFIG.isDebug : (
         window.location.hostname === "localhost" ||
         window.location.hostname === "127.0.0.1" ||
-        !window.location.hostname;
+        !window.location.hostname
+    );
     const debugMatch = {
         log: (...args) => DEBUG_MATCH && console.log(...args),
         warn: (...args) => DEBUG_MATCH && console.warn(...args),

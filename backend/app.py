@@ -187,6 +187,27 @@ def inject_snippets():
 
 
 @app.context_processor
+def inject_app_config():
+    """Inject application configuration into all templates for JavaScript usage"""
+    # Determine API base URL from environment or default
+    api_base_url = os.environ.get('API_BASE_URL', '')
+    if not api_base_url:
+        # Default based on environment
+        if DEBUG:
+            api_base_url = 'http://localhost:5000/api'
+        else:
+            api_base_url = 'https://wovcc.xeniox.uk/api'
+    
+    return {
+        'app_config': {
+            'api_base_url': api_base_url,
+            'is_debug': DEBUG,
+            'environment': os.environ.get('ENVIRONMENT', 'development' if DEBUG else 'production')
+        }
+    }
+
+
+@app.context_processor
 def inject_sponsors():
     """Inject active sponsors into all templates"""
     from database import get_db, Sponsor
