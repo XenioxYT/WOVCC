@@ -20,9 +20,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 # Import Base and all models to ensure they're registered with metadata
 from database import Base, User, PendingRegistration, Event, EventInterest, ContentSnippet, Sponsor
 
-# Try to import LiveConfig if it exists (for forward compatibility)
+# Try to import LiveConfig and ScrapedData if they exist (for forward compatibility)
 try:
     from database import LiveConfig
+except ImportError:
+    pass
+
+try:
+    from database import ScrapedData
 except ImportError:
     pass
 

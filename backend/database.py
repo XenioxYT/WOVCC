@@ -279,6 +279,93 @@ class LiveConfig(Base):
         )
 
 
+class ScrapedData(Base):
+    """
+    Cached cricket data from Play-Cricket scraper.
+    Stored in database for persistence across container restarts.
+    Implements stale-while-revalidate pattern: old data is preserved if scraper fails.
+    """
+    __tablename__ = 'scraped_data'
+    
+    id = Column(Integer, primary_key=True, default=1)  # Single row for all data
+    teams_data = Column(Text, nullable=True)  # JSON array of teams
+    fixtures_data = Column(Text, nullable=True)  # JSON array of fixtures
+    results_data = Column(Text, nullable=True)  # JSON array of results
+    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_scrape_success = Column(Boolean, default=True)  # Track if last scrape was successful
+    scrape_error_message = Column(Text, nullable=True)  # Store error message if scrape failed
+    
+    def to_dict(self):
+        """Convert scraped data to dictionary format matching the old JSON file structure"""
+        import json
+        
+        teams = []
+        fixtures = []
+        results = []
+        
+        if self.teams_data:
+            try:
+                teams = json.loads(self.teams_data)
+            except json.JSONDecodeError:
+                pass
+        
+        if self.fixtures_data:
+            try:
+                fixtures = json.loads(self.fixtures_data)
+            except json.JSONDecodeError:
+                pass
+        
+        if self.results_data:
+            try:
+                results = json.loads(self.results_data)
+            except json.JSONDecodeError:
+                pass
+        
+        return {
+            'teams': teams,
+            'fixtures': fixtures,
+            'results': results,
+            'last_updated': self.last_updated.isoformat() if self.last_updated else None,
+            'last_scrape_success': self.last_scrape_success,
+            'scrape_error_message': self.scrape_error_message
+        }
+    
+    @classmethod
+    def update_from_scrape(cls, db_session, teams=None, fixtures=None, results=None, 
+                           success=True, error_message=None):
+        """
+        Update scraped data in database with stale-while-revalidate logic.
+        If scrape failed, keeps old data and logs the error.
+        """
+        import json
+        
+        # Get or create the single row
+        data_row = db_session.query(cls).filter(cls.id == 1).first()
+        if not data_row:
+            data_row = cls(id=1)
+            db_session.add(data_row)
+        
+        # Only update data if scrape was successful
+        if success:
+            if teams is not None:
+                data_row.teams_data = json.dumps(teams)
+            if fixtures is not None:
+                data_row.fixtures_data = json.dumps(fixtures)
+            if results is not None:
+                data_row.results_data = json.dumps(results)
+            data_row.last_scrape_success = True
+            data_row.scrape_error_message = None
+        else:
+            # Scrape failed - keep old data, log error
+            data_row.last_scrape_success = False
+            data_row.scrape_error_message = error_message
+        
+        data_row.last_updated = datetime.utcnow()
+        db_session.commit()
+        
+        return data_row
+
+
 def init_db():
     """Initialize database - create all tables"""
     try:

@@ -58,7 +58,7 @@ def main():
     logger.info("")
     
     # Schedule the job for every Sunday at 6:00 PM
-    schedule.every().tuesday.at("01:30").do(send_report_job)
+    schedule.every().sunday.at("18:00").do(send_report_job)
     
     logger.info(f"Next scheduled run: {schedule.next_run()}")
     logger.info("Press Ctrl+C to stop the scheduler")
