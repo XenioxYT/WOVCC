@@ -76,6 +76,14 @@ def create_checkout_session(customer_id: str = None, email: str = None, user_id:
         'cancel_url': os.environ.get('STRIPE_CANCEL_URL', f'{default_frontend_url}/join/cancel'),
         'line_items': [],
         'metadata': {},
+        # Collect full billing address and phone so we can sync to the user profile
+        'billing_address_collection': 'required',
+        'phone_number_collection': {'enabled': True},
+        'customer_creation': 'always',
+        'customer_update': {
+            'address': 'auto',
+            'name': 'auto'
+        },
         # WOVCC Brand Colors
         'ui_mode': 'hosted',
         'custom_text': {
@@ -231,6 +239,13 @@ def create_spouse_card_checkout_session(customer_id: str = None, email: str = No
         'metadata': {
             'user_id': str(user_id),
             'spouse_card_only': 'true'
+        },
+        'billing_address_collection': 'required',
+        'phone_number_collection': {'enabled': True},
+        'customer_creation': 'always',
+        'customer_update': {
+            'address': 'auto',
+            'name': 'auto'
         },
         'ui_mode': 'hosted',
         'custom_text': {
