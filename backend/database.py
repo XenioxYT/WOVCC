@@ -41,6 +41,13 @@ class User(Base):
     has_spouse_card = Column(Boolean, default=False)  # Whether user has purchased spouse card addon
     membership_start_date = Column(DateTime, nullable=True)  # When membership started
     membership_expiry_date = Column(DateTime, nullable=True)  # When membership expires
+    # Contact details captured via Stripe Checkout
+    phone = Column(String(50), nullable=True)
+    address_line1 = Column(String(255), nullable=True)
+    address_line2 = Column(String(255), nullable=True)
+    city = Column(String(100), nullable=True)
+    postal_code = Column(String(50), nullable=True)
+    country = Column(String(2), nullable=True)  # ISO country code from Stripe
     join_date = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -63,6 +70,12 @@ class User(Base):
             'has_spouse_card': self.has_spouse_card,
             'membership_start_date': self.membership_start_date.isoformat() if self.membership_start_date else None,
             'membership_expiry_date': self.membership_expiry_date.isoformat() if self.membership_expiry_date else None,
+            'phone': self.phone,
+            'address_line1': self.address_line1,
+            'address_line2': self.address_line2,
+            'city': self.city,
+            'postal_code': self.postal_code,
+            'country': self.country,
             'join_date': self.join_date.isoformat() if self.join_date else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
