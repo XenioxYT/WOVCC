@@ -182,6 +182,7 @@
       updateMembershipInfo(user);
     }
     
+    setupContactDetailsForm();
     setupSpouseCardButton();
     setupEmailChangeForm();
     setupAccountDeletion();
@@ -298,6 +299,120 @@
     if (currentEmailDisplay && user.email) {
       currentEmailDisplay.value = user.email;
     }
+
+    // Populate contact details form
+    var phoneInput = document.getElementById('contact-phone');
+    var addr1Input = document.getElementById('contact-address-line1');
+    var addr2Input = document.getElementById('contact-address-line2');
+    var cityInput = document.getElementById('contact-city');
+    var postalInput = document.getElementById('contact-postal-code');
+    var countryInput = document.getElementById('contact-country');
+
+    if (phoneInput) phoneInput.value = user.phone || '';
+    if (addr1Input) addr1Input.value = user.address_line1 || '';
+    if (addr2Input) addr2Input.value = user.address_line2 || '';
+    if (cityInput) cityInput.value = user.city || '';
+    if (postalInput) postalInput.value = user.postal_code || '';
+    if (countryInput) countryInput.value = (user.country || '').toUpperCase();
+  }
+
+  function setupContactDetailsForm() {
+    var form = document.getElementById('contact-details-form');
+    if (!form) return;
+
+    var errorDiv = document.getElementById('contact-details-error');
+    var successDiv = document.getElementById('contact-details-success');
+    var submitBtn = document.getElementById('contact-details-submit');
+
+    // Reset listeners by cloning
+    var freshForm = form.cloneNode(true);
+    form.parentNode.replaceChild(freshForm, form);
+    form = freshForm;
+
+    // Rebind elements after cloning
+    errorDiv = document.getElementById('contact-details-error');
+    successDiv = document.getElementById('contact-details-success');
+    submitBtn = document.getElementById('contact-details-submit');
+
+    function showError(message) {
+      if (errorDiv) {
+        errorDiv.querySelector('p').textContent = message;
+        errorDiv.style.display = 'block';
+      }
+      if (successDiv) successDiv.style.display = 'none';
+    }
+
+    function showSuccess(message) {
+      if (successDiv) {
+        successDiv.querySelector('p').textContent = message;
+        successDiv.style.display = 'block';
+      }
+      if (errorDiv) errorDiv.style.display = 'none';
+    }
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (!window.WOVCCAuth) return;
+
+      var phone = (document.getElementById('contact-phone').value || '').trim();
+      var address1 = (document.getElementById('contact-address-line1').value || '').trim();
+      var address2 = (document.getElementById('contact-address-line2').value || '').trim();
+      var city = (document.getElementById('contact-city').value || '').trim();
+      var postal = (document.getElementById('contact-postal-code').value || '').trim();
+      var country = (document.getElementById('contact-country').value || '').trim().toUpperCase();
+
+      if (!phone || !address1 || !city || !postal || !country) {
+        showError('Please complete all required fields (phone, address, city, postcode, country).');
+        return;
+      }
+
+      var originalText = submitBtn ? submitBtn.textContent : '';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
+      }
+      if (errorDiv) errorDiv.style.display = 'none';
+      if (successDiv) successDiv.style.display = 'none';
+
+      window.WOVCCAuth.authenticatedFetch('/user/update', {
+        method: 'POST',
+        body: JSON.stringify({
+          phone: phone,
+          address_line1: address1,
+          address_line2: address2 || null,
+          city: city,
+          postal_code: postal,
+          country: country
+        })
+      }).then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data.success) {
+            showSuccess('Contact details updated successfully');
+            notify('Contact details updated', 'success');
+            if (window.WOVCCAuth && window.WOVCCAuth.refreshUserProfile) {
+              window.WOVCCAuth.refreshUserProfile().then(function(updatedUser) {
+                if (updatedUser) {
+                  updateMembershipInfo(updatedUser);
+                }
+              });
+            }
+          } else {
+            showError(data.error || data.message || 'Failed to update contact details');
+            notify(data.error || data.message || 'Failed to update contact details', 'error');
+          }
+        })
+        .catch(function(err) {
+          console.error('Contact details update error:', err);
+          showError('Failed to connect to server');
+          notify('Failed to connect to server', 'error');
+        })
+        .finally(function() {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+          }
+        });
+    });
   }
 
   function setupSpouseCardButton() {
