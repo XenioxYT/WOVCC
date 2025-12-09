@@ -372,15 +372,62 @@ def update_profile(user):
     """Update user profile"""
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
         
         db = next(get_db())
         try:
+            def _clean(value, max_len=255):
+                if value is None:
+                    return None
+                cleaned = str(value).strip()
+                if not cleaned:
+                    return None
+                return cleaned[:max_len]
+
+            # Basic profile fields
             if 'name' in data:
-                user.name = data['name']
+                cleaned_name = _clean(data.get('name'), 255)
+                if cleaned_name:
+                    user.name = cleaned_name
             if 'newsletter' in data:
-                user.newsletter = data['newsletter']
+                user.newsletter = bool(data.get('newsletter'))
+
+            # Contact fields (phone + address). If any contact field is provided,
+            # require the core ones to avoid partial/blank updates.
+            contact_payload_keys = {'phone', 'address_line1', 'address_line2', 'city', 'postal_code', 'country'}
+            if contact_payload_keys.intersection(data.keys()):
+                required_contact = ['phone', 'address_line1', 'city', 'postal_code', 'country']
+                cleaned_contact = {}
+                for field, max_len in [
+                    ('phone', 50),
+                    ('address_line1', 255),
+                    ('address_line2', 255),
+                    ('city', 100),
+                    ('postal_code', 50),
+                    ('country', 2),
+                ]:
+                    cleaned_contact[field] = _clean(data.get(field), max_len)
+
+                missing_required = [f for f in required_contact if not cleaned_contact.get(f)]
+                if missing_required:
+                    return jsonify({
+                        'success': False,
+                        'error': f"Missing required contact fields: {', '.join(missing_required)}"
+                    }), 400
+
+                # Normalize country to upper-case ISO code
+                if cleaned_contact.get('country'):
+                    cleaned_contact['country'] = cleaned_contact['country'].upper()
+
+                user.phone = cleaned_contact.get('phone')
+                user.address_line1 = cleaned_contact.get('address_line1')
+                user.address_line2 = cleaned_contact.get('address_line2')
+                user.city = cleaned_contact.get('city')
+                user.postal_code = cleaned_contact.get('postal_code')
+                user.country = cleaned_contact.get('country')
             
-            user.updated_at = datetime.datetime.now(timezone.utc)
+            user.updated_at = datetime.now(timezone.utc)
             db.commit()
             db.refresh(user)
             
