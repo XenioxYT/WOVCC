@@ -4,7 +4,7 @@ Tracks all new member signups and generates weekly summary reports.
 """
 
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float
-from database import Base, engine, get_db
+from database import Base, engine, get_db, User
 from datetime import datetime, timezone, timedelta
 from email_config import EmailConfig, render_email_template
 import logging
@@ -158,6 +158,21 @@ def generate_weekly_report_email(signups: list) -> tuple:
     if not signups:
         return None, None, None
     
+    # Preload associated users so we can include contact details in the report
+    users_by_id = {}
+    db = None
+    try:
+        db = next(get_db())
+        user_ids = [s.user_id for s in signups if s.user_id]
+        if user_ids:
+            users = db.query(User).filter(User.id.in_(user_ids)).all()
+            users_by_id = {user.id: user for user in users}
+    except Exception as e:
+        logger.warning(f"Failed to load user contact details for weekly report: {e}")
+    finally:
+        if db:
+            db.close()
+    
     # Calculate totals
     total_signups = len(signups)
     total_revenue = sum(s.amount_paid for s in signups)
@@ -188,10 +203,53 @@ Summary:
 Member Details:
 """
     
+    def _format_address_lines(user):
+        if not user:
+            return []
+        return [
+            line for line in [
+                user.address_line1,
+                user.address_line2,
+                user.city,
+                user.postal_code,
+                user.country
+            ] if line
+        ]
+    
+    def _format_expiry(user):
+        if user and user.membership_expiry_date:
+            return user.membership_expiry_date.strftime('%d %B %Y')
+        return None
+    
+    def _membership_label(user, signup_obj):
+        if user and user.membership_tier:
+            return user.membership_tier
+        if signup_obj.membership_type:
+            return signup_obj.membership_type
+        return "Member"
+    
     for i, signup in enumerate(signups, 1):
+        user = users_by_id.get(signup.user_id)
+        phone = user.phone if user and user.phone else None
+        address_lines = _format_address_lines(user)
+        membership_label = _membership_label(user, signup)
+        expiry_display = _format_expiry(user)
+        
+        phone_text = phone or "N/A"
+        if address_lines:
+            address_text = address_lines[0]
+            if len(address_lines) > 1:
+                address_text += "\n      " + "\n      ".join(address_lines[1:])
+        else:
+            address_text = "N/A"
+        
         body_text += f"""
 {i}. {signup.name}
    Email: {signup.email}
+   Phone: {phone_text}
+   Address: {address_text}
+   Membership: {membership_label}
+   Expiry: {expiry_display or 'N/A'}
    Amount Paid: £{signup.amount_paid:.2f}
    Additional Card: {'Yes' if signup.has_spouse_card else 'No'}
    Newsletter: {'Yes' if signup.newsletter_subscribed else 'No'}
@@ -209,9 +267,15 @@ To view member details, log in to the admin dashboard.
     # Prepare signup data for template
     signups_data = []
     for signup in signups:
+        user = users_by_id.get(signup.user_id)
+        address_lines = _format_address_lines(user)
         signups_data.append({
             'name': signup.name,
             'email': signup.email,
+            'phone': user.phone if user and user.phone else None,
+            'address_lines': address_lines,
+            'membership_tier': _membership_label(user, signup),
+            'membership_expiry': _format_expiry(user),
             'amount_paid': f"{signup.amount_paid:.2f}",
             'has_spouse_card': signup.has_spouse_card,
             'newsletter_subscribed': signup.newsletter_subscribed,
