@@ -13,6 +13,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Base site URL for email links (configurable via .env)
+SITE_BASE_URL = os.environ.get("SITE_BASE_URL", "https://wovcc.xeniox.uk").rstrip('/')
+
 
 def render_email_template(template_name: str, **context):
     """
@@ -25,6 +28,7 @@ def render_email_template(template_name: str, **context):
     Returns:
         str: Rendered HTML template
     """
+    context = {'site_base_url': SITE_BASE_URL, **context}
     if has_app_context():
         # Already in app context, render directly
         return render_template(template_name, **context)
@@ -206,9 +210,9 @@ Total Paid: {currency_symbol}{amount_paid:.2f}
 {'Valid Until: ' + membership_expiry if membership_expiry else ''}
 
 WHAT'S NEXT?
-- View upcoming events: https://wovcc.co.uk/events
-- Check match fixtures: https://wovcc.co.uk/matches
-- Access your member area: https://wovcc.co.uk/members
+- View upcoming events: {SITE_BASE_URL}/events
+- Check match fixtures: {SITE_BASE_URL}/matches
+- Access your member area: {SITE_BASE_URL}/members
 
 If you have any questions, contact us at info@wickersleycricket.com
 
@@ -322,7 +326,7 @@ You can now:
 - View upcoming matches and events
 - Receive club updates and newsletters
 
-Visit our website: https://wovcc.co.uk
+Visit our website: {SITE_BASE_URL}
 
 If you have any questions, please contact us at info@wovcc.co.uk
 
