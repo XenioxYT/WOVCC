@@ -80,10 +80,6 @@ def create_checkout_session(customer_id: str = None, email: str = None, user_id:
         'billing_address_collection': 'required',
         'phone_number_collection': {'enabled': True},
         'customer_creation': 'always',
-        'customer_update': {
-            'address': 'auto',
-            'name': 'auto'
-        },
         # WOVCC Brand Colors
         'ui_mode': 'hosted',
         'custom_text': {
@@ -143,6 +139,11 @@ def create_checkout_session(customer_id: str = None, email: str = None, user_id:
     
     if customer_id:
         session_params['customer'] = customer_id
+        # Only allowed when an explicit customer is provided
+        session_params['customer_update'] = {
+            'address': 'auto',
+            'name': 'auto'
+        }
     elif email:
         session_params['customer_email'] = email
     
@@ -243,10 +244,6 @@ def create_spouse_card_checkout_session(customer_id: str = None, email: str = No
         'billing_address_collection': 'required',
         'phone_number_collection': {'enabled': True},
         'customer_creation': 'always',
-        'customer_update': {
-            'address': 'auto',
-            'name': 'auto'
-        },
         'ui_mode': 'hosted',
         'custom_text': {
             'submit': {
@@ -275,6 +272,10 @@ def create_spouse_card_checkout_session(customer_id: str = None, email: str = No
     
     if customer_id:
         session_params['customer'] = customer_id
+        session_params['customer_update'] = {
+            'address': 'auto',
+            'name': 'auto'
+        }
     elif email:
         session_params['customer_email'] = email
     
