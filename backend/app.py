@@ -15,6 +15,7 @@ import logging
 from datetime import datetime
 from markupsafe import Markup
 import bleach
+from urllib.parse import urlparse
 
 # Import application modules
 from database import init_db
@@ -35,8 +36,75 @@ app = Flask(__name__)
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 PORT = int(os.environ.get('PORT', 5000))
 
+
+def _normalize_url(value):
+    """Strip trailing slash while keeping scheme/host"""
+    if not value:
+        return ''
+    return value.rstrip('/')
+
+
+def _split_env_list(value):
+    """Split comma-separated env values into a cleaned list"""
+    if not value:
+        return []
+    return [item.strip() for item in value.split(',') if item.strip()]
+
+
+def _origin_from_url(url_value):
+    """Extract origin (scheme://host[:port]) from a URL string"""
+    if not url_value:
+        return None
+    parsed = urlparse(url_value)
+    if not parsed.scheme or not parsed.netloc:
+        return None
+    return f"{parsed.scheme}://{parsed.netloc}"
+
+
+def _get_www_variant(url_value):
+    """Return www. variant of a URL if applicable"""
+    parsed = urlparse(url_value)
+    if parsed.hostname and not parsed.hostname.startswith('www.'):
+        port = f":{parsed.port}" if parsed.port else ''
+        return f"{parsed.scheme}://www.{parsed.hostname}{port}"
+    return None
+
+
+# Base URLs (configurable via .env)
+SITE_BASE_URL = _normalize_url(os.environ.get('SITE_BASE_URL', 'https://wovcc.xeniox.uk'))
+
+
+def _resolve_api_base_url():
+    """Determine API base URL from env, falling back to site base or localhost."""
+    env_api = _normalize_url(os.environ.get('API_BASE_URL', ''))
+    if env_api:
+        return env_api
+    if DEBUG:
+        return 'http://localhost:5000/api'
+    if SITE_BASE_URL:
+        return f"{SITE_BASE_URL}/api"
+    return ''
+
+
+API_BASE_URL = _resolve_api_base_url()
+
+
+def _build_cors_origins():
+    """Build the CORS origins list from env with sensible defaults."""
+    env_origins = _split_env_list(os.environ.get('CORS_ORIGINS', ''))
+    if env_origins:
+        return [_normalize_url(origin) for origin in env_origins]
+    
+    origins = ['http://localhost:5000', 'http://127.0.0.1:5000']
+    if SITE_BASE_URL:
+        origins.append(SITE_BASE_URL)
+        www_variant = _get_www_variant(SITE_BASE_URL)
+        if www_variant:
+            origins.append(www_variant)
+    return origins
+
 # Enable CORS with credentials support for httpOnly cookies
-CORS(app, supports_credentials=True, origins=['http://localhost:5000', 'http://127.0.0.1:5000', 'https://wovcc.co.uk', 'https://www.wovcc.co.uk'])
+CORS(app, supports_credentials=True, origins=_build_cors_origins())
 
 # Initialize database on startup
 init_db()
@@ -190,20 +258,17 @@ def inject_snippets():
 def inject_app_config():
     """Inject application configuration into all templates for JavaScript usage"""
     # Determine API base URL from environment or default
-    api_base_url = os.environ.get('API_BASE_URL', '')
-    if not api_base_url:
-        # Default based on environment
-        if DEBUG:
-            api_base_url = 'http://localhost:5000/api'
-        else:
-            api_base_url = 'https://wovcc.xeniox.uk/api'
+    env_api_raw = os.environ.get('API_BASE_URL', '')
+    api_base_url = _normalize_url(env_api_raw) if env_api_raw else API_BASE_URL
     
     return {
         'app_config': {
             'api_base_url': api_base_url,
+            'site_base_url': SITE_BASE_URL,
             'is_debug': DEBUG,
             'environment': os.environ.get('ENVIRONMENT', 'development' if DEBUG else 'production')
-        }
+        },
+        'site_base_url': SITE_BASE_URL
     }
 
 
@@ -280,12 +345,22 @@ def add_security_headers(response):
     # - Keep localhost targets for local/dev usage.
     # - Keep cdn.jsdelivr.net for external scripts.
     # - Update this if you introduce new domains.
+    connect_sources = ["'self'", "http://localhost:5000", "http://127.0.0.1:5000"]
+    api_origin = _origin_from_url(API_BASE_URL)
+    site_origin = _origin_from_url(SITE_BASE_URL)
+    if api_origin:
+        connect_sources.append(api_origin)
+    if site_origin:
+        connect_sources.append(site_origin)
+    # Deduplicate while preserving order
+    connect_sources = list(dict.fromkeys(connect_sources))
+
     csp = (
         "default-src 'self'; "
         "script-src 'self' https://cdn.jsdelivr.net https://www.play-cricket.com; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.play-cricket.com; "
         "font-src 'self' https://fonts.gstatic.com; "
-        "connect-src 'self' http://localhost:5000 http://127.0.0.1:5000 https://wovcc.xeniox.uk; "
+        f"connect-src {' '.join(connect_sources)}; "
         "img-src 'self' data: https://maps.googleapis.com https://*.googleapis.com https://www.play-cricket.com; "
         "frame-src https://www.google.com https://maps.google.com https://www.youtube.com https://player.vimeo.com; "
         "object-src 'none';"

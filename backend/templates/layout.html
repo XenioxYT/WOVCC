@@ -196,6 +196,7 @@
   <script>
     window.APP_CONFIG = {
       apiBase: "{{ app_config.api_base_url }}",
+      siteBase: "{{ app_config.site_base_url }}",
       isDebug: {{ app_config.is_debug | tojson }},
       environment: "{{ app_config.environment }}"
     };

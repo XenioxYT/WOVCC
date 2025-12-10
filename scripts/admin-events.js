@@ -4,7 +4,7 @@
     const API_BASE = window.APP_CONFIG ? window.APP_CONFIG.apiBase : (
         window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://localhost:5000/api'
-            : 'https://wovcc.xeniox.uk/api'
+            : `${window.location.origin}/api`
     );
     let allEvents = [];
     let currentEditingEvent = null;
