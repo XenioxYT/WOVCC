@@ -71,7 +71,13 @@
             membership_tier: user.membership_tier,
             membership_start_date: user.membership_start_date,
             membership_expiry_date: user.membership_expiry_date,
-            newsletter: user.newsletter
+            newsletter: user.newsletter,
+            phone: user.phone,
+            address_line1: user.address_line1,
+            address_line2: user.address_line2,
+            city: user.city,
+            postal_code: user.postal_code,
+            country: user.country
         };
         storage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
     }
@@ -331,7 +337,13 @@
                     membership_tier: data.user.membership_tier,
                     membership_start_date: data.user.membership_start_date,
                     membership_expiry_date: data.user.membership_expiry_date,
-                    newsletter: data.user.newsletter
+                    newsletter: data.user.newsletter,
+                    phone: data.user.phone,
+                    address_line1: data.user.address_line1,
+                    address_line2: data.user.address_line2,
+                    city: data.user.city,
+                    postal_code: data.user.postal_code,
+                    country: data.user.country
                 };
                 storage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
                 return userData;

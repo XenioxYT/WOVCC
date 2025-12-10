@@ -53,6 +53,9 @@ def stripe_webhook():
             pending_id_str = session.get('metadata', {}).get('pending_id')
             user_id_str = session.get('metadata', {}).get('user_id')
             spouse_card_only = session.get('metadata', {}).get('spouse_card_only') == 'true'
+            customer_details = session.get('customer_details') or {}
+            address = customer_details.get('address') or {}
+            phone = customer_details.get('phone')
             
             logger.info(f"[WEBHOOK] Checkout session {session_id}: payment_status={payment_status}, pending_id={pending_id_str}, user_id={user_id_str}, spouse_card_only={spouse_card_only}")
 
@@ -71,6 +74,16 @@ def stripe_webhook():
                         logger.error(f"[WEBHOOK] User not found for ID: {user_id}")
                         return jsonify({'success': False, 'error': 'User not found'}), 404
                     
+                    # Update contact details from Stripe (if provided)
+                    if phone:
+                        user.phone = phone
+                    if address:
+                        user.address_line1 = address.get('line1')
+                        user.address_line2 = address.get('line2')
+                        user.city = address.get('city')
+                        user.postal_code = address.get('postal_code')
+                        user.country = address.get('country')
+
                     logger.info(f"[WEBHOOK] Setting additional card flag for user {user.email}")
                     user.has_spouse_card = True
                     user.updated_at = datetime.now(timezone.utc)
@@ -133,6 +146,15 @@ def stripe_webhook():
                         existing_user.updated_at = now
                         existing_user.has_spouse_card = existing_user.has_spouse_card or pending.include_spouse_card
                         existing_user.stripe_customer_id = session.get('customer')
+                        # Update contact details from Stripe
+                        if phone:
+                            existing_user.phone = phone
+                        if address:
+                            existing_user.address_line1 = address.get('line1')
+                            existing_user.address_line2 = address.get('line2')
+                            existing_user.city = address.get('city')
+                            existing_user.postal_code = address.get('postal_code')
+                            existing_user.country = address.get('country')
                         created_user = existing_user
                         
                         # Subscribe to newsletter if requested and not already subscribed
@@ -158,7 +180,13 @@ def stripe_webhook():
                             has_spouse_card=pending.include_spouse_card,
                             membership_start_date=now,
                             membership_expiry_date=expiry,
-                            stripe_customer_id=session.get('customer')
+                            stripe_customer_id=session.get('customer'),
+                            phone=phone,
+                            address_line1=address.get('line1'),
+                            address_line2=address.get('line2'),
+                            city=address.get('city'),
+                            postal_code=address.get('postal_code'),
+                            country=address.get('country')
                         )
                         db.add(new_user)
                         db.flush()  # Flush to get the user ID before committing

@@ -49,6 +49,16 @@
                 </tr>
                 <tr>
                     <td style="padding: 8px 8px 8px 0; vertical-align: top;" valign="top">
+                        <div style="font-weight: 600; color: #6c757d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Phone</div>
+                        <div style="color: #1a1a1a; font-size: 14px; margin-top: 4px;">{{ signup.phone or 'N/A' }}</div>
+                    </td>
+                    <td style="padding: 8px 8px 8px 0; vertical-align: top;" valign="top">
+                        <div style="font-weight: 600; color: #6c757d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Membership</div>
+                        <div style="color: #1a1a1a; font-size: 14px; margin-top: 4px;">{{ signup.membership_tier or 'Member' }}</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 8px 8px 0; vertical-align: top;" valign="top">
                         <div style="font-weight: 600; color: #6c757d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Additional Card</div>
                         <div style="color: #1a1a1a; font-size: 14px; margin-top: 4px;">
                             <span class="badge {% if signup.has_spouse_card %}badge-yes{% else %}badge-no{% endif %}" style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; background-color: {% if signup.has_spouse_card %}#d4edda{% else %}#f8d7da{% endif %}; color: {% if signup.has_spouse_card %}#155724{% else %}#721c24{% endif %};">
@@ -70,7 +80,23 @@
                         <div style="font-weight: 600; color: #6c757d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Signup Date</div>
                         <div style="color: #1a1a1a; font-size: 14px; margin-top: 4px;">{{ signup.signup_date }}</div>
                     </td>
-                    <td style="padding: 8px 8px 8px 0;"></td>
+                    <td style="padding: 8px 8px 8px 0; vertical-align: top;" valign="top">
+                        <div style="font-weight: 600; color: #6c757d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Membership Expiry</div>
+                        <div style="color: #1a1a1a; font-size: 14px; margin-top: 4px;">{{ signup.membership_expiry or 'N/A' }}</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="padding: 8px 8px 8px 0; vertical-align: top;" valign="top">
+                        <div style="font-weight: 600; color: #6c757d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Address</div>
+                        {% set address_lines = signup.address_lines or [] %}
+                        {% if address_lines %}
+                            {% for line in address_lines %}
+                                <div style="color: #1a1a1a; font-size: 14px; margin-top: 4px;">{{ line }}</div>
+                            {% endfor %}
+                        {% else %}
+                            <div style="color: #1a1a1a; font-size: 14px; margin-top: 4px;">N/A</div>
+                        {% endif %}
+                    </td>
                 </tr>
             </table>
         </td>

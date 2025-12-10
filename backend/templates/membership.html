@@ -163,6 +163,51 @@
           </div>
         </div>
 
+        <!-- Contact Details -->
+        <div class="card" style="border-left: 4px solid var(--primary-color);">
+          <div class="card-body">
+            <h3 style="color: var(--primary-color); margin-bottom: 20px; font-size: 1.2rem;">Contact Details</h3>
+            <p style="color: var(--text-light); font-size: 0.95rem; margin-bottom: 15px;">
+              Update the address and phone number linked to your membership. These are collected at checkout and required to keep your account current.
+            </p>
+            <form id="contact-details-form" style="max-width: 620px;">
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" for="contact-phone">Phone Number</label>
+                <input type="text" id="contact-phone" class="form-input" placeholder="e.g. 07123 456789" required>
+              </div>
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" for="contact-address-line1">Address Line 1</label>
+                <input type="text" id="contact-address-line1" class="form-input" placeholder="House name/number and street" required>
+              </div>
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" for="contact-address-line2">Address Line 2 (optional)</label>
+                <input type="text" id="contact-address-line2" class="form-input" placeholder="Apartment, suite, etc.">
+              </div>
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" for="contact-city">Town/City</label>
+                <input type="text" id="contact-city" class="form-input" required>
+              </div>
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" for="contact-postal-code">Postcode</label>
+                <input type="text" id="contact-postal-code" class="form-input" required>
+              </div>
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" for="contact-country">Country (ISO code)</label>
+                <input type="text" id="contact-country" class="form-input" placeholder="e.g. GB" required>
+              </div>
+              <div id="contact-details-error" style="display: none; padding: 12px; background: #ffe6e6; border-left: 4px solid #dc3545; border-radius: 4px; margin-bottom: 15px;">
+                <p style="margin: 0; color: #dc3545; font-size: 0.95rem;"></p>
+              </div>
+              <div id="contact-details-success" style="display: none; padding: 12px; background: #e6f7e6; border-left: 4px solid #28a745; border-radius: 4px; margin-bottom: 15px;">
+                <p style="margin: 0; color: #28a745; font-size: 0.95rem;"></p>
+              </div>
+              <button type="submit" class="btn btn-primary" id="contact-details-submit">
+                Save Contact Details
+              </button>
+            </form>
+          </div>
+        </div>
+
         <!-- Account Settings Card -->
         <div class="card" style="border-left: 4px solid var(--accent-color);">
           <div class="card-body">
