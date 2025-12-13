@@ -259,18 +259,13 @@ def update_user(admin_user, user_id):
                     user.membership_expiry_date = parser.parse(data['membership_expiry_date'])
                 else:
                     user.membership_expiry_date = None
-            if 'phone' in data:
-                user.phone = data['phone'] or None
-            if 'address_line1' in data:
-                user.address_line1 = data['address_line1'] or None
-            if 'address_line2' in data:
-                user.address_line2 = data['address_line2'] or None
-            if 'city' in data:
-                user.city = data['city'] or None
-            if 'postal_code' in data:
-                user.postal_code = data['postal_code'] or None
-            if 'country' in data:
-                user.country = data['country'] or None
+            fields_to_update = [
+                'phone', 'address_line1', 'address_line2',
+                'city', 'postal_code', 'country'
+            ]
+            for field in fields_to_update:
+                if field in data:
+                    setattr(user, field, data[field] or None)
             
             user.updated_at = datetime.now(timezone.utc)
             db.commit()
