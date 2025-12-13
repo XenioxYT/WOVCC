@@ -392,7 +392,7 @@
             container.innerHTML = html;
             // Attach error handlers to opponent logos (CSP-compliant - no inline handlers)
             container.querySelectorAll('.opponent-logo').forEach(function(img) {
-                img.addEventListener('error', function() { this.style.display = 'none'; });
+                img.addEventListener('error', function() { this.src = ''; });
             });
         }
     }
