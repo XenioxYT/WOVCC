@@ -13,7 +13,7 @@ import stripe
 from database import get_db, User, PendingRegistration
 from auth import (
     hash_password, verify_password, generate_token, require_auth, 
-    get_refresh_token_from_request, verify_token
+    get_refresh_token_from_request, verify_token, validate_password_strength
 )
 from stripe_config import create_checkout_session, create_spouse_card_checkout_session, STRIPE_SECRET_KEY, delete_stripe_customer
 from mailchimp import unsubscribe_from_newsletter, subscribe_to_newsletter
@@ -35,6 +35,13 @@ def pre_register():
         if not data or not data.get('email') or not data.get('password') or not data.get('name'):
             logger.error("[PRE-REGISTER] Missing required fields")
             return jsonify({'success': False, 'error': 'Name, email, and password are required'}), 400
+        
+        # Validate password strength
+        password = data.get('password')
+        is_valid, error_msg = validate_password_strength(password)
+        if not is_valid:
+            logger.warning(f"[PRE-REGISTER] Weak password rejected: {error_msg}")
+            return jsonify({'success': False, 'error': error_msg}), 400
 
         db = next(get_db())
         try:

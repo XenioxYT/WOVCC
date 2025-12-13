@@ -5,6 +5,7 @@ Password hashing, JWT tokens, and authentication utilities
 
 import bcrypt
 import jwt
+import re
 from datetime import datetime, timedelta, timezone
 import os
 from functools import wraps
@@ -38,6 +39,41 @@ def verify_password(password: str, hashed: str) -> bool:
         return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
     except Exception:
         return False
+
+
+def validate_password_strength(password: str) -> tuple[bool, str]:
+    """
+    Validate password meets security requirements.
+    
+    Returns:
+        tuple: (is_valid: bool, error_message: str)
+    
+    Requirements:
+        - At least 8 characters
+        - At least 1 uppercase letter (A-Z)
+        - At least 1 lowercase letter (a-z)
+        - At least 1 number (0-9)
+        - At least 1 special character (!@#$%^&*()_+-=[]{}|;:,.<>?)
+    """
+    if not password:
+        return False, "Password is required"
+    
+    if len(password) < 8:
+        return False, "Password must be at least 8 characters long"
+    
+    if not re.search(r'[A-Z]', password):
+        return False, "Password must contain at least one uppercase letter"
+    
+    if not re.search(r'[a-z]', password):
+        return False, "Password must contain at least one lowercase letter"
+    
+    if not re.search(r'[0-9]', password):
+        return False, "Password must contain at least one number"
+    
+    if not re.search(r'[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]', password):
+        return False, "Password must contain at least one special character (!@#$%^&*)"
+    
+    return True, ""
 
 
 def generate_token(user_id: int, email: str, is_admin: bool = False, include_refresh: bool = True) -> dict:
