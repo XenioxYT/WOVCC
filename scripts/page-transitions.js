@@ -481,7 +481,12 @@ class PageTransitions {
             this.loadScriptsSequentially(scriptsToLoad).then(() => {
                 // Wait a moment for external scripts to initialize
                 setTimeout(() => {
-                    // Then execute inline scripts
+                    // Skip inline scripts due to CSP - all scripts should be external files
+                    if (inlineScripts.length > 0) {
+                        console.warn('[PageTransitions] Inline scripts detected but skipped due to CSP policy');
+                    }
+                    // Legacy code below kept for reference but will not execute
+                    /*
                     inlineScripts.forEach((oldScript, index) => {
                         try {
                             const newScript = document.createElement('script');
@@ -505,6 +510,7 @@ class PageTransitions {
                             console.error('Error executing inline script:', error);
                         }
                     });
+                    */
                     
                     // After all scripts are loaded and executed, dispatch the event
                     setTimeout(() => {

@@ -396,7 +396,7 @@ def add_security_headers(response):
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.play-cricket.com; "
         "font-src 'self' https://fonts.gstatic.com; "
         f"connect-src {' '.join(connect_sources)}; "
-        "img-src 'self' data: https://maps.googleapis.com https://*.googleapis.com https://www.play-cricket.com; "
+        "img-src 'self' data: https://maps.googleapis.com https://*.googleapis.com https://www.play-cricket.com https://s3-eu-west-1.amazonaws.com; "
         "frame-src https://www.google.com https://maps.google.com https://www.youtube.com https://player.vimeo.com; "
         "object-src 'none';"
     )
