@@ -1547,6 +1547,7 @@
 
       var name = (document.getElementById('contact-name').value || '').trim();
       var email = (document.getElementById('contact-email').value || '').trim();
+      var phone = (document.getElementById('contact-phone').value || '').trim();
       var subject = (document.getElementById('contact-subject').value || '').trim();
       var message = (document.getElementById('contact-message').value || '').trim();
 
@@ -1561,6 +1562,11 @@
         subject: subject,
         message: message
       };
+      
+      // Add phone number if provided
+      if (phone) {
+        payload.phone = phone;
+      }
 
       var originalText = submitBtn ? submitBtn.textContent : '';
       if (submitBtn) {

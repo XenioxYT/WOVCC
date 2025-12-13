@@ -221,7 +221,7 @@ docker-compose up -d --build
 
 ```
 
-5. Set up Nginx as a reverse proxy to forward requests from your domain (e.g., `https://wovcc.co.uk`) to `http://localhost:5000`. Use the `backend/nginx.conf` file as a template.
+5. Set up Nginx as a reverse proxy to forward requests from your domain (e.g., `https://wickersleycricket.com`) to `http://localhost:5000`. Use the `backend/nginx.conf` file as a template.
 
 6. Ensure you configure SSL using Let's Encrypt or another provider.
 

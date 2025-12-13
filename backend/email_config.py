@@ -54,7 +54,7 @@ class EmailConfig:
     # Email defaults
     DEFAULT_SENDER = os.environ.get("MAIL_DEFAULT_SENDER", "noreply@wickersleycricket.com")
     DEFAULT_SENDER_NAME = os.environ.get("MAIL_DEFAULT_SENDER_NAME", "WOVCC")
-    CONTACT_RECIPIENT = os.environ.get("CONTACT_RECIPIENT", "info@wickersleycricket.com")
+    CONTACT_RECIPIENT = os.environ.get("CONTACT_RECIPIENT", "wovcc10@gmail.com")
     
     @classmethod
     def is_configured(cls) -> bool:
@@ -328,7 +328,7 @@ You can now:
 
 Visit our website: {SITE_BASE_URL}
 
-If you have any questions, please contact us at info@wovcc.co.uk
+If you have any questions, please contact us at wovcc10@gmail.com
 
 We look forward to seeing you at the club!
 
@@ -355,7 +355,8 @@ Wickersley Old Village Cricket Club
         from_name: str,
         from_email: str,
         subject: str,
-        message: str
+        message: str,
+        from_phone: str = None
     ) -> bool:
         """
         Send contact form notification to club admin.
@@ -365,6 +366,7 @@ Wickersley Old Village Cricket Club
             from_email: Email of person contacting
             subject: Contact form subject
             message: Contact form message
+            from_phone: Phone number (optional)
             
         Returns:
             bool: True if sent successfully
@@ -372,12 +374,13 @@ Wickersley Old Village Cricket Club
         email_subject = f"[WOVCC Contact] {subject}"
         
         # Plain text version
+        phone_line = f"Phone: {from_phone}\n" if from_phone else ""
         body = f"""
 New contact form submission from WOVCC website:
 
 Name: {from_name}
 Email: {from_email}
-
+{phone_line}
 Subject: {subject}
 
 Message:
@@ -389,6 +392,7 @@ Message:
             'emails/contact_notification.html',
             from_name=from_name,
             from_email=from_email,
+            from_phone=from_phone,
             subject=subject,
             message=message
         )

@@ -21,7 +21,7 @@ def create_admin():
     db = SessionLocal()
     
     try:
-        email = input("Enter admin email (default: admin@wovcc.co.uk): ").strip() or "admin@wovcc.co.uk"
+        email = input("Enter admin email (default: admin@wickersleycricket.com): ").strip() or "admin@wickersleycricket.com"
         
         # Check if admin already exists
         existing = db.query(User).filter(User.email == email).first()

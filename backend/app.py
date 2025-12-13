@@ -155,6 +155,11 @@ def init_cms_content_if_needed():
             'description': 'Footer - Opening hours (supports HTML <br> tags)'
         },
         {
+            'key': 'footer_visit_info',
+            'content': 'Free parking on site.',
+            'description': 'Footer - Visitor info / travel notes (supports basic HTML)'
+        },
+        {
             'key': 'footer_christmas_hours',
             'content': '',
             'description': 'Footer - Christmas opening hours (leave blank to hide)'
@@ -296,7 +301,8 @@ def inject_app_config():
             'api_base_url': api_base_url,
             'site_base_url': SITE_BASE_URL,
             'is_debug': DEBUG,
-            'environment': os.environ.get('ENVIRONMENT', 'development' if DEBUG else 'production')
+            'environment': os.environ.get('ENVIRONMENT', 'development' if DEBUG else 'production'),
+            'google_maps_api_key': os.environ.get('GOOGLE_MAPS_API_KEY', '')
         },
         'site_base_url': SITE_BASE_URL
     }
@@ -365,11 +371,10 @@ def add_security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     # Prevent clickjacking
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
-    # Enable XSS protection
-    # Updated Content-Security-Policy:
-    # - Remove 'unsafe-inline' for scripts
+    # Content-Security-Policy:
+    # - No inline scripts allowed (all scripts must be external files)
     # - Allow external marked.js CDN
-    # - Permit inline styles via nonce-based attributes (templates/scripts should avoid new inline JS)
+    # - Permit inline styles via 'unsafe-inline' (styles are less risky than scripts)
     # IMPORTANT:
     # - Allow API calls to your Cloudflare-tunnelled backend and external API hostname.
     # - Keep localhost targets for local/dev usage.
