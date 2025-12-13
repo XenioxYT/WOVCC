@@ -328,7 +328,7 @@ You can now:
 
 Visit our website: {SITE_BASE_URL}
 
-If you have any questions, please contact us at wovcc10@gmail.com
+If you have any questions, please contact us at {cls.CONTACT_RECIPIENT}
 
 We look forward to seeing you at the club!
 
