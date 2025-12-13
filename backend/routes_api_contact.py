@@ -16,6 +16,7 @@ def submit_contact():
       - email (required)
       - subject (required)
       - message (required)
+      - phone (optional)
 
     Sends an email to the configured club contact address.
     """
@@ -23,6 +24,7 @@ def submit_contact():
         data = request.get_json(silent=True) or {}
         name = (data.get("name") or "").strip()
         email = (data.get("email") or "").strip()
+        phone = (data.get("phone") or "").strip()
         subject = (data.get("subject") or "").strip()
         message = (data.get("message") or data.get("content") or "").strip()
 
@@ -30,6 +32,7 @@ def submit_contact():
         # Remove newline characters that could be used for header injection
         name = name.replace('\n', '').replace('\r', '')
         email = email.replace('\n', '').replace('\r', '')
+        phone = phone.replace('\n', '').replace('\r', '')
         subject = subject.replace('\n', '').replace('\r', '')
         # Message content can have newlines, but sanitize control characters
         message = message.replace('\r\n', '\n').replace('\r', '\n')
@@ -63,6 +66,7 @@ def submit_contact():
             success = EmailConfig.send_contact_notification(
                 from_name=name,
                 from_email=email,
+                from_phone=phone if phone else None,
                 subject=subject,
                 message=message
             )

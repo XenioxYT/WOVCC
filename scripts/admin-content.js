@@ -40,6 +40,11 @@
     `;
   }
 
+  // Identify seasonal snippets for quick visual cues in the admin list
+  function isSeasonalSnippet(key) {
+    return key === 'footer_christmas_hours' || key === 'footer_new_year_hours';
+  }
+
   // Render content list
   function renderContentList(snippets) {
     const container = document.getElementById('admin-content-list');
@@ -74,6 +79,7 @@
               <tr style="border-bottom: 1px solid var(--border-color);">
                 <td style="padding: 12px;">
                   <code style="background: var(--secondary-bg); padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">${escapeHtml(snippet.key)}</code>
+                  ${isSeasonalSnippet(snippet.key) ? '<span style="margin-left: 8px; background: #fff3cd; color: #856404; padding: 3px 8px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;">Seasonal</span>' : ''}
                 </td>
                 <td style="padding: 12px; color: var(--text-light);">${escapeHtml(snippet.description || 'No description')}</td>
                 <td style="padding: 12px; color: var(--text-dark); max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">

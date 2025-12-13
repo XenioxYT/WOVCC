@@ -153,6 +153,21 @@ def init_cms_content_if_needed():
             'key': 'footer_opening_hours',
             'content': 'Mon-Thu: 4pm-10pm<br>Tue: 4pm-10:30pm<br>Fri: 4pm-11pm<br>Sat: 12pm-11pm<br>Sun: 12pm-10pm',
             'description': 'Footer - Opening hours (supports HTML <br> tags)'
+        },
+        {
+            'key': 'footer_visit_info',
+            'content': 'Free parking on site.',
+            'description': 'Footer - Visitor info / travel notes (supports basic HTML)'
+        },
+        {
+            'key': 'footer_christmas_hours',
+            'content': '',
+            'description': 'Footer - Christmas opening hours (leave blank to hide)'
+        },
+        {
+            'key': 'footer_new_year_hours',
+            'content': '',
+            'description': 'Footer - New Year opening hours (leave blank to hide)'
         }
     ]
     
@@ -185,6 +200,26 @@ def init_cms_content_if_needed():
                         raise
             else:
                 logger.info(f"CMS content snippets already initialized ({count} snippets found)")
+                # Backfill any newly added default snippets that don't yet exist
+                existing_keys = {row[0] for row in db.query(ContentSnippet.key).all()}
+                missing_snippets = [s for s in DEFAULT_SNIPPETS if s['key'] not in existing_keys]
+                if missing_snippets:
+                    logger.info(f"Adding {len(missing_snippets)} missing CMS snippets...")
+                    try:
+                        for snippet_data in missing_snippets:
+                            db.add(ContentSnippet(
+                                key=snippet_data['key'],
+                                content=snippet_data['content'],
+                                description=snippet_data['description']
+                            ))
+                        db.commit()
+                        logger.info("✅ Missing CMS snippets added")
+                    except Exception as insert_error:
+                        db.rollback()
+                        if "duplicate" in str(insert_error).lower() or "already exists" in str(insert_error).lower():
+                            logger.info("CMS snippets already added by another worker")
+                        else:
+                            raise
                 
         finally:
             db.close()
@@ -266,7 +301,8 @@ def inject_app_config():
             'api_base_url': api_base_url,
             'site_base_url': SITE_BASE_URL,
             'is_debug': DEBUG,
-            'environment': os.environ.get('ENVIRONMENT', 'development' if DEBUG else 'production')
+            'environment': os.environ.get('ENVIRONMENT', 'development' if DEBUG else 'production'),
+            'google_maps_api_key': os.environ.get('GOOGLE_MAPS_API_KEY', '')
         },
         'site_base_url': SITE_BASE_URL
     }
@@ -335,11 +371,10 @@ def add_security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     # Prevent clickjacking
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
-    # Enable XSS protection
-    # Updated Content-Security-Policy:
-    # - Remove 'unsafe-inline' for scripts
+    # Content-Security-Policy:
+    # - No inline scripts allowed (all scripts must be external files)
     # - Allow external marked.js CDN
-    # - Permit inline styles via nonce-based attributes (templates/scripts should avoid new inline JS)
+    # - Permit inline styles via 'unsafe-inline' (styles are less risky than scripts)
     # IMPORTANT:
     # - Allow API calls to your Cloudflare-tunnelled backend and external API hostname.
     # - Keep localhost targets for local/dev usage.
@@ -361,7 +396,7 @@ def add_security_headers(response):
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.play-cricket.com; "
         "font-src 'self' https://fonts.gstatic.com; "
         f"connect-src {' '.join(connect_sources)}; "
-        "img-src 'self' data: https://maps.googleapis.com https://*.googleapis.com https://www.play-cricket.com; "
+        "img-src 'self' data: https://maps.googleapis.com https://*.googleapis.com https://www.play-cricket.com https://s3-eu-west-1.amazonaws.com; "
         "frame-src https://www.google.com https://maps.google.com https://www.youtube.com https://player.vimeo.com; "
         "object-src 'none';"
     )

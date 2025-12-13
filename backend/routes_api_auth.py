@@ -377,6 +377,11 @@ def update_profile(user):
         
         db = next(get_db())
         try:
+            # Re-query user in the current session to avoid detached instance error
+            user = db.query(User).filter(User.id == user.id).first()
+            if not user:
+                return jsonify({'success': False, 'error': 'User not found'}), 404
+            
             def _clean(value, max_len=255):
                 if value is None:
                     return None

@@ -145,6 +145,14 @@ async function loadCategories() {
     noEventsMessage.style.display = 'none';
     
     container.innerHTML = events.map(event => createEventCard(event)).join('');
+    // Attach fallback handlers for images (CSP-compliant - no inline handlers)
+    container.querySelectorAll('img[data-fallback]').forEach(function(img) {
+      img.addEventListener('error', function() {
+        if (this.dataset.fallback && this.src !== this.dataset.fallback) {
+          this.src = this.dataset.fallback;
+        }
+      });
+    });
   }
 
   function createEventCard(event) {
@@ -183,7 +191,7 @@ async function loadCategories() {
     return `
       <a href="/events/${event.id}" class="event-card" style="text-decoration: none; color: inherit; display: block;">
         <div class="event-card-image-container ${hasImage ? 'has-image' : ''}" style="${hasImage ? `--card-image: url('${imageUrl}');` : ''}">
-          <img src="${imageUrl}" alt="${event.title}" class="event-card-image" onerror="this.src='/assets/logo.webp'">
+          <img src="${imageUrl}" alt="${event.title}" class="event-card-image" data-fallback="/assets/logo.webp">
         </div>
         <div class="event-card-body">
           ${categoryBadge}

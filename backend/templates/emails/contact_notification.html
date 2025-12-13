@@ -10,6 +10,9 @@
         <td style="background-color: #f8f9fa; padding: 20px; border-left: 4px solid #1a5f5f; border-radius: 4px;" bgcolor="#f8f9fa">
             <p style="margin: 8px 0;"><strong>From:</strong> {{ from_name }}</p>
             <p style="margin: 8px 0;"><strong>Email:</strong> <a href="mailto:{{ from_email }}" style="color: #1a5f5f;">{{ from_email }}</a></p>
+            {% if from_phone %}
+            <p style="margin: 8px 0;"><strong>Phone:</strong> <a href="tel:{{ from_phone }}" style="color: #1a5f5f;">{{ from_phone }}</a></p>
+            {% endif %}
             <p style="margin: 8px 0;"><strong>Subject:</strong> {{ subject }}</p>
         </td>
     </tr>

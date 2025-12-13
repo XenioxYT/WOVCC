@@ -84,9 +84,11 @@
     <div class="sponsors-band-wrapper">
       <div class="sponsors-band">
         {% for sponsor in sponsors %}
+        {% if sponsor.website_url %}
         <a 
-          href="{{ sponsor.website_url if sponsor.website_url else '#' }}" 
-          {% if sponsor.website_url %}target="_blank" rel="noopener noreferrer"{% else %}onclick="return false;" style="cursor: default;"{% endif %}
+          href="{{ sponsor.website_url }}" 
+          target="_blank" 
+          rel="noopener noreferrer"
           class="sponsor-logo-link"
           title="{{ sponsor.name }}">
           <img 
@@ -95,12 +97,26 @@
             class="sponsor-logo"
             loading="lazy">
         </a>
+        {% else %}
+        <span 
+          class="sponsor-logo-link"
+          style="cursor: default;"
+          title="{{ sponsor.name }}">
+          <img 
+            src="{{ sponsor.logo_url }}" 
+            alt="{{ sponsor.name }}" 
+            class="sponsor-logo"
+            loading="lazy">
+        </span>
+        {% endif %}
         {% endfor %}
         <!-- Duplicate for seamless loop -->
         {% for sponsor in sponsors %}
+        {% if sponsor.website_url %}
         <a 
-          href="{{ sponsor.website_url if sponsor.website_url else '#' }}" 
-          {% if sponsor.website_url %}target="_blank" rel="noopener noreferrer"{% else %}onclick="return false;" style="cursor: default;"{% endif %}
+          href="{{ sponsor.website_url }}" 
+          target="_blank" 
+          rel="noopener noreferrer"
           class="sponsor-logo-link"
           title="{{ sponsor.name }}">
           <img 
@@ -109,6 +125,18 @@
             class="sponsor-logo"
             loading="lazy">
         </a>
+        {% else %}
+        <span 
+          class="sponsor-logo-link"
+          style="cursor: default;"
+          title="{{ sponsor.name }}">
+          <img 
+            src="{{ sponsor.logo_url }}" 
+            alt="{{ sponsor.name }}" 
+            class="sponsor-logo"
+            loading="lazy">
+        </span>
+        {% endif %}
         {% endfor %}
       </div>
     </div>
@@ -153,6 +181,24 @@
             {{ snippets.get('footer_opening_hours', 'Mon-Thu: 4pm-10pm<br>Tue: 4pm-10:30pm<br>Fri: 4pm-11pm<br>Sat: 12pm-11pm<br>Sun: 12pm-10pm') }}
           </p>
         </div>
+
+        {% set christmas_hours = snippets.get('footer_christmas_hours', '')|trim %}
+        {% set new_year_hours = snippets.get('footer_new_year_hours', '')|trim %}
+        {% if christmas_hours or new_year_hours %}
+        <div class="footer-section">
+          <h3>Festive Opening Hours</h3>
+          {% if christmas_hours %}
+          <p style="font-size: 0.95rem; line-height: 1.8; margin-bottom: 8px;">
+            {{ christmas_hours }}
+          </p>
+          {% endif %}
+          {% if new_year_hours %}
+          <p style="font-size: 0.95rem; line-height: 1.8; margin-bottom: 0;">
+            {{ new_year_hours }}
+          </p>
+          {% endif %}
+        </div>
+        {% endif %}
         
         <!-- Follow Us -->
         <div class="footer-section">
@@ -182,6 +228,27 @@
             Wickersley, Rotherham<br>
             S66 2HL
           </p>
+          <p style="font-size: 0.95rem; line-height: 1.6; margin-top: 10px;">
+            {{ snippets.get('footer_visit_info', 'Free parking on site.') }}
+          </p>
+          {% if app_config.google_maps_api_key %}
+          <div style="margin-top: 12px; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+            <iframe
+              title="Map to WOVCC"
+              width="100%"
+              height="200"
+              style="border:0;"
+              loading="lazy"
+              allowfullscreen
+              referrerpolicy="no-referrer-when-downgrade"
+              src="https://www.google.com/maps/embed/v1/place?key={{ app_config.google_maps_api_key }}&q=Wickersley+Old+Village+Cricket+Club,S66+2HL">
+            </iframe>
+          </div>
+          {% else %}
+          <p style="margin-top: 10px; font-size: 0.95rem;">
+            <a href="https://www.google.com/maps?q=Wickersley+Old+Village+Cricket+Club+S66+2HL" target="_blank" rel="noopener" style="color: var(--accent-color); text-decoration: underline;">Open in Google Maps</a>
+          </p>
+          {% endif %}
         </div>
       </div>
       
@@ -192,15 +259,16 @@
   </footer>
 
   <!-- Scripts -->
-  <!-- Server-injected configuration for JavaScript -->
-  <script>
-    window.APP_CONFIG = {
-      apiBase: "{{ app_config.api_base_url }}",
-      siteBase: "{{ app_config.site_base_url }}",
-      isDebug: {{ app_config.is_debug | tojson }},
-      environment: "{{ app_config.environment }}"
-    };
+  <!-- Server-injected configuration for JavaScript (JSON data, not executable) -->
+  <script type="application/json" id="app-config-data">
+    {
+      "apiBase": "{{ app_config.api_base_url }}",
+      "siteBase": "{{ app_config.site_base_url }}",
+      "isDebug": {{ app_config.is_debug | tojson }},
+      "environment": "{{ app_config.environment }}"
+    }
   </script>
+  <script src="/scripts/config-loader.js"></script>
   <script src="/scripts/sanitizer.js"></script>
   <script src="/scripts/modal-utils.js"></script>
   <script src="/scripts/page-transitions.js"></script>
