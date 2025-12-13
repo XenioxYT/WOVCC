@@ -52,9 +52,13 @@ def get_admin_stats(user):
             payment_status_counts = db.query(
                 User.payment_status,
                 func.count(User.id)
+            ).filter(
+                User.is_member == True
             ).group_by(User.payment_status).all()
             
-            payment_status_breakdown = {status: count for status, count in payment_status_counts}
+            payment_status_breakdown = {status or 'unknown': count for status, count in payment_status_counts}
+            for status_key in ['active', 'pending', 'expired', 'cancelled']:
+                payment_status_breakdown.setdefault(status_key, 0)
             
             # Newsletter subscribers
             newsletter_subscribers = db.query(User).filter(User.newsletter == True).count()
@@ -255,6 +259,18 @@ def update_user(admin_user, user_id):
                     user.membership_expiry_date = parser.parse(data['membership_expiry_date'])
                 else:
                     user.membership_expiry_date = None
+            if 'phone' in data:
+                user.phone = data['phone'] or None
+            if 'address_line1' in data:
+                user.address_line1 = data['address_line1'] or None
+            if 'address_line2' in data:
+                user.address_line2 = data['address_line2'] or None
+            if 'city' in data:
+                user.city = data['city'] or None
+            if 'postal_code' in data:
+                user.postal_code = data['postal_code'] or None
+            if 'country' in data:
+                user.country = data['country'] or None
             
             user.updated_at = datetime.now(timezone.utc)
             db.commit()
@@ -534,6 +550,7 @@ Your role is to help administrators understand and use the various features avai
      * Edit homepage hero title and subtitle
      * Edit 4 paragraphs in the "About" section
      * Edit footer opening hours
+     * Add festive opening hours (Christmas / New Year) - hidden when blank
      * Changes appear immediately on the site
    - Available Snippets:
      * homepage_hero_title - Main welcome message
@@ -543,6 +560,8 @@ Your role is to help administrators understand and use the various features avai
      * homepage_about_p3 - Junior teams info
      * homepage_about_p4 - Membership info
      * footer_opening_hours - Opening hours (HTML <br> tags supported)
+     * footer_christmas_hours - Optional Christmas opening hours (HTML allowed)
+     * footer_new_year_hours - Optional New Year opening hours (HTML allowed)
    - How to edit:
      1. Click edit icon next to snippet
      2. Modify text in textarea

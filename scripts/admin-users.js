@@ -338,12 +338,34 @@
         const safeEmail = escapeHtml(user.email);
         const safeTier = escapeHtml(user.membership_tier || 'N/A');
         const safeUserId = parseInt(user.id, 10); // Ensure ID is a number
+        const safePhone = user.phone ? escapeHtml(user.phone) : '';
+        const safeAddressParts = [
+            user.address_line1,
+            user.address_line2,
+            user.city,
+            user.postal_code,
+            user.country
+        ].filter(Boolean).map(escapeHtml);
+        const addressText = safeAddressParts.join(', ');
+        const hasContactInfo = Boolean((user.phone && String(user.phone).trim()) || safeAddressParts.length);
+        const contactDetailsSection = hasContactInfo
+            ? `
+                <details class="contact-details" style="margin-top: 6px;">
+                    <summary style="cursor: pointer; color: var(--primary-color); font-weight: 600; font-size: 0.85rem;">Contact</summary>
+                    <div style="margin-top: 6px; color: var(--text-light); font-size: 0.85rem; line-height: 1.4;">
+                        <div>Phone: ${safePhone || 'Not provided'}</div>
+                        <div>Address: ${addressText || 'Not provided'}</div>
+                    </div>
+                </details>
+            `
+            : '<div style="margin-top: 6px; font-size: 0.85rem; color: var(--text-light);">Contact: Not provided</div>';
         
         return `
             <tr style="border-bottom: 1px solid var(--border-color);">
                 <td style="padding: 12px;">
                     <div style="font-weight: 600; color: var(--text-dark); margin-bottom: 4px;">${safeName}</div>
                     <div style="font-size: 0.85rem; color: var(--text-light);">${safeTier}</div>
+                    ${contactDetailsSection}
                 </td>
                 <td style="padding: 12px;">${safeEmail}</td>
                 <td style="padding: 12px; text-align: center;">
@@ -462,6 +484,12 @@
         document.getElementById('user-expiry-date').value = user.membership_expiry_date 
             ? new Date(user.membership_expiry_date).toISOString().slice(0, 10)
             : '';
+        document.getElementById('user-phone').value = user.phone || '';
+        document.getElementById('user-address-line1').value = user.address_line1 || '';
+        document.getElementById('user-address-line2').value = user.address_line2 || '';
+        document.getElementById('user-city').value = user.city || '';
+        document.getElementById('user-postal-code').value = user.postal_code || '';
+        document.getElementById('user-country').value = user.country || '';
         
         document.getElementById('user-modal-title').textContent = `Edit User: ${user.name}`;
         document.getElementById('user-submit-btn').textContent = 'Update User';
@@ -484,6 +512,13 @@
         
         if (!currentEditingUser) return;
         
+        const valueOrNull = (id) => {
+            const el = document.getElementById(id);
+            if (!el) return null;
+            const val = el.value.trim();
+            return val ? val : null;
+        };
+        
         const data = {
             name: document.getElementById('user-name').value,
             email: document.getElementById('user-email').value,
@@ -492,7 +527,16 @@
             newsletter: document.getElementById('user-newsletter').checked,
             payment_status: document.getElementById('user-payment-status').value,
             membership_tier: document.getElementById('user-membership-tier').value,
-            membership_expiry_date: document.getElementById('user-expiry-date').value || null
+            membership_expiry_date: document.getElementById('user-expiry-date').value || null,
+            phone: valueOrNull('user-phone'),
+            address_line1: valueOrNull('user-address-line1'),
+            address_line2: valueOrNull('user-address-line2'),
+            city: valueOrNull('user-city'),
+            postal_code: valueOrNull('user-postal-code'),
+            country: (() => {
+                const countryVal = valueOrNull('user-country');
+                return countryVal ? countryVal.toUpperCase() : null;
+            })()
         };
         
         try {

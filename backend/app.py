@@ -153,6 +153,16 @@ def init_cms_content_if_needed():
             'key': 'footer_opening_hours',
             'content': 'Mon-Thu: 4pm-10pm<br>Tue: 4pm-10:30pm<br>Fri: 4pm-11pm<br>Sat: 12pm-11pm<br>Sun: 12pm-10pm',
             'description': 'Footer - Opening hours (supports HTML <br> tags)'
+        },
+        {
+            'key': 'footer_christmas_hours',
+            'content': '',
+            'description': 'Footer - Christmas opening hours (leave blank to hide)'
+        },
+        {
+            'key': 'footer_new_year_hours',
+            'content': '',
+            'description': 'Footer - New Year opening hours (leave blank to hide)'
         }
     ]
     
@@ -185,6 +195,26 @@ def init_cms_content_if_needed():
                         raise
             else:
                 logger.info(f"CMS content snippets already initialized ({count} snippets found)")
+                # Backfill any newly added default snippets that don't yet exist
+                existing_keys = {row[0] for row in db.query(ContentSnippet.key).all()}
+                missing_snippets = [s for s in DEFAULT_SNIPPETS if s['key'] not in existing_keys]
+                if missing_snippets:
+                    logger.info(f"Adding {len(missing_snippets)} missing CMS snippets...")
+                    try:
+                        for snippet_data in missing_snippets:
+                            db.add(ContentSnippet(
+                                key=snippet_data['key'],
+                                content=snippet_data['content'],
+                                description=snippet_data['description']
+                            ))
+                        db.commit()
+                        logger.info("✅ Missing CMS snippets added")
+                    except Exception as insert_error:
+                        db.rollback()
+                        if "duplicate" in str(insert_error).lower() or "already exists" in str(insert_error).lower():
+                            logger.info("CMS snippets already added by another worker")
+                        else:
+                            raise
                 
         finally:
             db.close()

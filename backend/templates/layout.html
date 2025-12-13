@@ -153,6 +153,24 @@
             {{ snippets.get('footer_opening_hours', 'Mon-Thu: 4pm-10pm<br>Tue: 4pm-10:30pm<br>Fri: 4pm-11pm<br>Sat: 12pm-11pm<br>Sun: 12pm-10pm') }}
           </p>
         </div>
+
+        {% set christmas_hours = snippets.get('footer_christmas_hours', '')|trim %}
+        {% set new_year_hours = snippets.get('footer_new_year_hours', '')|trim %}
+        {% if christmas_hours or new_year_hours %}
+        <div class="footer-section">
+          <h3>Festive Opening Hours</h3>
+          {% if christmas_hours %}
+          <p style="font-size: 0.95rem; line-height: 1.8; margin-bottom: 8px;">
+            {{ christmas_hours }}
+          </p>
+          {% endif %}
+          {% if new_year_hours %}
+          <p style="font-size: 0.95rem; line-height: 1.8; margin-bottom: 0;">
+            {{ new_year_hours }}
+          </p>
+          {% endif %}
+        </div>
+        {% endif %}
         
         <!-- Follow Us -->
         <div class="footer-section">

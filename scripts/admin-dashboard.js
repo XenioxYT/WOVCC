@@ -81,19 +81,28 @@
     const breakdown = statsData.payment_status_breakdown || {};
     container.innerHTML = '';
 
-    // Sort by count descending
-    const sorted = Object.entries(breakdown).sort((a, b) => b[1] - a[1]);
+    const preferredOrder = ['active', 'pending', 'expired', 'cancelled', 'unknown'];
+    const orderedStatuses = [
+      ...preferredOrder
+        .filter(status => breakdown[status] !== undefined)
+        .map(status => [status, breakdown[status]]),
+      ...Object.entries(breakdown).filter(([status]) => !preferredOrder.includes(status))
+    ];
 
-    if (sorted.length === 0) {
+    const totalCount = orderedStatuses.reduce((sum, [, count]) => sum + (Number(count) || 0), 0);
+
+    if (orderedStatuses.length === 0 || totalCount === 0) {
       container.innerHTML = '<div style="color: var(--text-light);">No payment data available</div>';
       return;
     }
 
-    sorted.forEach(([status, count]) => {
+    orderedStatuses.forEach(([status, count]) => {
+      const label = status ? status.replace(/_/g, ' ') : 'Unknown';
+      const displayLabel = label.charAt(0).toUpperCase() + label.slice(1);
       const item = document.createElement('div');
       item.className = 'payment-status-item';
       item.innerHTML = `
-        <span class="payment-status-badge ${status}">${status}</span>
+        <span class="payment-status-badge ${status}">${displayLabel}</span>
         <span style="font-weight: 600; font-size: 1.2rem;">${count}</span>
       `;
       container.appendChild(item);
