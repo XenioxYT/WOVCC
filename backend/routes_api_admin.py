@@ -7,7 +7,7 @@ from flask import Blueprint, jsonify, request
 import logging
 from datetime import datetime, timezone
 
-from database import get_db, User, ContentSnippet, Event, EventInterest
+from database import get_db, User, ContentSnippet, Event, EventInterest, Sponsor
 from auth import require_admin
 from sqlalchemy import or_, func
 from datetime import timedelta
@@ -477,10 +477,90 @@ def ai_help_chat(user):
         else:
             client = OpenAI(api_key=openai_api_key)
         model = os.environ.get('OPENAI_MODEL', 'gpt-3.5-turbo')
+
+        # Fetch current content, sponsors, stats, and events
+        current_content = ""
+        current_sponsors = ""
+        current_stats = ""
+        current_events = ""
+        
+        db = next(get_db())
+        try:
+            # Get all content snippets
+            snippets = db.query(ContentSnippet).all()
+            if snippets:
+                current_content = "Current Website Content:\n"
+                for snippet in snippets:
+                    current_content += f"- {snippet.key}: {snippet.content}\n"
+            
+            # Get all active sponsors
+            sponsors = db.query(Sponsor).filter(Sponsor.is_active == True).all()
+            if sponsors:
+                current_sponsors = "Current Active Sponsors:\n"
+                for sponsor in sponsors:
+                    current_sponsors += f"- {sponsor.name} ({sponsor.website_url or 'no url'})\n"
+            
+            # Get user statistics
+            now = datetime.now(timezone.utc)
+            total_users = db.query(User).count()
+            total_members = db.query(User).filter(User.is_member == True).count()
+            active_members = db.query(User).filter(
+                User.is_member == True,
+                User.payment_status == 'active',
+                or_(User.membership_expiry_date.is_(None), User.membership_expiry_date > now)
+            ).count()
+            expired_members = db.query(User).filter(
+                User.is_member == True,
+                User.membership_expiry_date < now
+            ).count()
+            newsletter_subscribers = db.query(User).filter(User.newsletter == True).count()
+            admin_users = db.query(User).filter(User.is_admin == True).count()
+            
+            current_stats = f"""Current User Statistics:
+- Total users registered: {total_users}
+- Total members: {total_members}
+- Active members: {active_members}
+- Expired members: {expired_members}
+- Newsletter subscribers: {newsletter_subscribers}
+- Admin users: {admin_users}
+"""
+            
+            # Get event statistics and list
+            total_events = db.query(Event).count()
+            published_events = db.query(Event).filter(Event.is_published == True).count()
+            upcoming_events = db.query(Event).filter(
+                Event.is_published == True,
+                Event.date >= now
+            ).order_by(Event.date.asc()).limit(10).all()
+            
+            current_events = f"""Current Event Statistics:
+- Total events: {total_events}
+- Published events: {published_events}
+- Upcoming published events: {len(upcoming_events)}
+
+"""
+            
+            if upcoming_events:
+                current_events += "Upcoming Events:\n"
+                for event in upcoming_events:
+                    current_events += f"- {event.title} (Date: {event.date.strftime('%Y-%m-%d')}, Location: {event.location or 'Not specified'})\n"
+            else:
+                current_events += "No upcoming events currently published.\n"
+                    
+        finally:
+            db.close()
         
         # System context about the admin panel
-        system_context = """You are a helpful AI assistant for the WOVCC (Wickersley Old Village Cricket Club) website admin panel. 
+        base_system_context = """You are a helpful AI assistant for the WOVCC (Wickersley Old Village Cricket Club) website admin panel. 
 Your role is to help administrators understand and use the various features available to them. Keep your answers simple and do not use technical language.
+
+**IMPORTANT INSTRUCTIONS:**
+- ONLY provide information that is explicitly included in this system prompt
+- If you are asked about specific data (like exact numbers, specific events, or detailed statistics) that is not provided below, you MUST say "I don't have access to that specific information right now, but you can find it in the [relevant tab name] tab of the admin panel"
+- DO NOT make up or guess any numbers, statistics, event details, or other specific information
+- DO NOT hallucinate or invent information
+- If the information is provided in the sections below (Current Website Content, Current Active Sponsors, Current User Statistics, Current Event Statistics), you can reference it
+- Be helpful by directing users to where they can find information in the admin panel
 
 **Admin Panel Features:**
 
@@ -583,6 +663,8 @@ Your role is to help administrators understand and use the various features avai
 - "Where are opening hours?" - Content tab, edit "footer_opening_hours" snippet
 
 Answer questions clearly and concisely. If asked about features not listed here, politely say you don't have information about that feature."""
+
+        system_context = f"{base_system_context}\n\n---\n\n**CURRENT LIVE DATA FROM THE SYSTEM:**\n\n{current_stats}\n{current_events}\n{current_content}\n{current_sponsors}\n\n---\n\nRemember: Only use the information provided above. If asked about something not included, direct users to the appropriate admin panel tab."
 
         # Build messages for OpenAI
         messages = [

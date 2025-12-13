@@ -229,12 +229,14 @@ def create_event(user):
             file = request.files['image']
             if file and file.filename and allowed_file(file.filename):
                 upload_folder = os.path.join(os.path.dirname(__file__), 'uploads', 'events')
-                image_url = process_and_save_image(file, upload_folder)
-                if not image_url:
+                image_result = process_and_save_image(file, upload_folder)
+                if not image_result:
                     return jsonify({
                         'success': False,
                         'error': 'Failed to process image'
                     }), 400
+                # Extract main URL if dict returned (responsive images), otherwise use string directly
+                image_url = image_result['main'] if isinstance(image_result, dict) else image_result
         
         db = next(get_db())
         try:
@@ -376,9 +378,10 @@ def update_event(user, event_id):
                     
                     # Upload new image
                     upload_folder = os.path.join(os.path.dirname(__file__), 'uploads', 'events')
-                    new_image_url = process_and_save_image(file, upload_folder)
-                    if new_image_url:
-                        event.image_url = new_image_url
+                    image_result = process_and_save_image(file, upload_folder)
+                    if image_result:
+                        # Extract main URL if dict returned (responsive images), otherwise use string directly
+                        event.image_url = image_result['main'] if isinstance(image_result, dict) else image_result
             
             event.updated_at = datetime.now(timezone.utc)
             db.commit()
