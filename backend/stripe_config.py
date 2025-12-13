@@ -76,10 +76,6 @@ def create_checkout_session(customer_id: str = None, email: str = None, user_id:
         'cancel_url': os.environ.get('STRIPE_CANCEL_URL', f'{default_frontend_url}/join/cancel'),
         'line_items': [],
         'metadata': {},
-        # Collect full billing address and phone so we can sync to the user profile
-        'billing_address_collection': 'required',
-        'phone_number_collection': {'enabled': True},
-        'customer_creation': 'always',
         # WOVCC Brand Colors
         'ui_mode': 'hosted',
         'custom_text': {
@@ -137,15 +133,21 @@ def create_checkout_session(customer_id: str = None, email: str = None, user_id:
     if user_id:
         session_params['metadata']['user_id'] = str(user_id)
     
+    # Handle customer attachment - cannot use both 'customer' and 'customer_creation'
     if customer_id:
+        # Existing customer - attach to their record
         session_params['customer'] = customer_id
-        # Only allowed when an explicit customer is provided
         session_params['customer_update'] = {
             'address': 'auto',
             'name': 'auto'
         }
-    elif email:
-        session_params['customer_email'] = email
+    else:
+        # New customer - create one and collect billing details
+        session_params['customer_creation'] = 'always'
+        session_params['billing_address_collection'] = 'required'
+        session_params['phone_number_collection'] = {'enabled': True}
+        if email:
+            session_params['customer_email'] = email
     
     try:
         session = stripe.checkout.Session.create(**session_params)
@@ -241,9 +243,6 @@ def create_spouse_card_checkout_session(customer_id: str = None, email: str = No
             'user_id': str(user_id),
             'spouse_card_only': 'true'
         },
-        'billing_address_collection': 'required',
-        'phone_number_collection': {'enabled': True},
-        'customer_creation': 'always',
         'ui_mode': 'hosted',
         'custom_text': {
             'submit': {
@@ -270,14 +269,22 @@ def create_spouse_card_checkout_session(customer_id: str = None, email: str = No
     else:
         raise ValueError("STRIPE_SPOUSE_CARD_PRICE_ID or STRIPE_SPOUSE_CARD_PRODUCT_ID must be set")
     
+    # For existing customers, attach to their customer record (no need to collect address/phone again)
+    # For new customers (shouldn't happen for spouse card, but handle gracefully), create a new customer
     if customer_id:
         session_params['customer'] = customer_id
         session_params['customer_update'] = {
             'address': 'auto',
             'name': 'auto'
         }
-    elif email:
-        session_params['customer_email'] = email
+        # Don't require address/phone collection - they already provided this during initial signup
+    else:
+        # Fallback: if somehow no customer_id, create a new customer and collect details
+        session_params['customer_creation'] = 'always'
+        session_params['billing_address_collection'] = 'required'
+        session_params['phone_number_collection'] = {'enabled': True}
+        if email:
+            session_params['customer_email'] = email
     
     try:
         session = stripe.checkout.Session.create(**session_params)

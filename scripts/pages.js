@@ -1217,18 +1217,160 @@
         spouseCheckbox.addEventListener('change', updateTotalPrice);
       }
 
+      // Real-time password validation feedback
+      var passwordInput = document.getElementById('password');
+      var confirmPasswordInput = document.getElementById('confirmPassword');
+      var passwordRequirements = document.getElementById('password-requirements');
+      
+      if (passwordInput && passwordRequirements) {
+        // Show requirements on focus
+        passwordInput.addEventListener('focus', function() {
+          passwordRequirements.classList.add('visible');
+        });
+        
+        // Hide requirements on blur (if password is valid or empty)
+        passwordInput.addEventListener('blur', function() {
+          var password = passwordInput.value;
+          var allMet = password.length >= 8 && 
+                       /[A-Z]/.test(password) && 
+                       /[a-z]/.test(password) && 
+                       /[0-9]/.test(password) && 
+                       /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password);
+          if (allMet || password.length === 0) {
+            passwordRequirements.classList.remove('visible');
+          }
+        });
+        
+        // Also show on confirm password focus if password requirements not met
+        if (confirmPasswordInput) {
+          confirmPasswordInput.addEventListener('focus', function() {
+            var password = passwordInput.value;
+            var allMet = password.length >= 8 && 
+                         /[A-Z]/.test(password) && 
+                         /[a-z]/.test(password) && 
+                         /[0-9]/.test(password) && 
+                         /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password);
+            if (!allMet && password.length > 0) {
+              passwordRequirements.classList.add('visible');
+            }
+          });
+        }
+        
+        passwordInput.addEventListener('input', function() {
+          var password = passwordInput.value;
+          var reqLength = document.getElementById('req-length');
+          var reqUppercase = document.getElementById('req-uppercase');
+          var reqLowercase = document.getElementById('req-lowercase');
+          var reqNumber = document.getElementById('req-number');
+          var reqSpecial = document.getElementById('req-special');
+
+          // Show requirements if typing
+          if (password.length > 0) {
+            passwordRequirements.classList.add('visible');
+          }
+
+          // Check length
+          if (password.length >= 8) {
+            reqLength.classList.add('met');
+            reqLength.textContent = '✓ 8+ chars';
+          } else {
+            reqLength.classList.remove('met');
+            reqLength.textContent = '✗ 8+ chars';
+          }
+
+          // Check uppercase
+          if (/[A-Z]/.test(password)) {
+            reqUppercase.classList.add('met');
+            reqUppercase.textContent = '✓ Uppercase';
+          } else {
+            reqUppercase.classList.remove('met');
+            reqUppercase.textContent = '✗ Uppercase';
+          }
+
+          // Check lowercase
+          if (/[a-z]/.test(password)) {
+            reqLowercase.classList.add('met');
+            reqLowercase.textContent = '✓ Lowercase';
+          } else {
+            reqLowercase.classList.remove('met');
+            reqLowercase.textContent = '✗ Lowercase';
+          }
+
+          // Check number
+          if (/[0-9]/.test(password)) {
+            reqNumber.classList.add('met');
+            reqNumber.textContent = '✓ Number';
+          } else {
+            reqNumber.classList.remove('met');
+            reqNumber.textContent = '✗ Number';
+          }
+
+          // Check special character
+          if (/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) {
+            reqSpecial.classList.add('met');
+            reqSpecial.textContent = '✓ Special (!@#$)';
+          } else {
+            reqSpecial.classList.remove('met');
+            reqSpecial.textContent = '✗ Special (!@#$)';
+          }
+          
+          // Hide if all requirements met
+          var allMet = password.length >= 8 && 
+                       /[A-Z]/.test(password) && 
+                       /[a-z]/.test(password) && 
+                       /[0-9]/.test(password) && 
+                       /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password);
+          if (allMet) {
+            setTimeout(function() {
+              passwordRequirements.classList.remove('visible');
+            }, 500);
+          }
+        });
+      }
+
       form.addEventListener('submit', function(e) {
         e.preventDefault();
         if (!window.WOVCCAuth) return;
 
         var name = document.getElementById('name').value;
         var email = document.getElementById('email').value;
+        var confirmEmail = document.getElementById('confirmEmail').value;
         var password = document.getElementById('password').value;
+        var confirmPassword = document.getElementById('confirmPassword').value;
         var newsletter = document.getElementById('newsletter').checked;
         var includeSpouseCard = spouseCheckbox ? spouseCheckbox.checked : false;
 
-        if (password.length < 6) {
-          notify('Password must be at least 6 characters', 'error');
+        // Validate email match
+        if (email !== confirmEmail) {
+          notify('Email addresses do not match', 'error');
+          return;
+        }
+
+        // Validate password match
+        if (password !== confirmPassword) {
+          notify('Passwords do not match', 'error');
+          return;
+        }
+
+        // Validate password strength
+        if (password.length < 8) {
+          notify('Password must be at least 8 characters long', 'error');
+          return;
+        }
+        if (!/[A-Z]/.test(password)) {
+          notify('Password must contain at least one uppercase letter', 'error');
+          return;
+        }
+        if (!/[a-z]/.test(password)) {
+          notify('Password must contain at least one lowercase letter', 'error');
+          return;
+        }
+        if (!/[0-9]/.test(password)) {
+          notify('Password must contain at least one number', 'error');
+          return;
+        }
+        if (!/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) {
+          notify('Password must contain at least one special character (!@#$%^&*)', 'error');
           return;
         }
 
