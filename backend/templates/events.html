@@ -2,7 +2,54 @@
 
 {% block title %}Events - WOVCC | Wickersley Old Village Cricket Club{% endblock %}
 
-{% block description %}Upcoming events and activities at Wickersley Old Village Cricket Club{% endblock %}
+{% block description %}{% if upcoming_events and upcoming_events|length > 0 %}Discover upcoming events at Wickersley Old Village Cricket Club including {{ upcoming_events[0].title }}{% if upcoming_events|length > 1 %}, {{ upcoming_events[1].title }}{% endif %} and more.{% else %}Discover events and activities at Wickersley Old Village Cricket Club - social events, cricket matches, fundraisers, and community gatherings in Rotherham.{% endif %}{% endblock %}
+
+{% block extra_css %}
+{% if all_events and all_events|length > 0 %}
+<!-- Schema.org Event List structured data for Google rich results -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "Events at Wickersley Old Village Cricket Club",
+  "description": "Events and activities at WOVCC in Rotherham",
+  "numberOfItems": {{ all_events|length }},
+  "itemListElement": [
+    {% for event in all_events %}
+    {
+      "@type": "ListItem",
+      "position": {{ loop.index }},
+      "item": {
+        "@type": "Event",
+        "name": "{{ event.title | e }}",
+        "description": "{{ event.short_description | e }}",
+        {% if event.date %}"startDate": "{{ event.date }}",{% endif %}
+        {% if event.image_url %}"image": "{{ site_base_url }}{{ event.image_url }}",{% endif %}
+        "url": "{{ site_base_url }}/events/{{ event.id }}",
+        "location": {
+          "@type": "Place",
+          "name": "{% if event.location %}{{ event.location | e }}{% else %}Wickersley Old Village Cricket Club{% endif %}",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "59 Northfield Lane",
+            "addressLocality": "Wickersley, Rotherham",
+            "postalCode": "S66 2HL",
+            "addressCountry": "GB"
+          }
+        },
+        "organizer": {
+          "@type": "Organization",
+          "name": "Wickersley Old Village Cricket Club",
+          "url": "{{ site_base_url }}"
+        }
+      }
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>
+{% endif %}
+{% endblock %}
 
 {% block extra_js %}
 <script src="/scripts/api-client.js"></script>
@@ -14,65 +61,165 @@
   <section class="hero events-hero">
     <div class="hero-content">
       <h1>Club Events</h1>
-      <p>Stay up to date with all our upcoming events and activities</p>
+      <p>What's on at Wickersley Old Village Cricket Club</p>
     </div>
   </section>
 
-  <!-- Events Section -->
-  <section class="section">
+  <!-- Intro Section -->
+  <section class="section" style="padding-bottom: 1.5rem;">
     <div class="container">
-      
-      <!-- Filters and Search -->
-      <div class="events-filters-container">
-        <div class="events-filters-row">
-          
-          <!-- Filter Tabs -->
-          <div class="events-filter-tabs">
-            <button class="filter-tab active" data-filter="upcoming">Upcoming</button>
-            <button class="filter-tab" data-filter="past">Past</button>
-            <button class="filter-tab" data-filter="all">All Events</button>
-          </div>
-          
-          <!-- Category Filter -->
-          <div class="events-category-filter">
-            <label for="category-filter" class="category-label">Category:</label>
-            <select id="category-filter" class="form-input category-select">
-              <option value="all">All Categories</option>
-              <!-- Populated dynamically -->
-            </select>
-          </div>
-        </div>
+      <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+        <p style="color: var(--text-secondary); line-height: 1.8; font-size: 1.05rem; margin-bottom: 2rem;">
+          From quiz nights and live entertainment to cricket festivals and family fun days, 
+          there's always something happening at WOVCC. Our clubhouse is the heart of the 
+          Wickersley community — everyone's welcome, members and visitors alike.
+        </p>
         
         <!-- Search Bar -->
-        <div class="events-search-container">
+        <div class="events-search-wrapper" style="max-width: 500px; margin: 0 auto;">
           <input 
             type="text" 
             id="search-input" 
             class="form-input events-search-input" 
             placeholder="Search events..."
+            style="width: 100%; padding: 12px 16px; font-size: 1rem;"
+            aria-label="Search events"
           >
         </div>
       </div>
-      
+    </div>
+  </section>
+
+  <!-- Upcoming Events Section -->
+  <section class="section" style="padding-top: 2rem; padding-bottom: 3rem;" id="upcoming-section">
+    <div class="container">
       <!-- Loading Skeleton -->
       <div id="events-skeleton" class="events-skeleton">
         <!-- Skeleton cards will be injected here -->
       </div>
-      
-      <!-- Events Grid -->
-      <div id="events-container" class="events-grid">
-        <!-- Events will be dynamically loaded here -->
+      <div class="events-section-header" id="upcoming-header" style="margin-bottom: 2rem;">
+        <h2 style="font-size: 1.75rem; margin: 0 0 0.5rem 0; font-weight: 700; color: var(--primary-color);">
+          Upcoming Events
+        </h2>
+        <p style="color: var(--text-secondary); margin: 0; font-size: 1rem;" id="upcoming-count-text">
+          {% if upcoming_count > 0 %}{{ upcoming_count }} event{{ 's' if upcoming_count != 1 else '' }} coming up{% else %}No upcoming events scheduled{% endif %}
+        </p>
       </div>
       
-      <!-- No Events Message -->
-      <div id="no-events-message" class="no-events-message">
-        <svg class="no-events-icon" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
-        </svg>
-        <h3 class="no-events-title">No Events Found</h3>
-        <p class="no-events-text">Check back soon for upcoming events and activities!</p>
+      <div id="upcoming-events-container" class="events-grid">
+        <!-- Upcoming events will be loaded here by JavaScript -->
+        {% if upcoming_events and upcoming_events|length > 0 %}
+        <noscript>
+          {% for event in upcoming_events %}
+          <article class="event-card-seo" style="border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
+            <h3><a href="/events/{{ event.id }}">{{ event.title }}</a></h3>
+            <p><strong>Date:</strong> {{ event.date_display or event.date }}</p>
+            {% if event.time %}<p><strong>Time:</strong> {{ event.time }}</p>{% endif %}
+            {% if event.location %}<p><strong>Location:</strong> {{ event.location }}</p>{% endif %}
+            <p>{{ event.short_description }}</p>
+            <a href="/events/{{ event.id }}">View Event Details →</a>
+          </article>
+          {% endfor %}
+        </noscript>
+        {% endif %}
       </div>
       
+      <!-- No Upcoming Events Message -->
+      <div id="no-upcoming-message" class="no-events-message" style="{% if upcoming_count > 0 %}display: none;{% endif %}">
+        <div style="text-align: center; padding: 3rem 1.5rem; background: var(--secondary-bg); border-radius: 12px;">
+          <p style="color: var(--text-secondary); font-size: 1.05rem; line-height: 1.6; margin: 0;">
+            We're planning more exciting events! Follow us on 
+            <a href="https://www.facebook.com/wickersleyovcc/" target="_blank" rel="noopener" style="color: var(--accent-color); font-weight: 600;">Facebook</a> 
+            or <a href="https://www.instagram.com/wovcc/" target="_blank" rel="noopener" style="color: var(--accent-color); font-weight: 600;">Instagram</a> 
+            to be the first to know.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Separator -->
+  <div class="container" style="padding: 2rem 0;">
+    <div style="max-width: 100px; margin: 0 auto; height: 4px; background: linear-gradient(90deg, transparent, var(--border-color), transparent); border-radius: 2px;"></div>
+  </div>
+
+  <!-- Past Events Section -->
+  <section class="section" style="padding-top: 0;" id="past-section">
+    <div class="container">
+      <div class="events-section-header" id="past-header" style="margin-bottom: 2rem;">
+        <h2 style="font-size: 1.75rem; margin: 0 0 0.5rem 0; font-weight: 700; color: var(--primary-color);">
+          Past Events
+        </h2>
+        <p style="color: var(--text-secondary); margin: 0; font-size: 1rem;" id="past-count-text">
+          {% if past_count > 0 %}{{ past_count }} past event{{ 's' if past_count != 1 else '' }}{% else %}No past events{% endif %}
+        </p>
+      </div>
+      
+      <div id="past-events-container" class="events-grid">
+        <!-- Past events will be loaded here by JavaScript -->
+        {% if past_events and past_events|length > 0 %}
+        <noscript>
+          {% for event in past_events %}
+          <article class="event-card-seo" style="border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; opacity: 0.8;">
+            <h3><a href="/events/{{ event.id }}">{{ event.title }}</a></h3>
+            <p><strong>Date:</strong> {{ event.date_display or event.date }}</p>
+            {% if event.time %}<p><strong>Time:</strong> {{ event.time }}</p>{% endif %}
+            {% if event.location %}<p><strong>Location:</strong> {{ event.location }}</p>{% endif %}
+            <p>{{ event.short_description }}</p>
+            <a href="/events/{{ event.id }}">View Event Details →</a>
+          </article>
+          {% endfor %}
+        </noscript>
+        {% endif %}
+      </div>
+      
+      <!-- No Past Events Message -->
+      <div id="no-past-message" class="no-events-message" style="{% if past_count > 0 %}display: none;{% endif %}">
+        <div style="text-align: center; padding: 3rem 1.5rem; background: var(--secondary-bg); border-radius: 12px;">
+          <p style="color: var(--text-secondary); font-size: 1.05rem; margin: 0;">
+            No past events to display yet.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Additional Info Section -->
+  <section class="section" style="background: linear-gradient(180deg, var(--surface-color) 0%, white 100%); margin-top: 3rem;">
+    <div class="container">
+      <div style="max-width: 1000px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 3rem;">
+          <h2 style="font-size: 2rem; margin-bottom: 0.75rem; font-weight: 700; color: var(--primary-color);">What's On at the Clubhouse</h2>
+          <p style="color: var(--text-secondary); font-size: 1.05rem;">More than just cricket — we're your community hub</p>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2.5rem; margin-bottom: 3rem;">
+          <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease;">
+            <h3 style="font-size: 1.2rem; margin-bottom: 0.75rem; font-weight: 700; color: var(--primary-color);">Cricket Days</h3>
+            <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; margin: 0;">
+              Watch our senior, women's and junior teams in action. The bar is open on match days with a great atmosphere for supporters.
+            </p>
+          </div>
+          <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease;">
+            <h3 style="font-size: 1.2rem; margin-bottom: 0.75rem; font-weight: 700; color: var(--primary-color);">Entertainment</h3>
+            <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; margin: 0;">
+              Regular quiz nights, live music, karaoke, and themed evenings. Check back often for our latest entertainment schedule.
+            </p>
+          </div>
+          <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease;">
+            <h3 style="font-size: 1.2rem; margin-bottom: 0.75rem; font-weight: 700; color: var(--primary-color);">Private Hire</h3>
+            <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; margin: 0;">
+              Our function room is available for parties, celebrations, and meetings. <a href="/contact" style="color: var(--accent-color); font-weight: 600;">Get in touch</a> to book.
+            </p>
+          </div>
+        </div>
+        
+        <div style="text-align: center; padding: 2rem; background: var(--secondary-bg); border-radius: 12px;">
+          <p style="margin: 0; color: var(--text-secondary); font-size: 1rem;">
+            View our full fixture list on <a href="https://wov.play-cricket.com/home" target="_blank" rel="noopener" style="color: var(--accent-color); font-weight: 600; text-decoration: underline;">Play-Cricket</a>
+          </p>
+        </div>
+      </div>
     </div>
   </section>
 {% endblock %}

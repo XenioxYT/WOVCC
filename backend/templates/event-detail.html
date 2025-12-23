@@ -1,8 +1,58 @@
 {% extends "layout.html" %}
 
-{% block title %}Event Details - WOVCC | Wickersley Old Village Cricket Club{% endblock %}
+{% block title %}{% if event %}{{ event.title }} - {% endif %}WOVCC Events | Wickersley Old Village Cricket Club{% endblock %}
 
-{% block description %}Event details for Wickersley Old Village Cricket Club{% endblock %}
+{% block description %}{% if event %}{{ event.short_description }}{% else %}Event details for Wickersley Old Village Cricket Club{% endif %}{% endblock %}
+
+{% block og_type %}{% if event %}event{% else %}website{% endif %}{% endblock %}
+
+{% block og_title %}{% if event %}{{ event.title }} - WOVCC Event{% else %}Event Details - WOVCC{% endif %}{% endblock %}
+
+{% block og_description %}{% if event %}{{ event.short_description }}{% else %}Event details for Wickersley Old Village Cricket Club{% endif %}{% endblock %}
+
+{% block og_image %}{% if event and event.image_url %}{{ site_base_url }}{{ event.image_url }}{% else %}{{ site_base_url }}/assets/logo.webp{% endif %}{% endblock %}
+
+{% block twitter_card %}{% if event and event.image_url %}summary_large_image{% else %}summary{% endif %}{% endblock %}
+
+{% block twitter_title %}{% if event %}{{ event.title }} - WOVCC Event{% else %}Event Details - WOVCC{% endif %}{% endblock %}
+
+{% block twitter_description %}{% if event %}{{ event.short_description }}{% else %}Event details for Wickersley Old Village Cricket Club{% endif %}{% endblock %}
+
+{% block twitter_image %}{% if event and event.image_url %}{{ site_base_url }}{{ event.image_url }}{% else %}{{ site_base_url }}/assets/logo.webp{% endif %}{% endblock %}
+
+{% block extra_css %}
+{% if event %}
+<!-- Schema.org Event structured data for Google rich results -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Event",
+  "name": "{{ event.title | e }}",
+  "description": "{{ event.short_description | e }}",
+  {% if event.date %}"startDate": "{{ event.date }}{% if event.time %}T{{ event.time }}{% endif %}",{% endif %}
+  {% if event.image_url %}"image": "{{ site_base_url }}{{ event.image_url }}",{% endif %}
+  "location": {
+    "@type": "Place",
+    "name": "{% if event.location %}{{ event.location | e }}{% else %}Wickersley Old Village Cricket Club{% endif %}",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "59 Northfield Lane",
+      "addressLocality": "Wickersley, Rotherham",
+      "postalCode": "S66 2HL",
+      "addressCountry": "GB"
+    }
+  },
+  "organizer": {
+    "@type": "Organization",
+    "name": "Wickersley Old Village Cricket Club",
+    "url": "{{ site_base_url }}"
+  },
+  "eventStatus": "https://schema.org/EventScheduled",
+  "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode"
+}
+</script>
+{% endif %}
+{% endblock %}
 
 {% block extra_js %}
 <script src="/scripts/api-client.js"></script>

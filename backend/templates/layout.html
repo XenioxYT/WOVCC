@@ -11,18 +11,22 @@
   <link rel="apple-touch-icon" href="/assets/logo_favicon.webp">
   
   <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website">
+  <meta property="og:type" content="{% block og_type %}website{% endblock %}">
   <meta property="og:url" content="{{ request.url }}">
   <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
   <meta property="og:description" content="{% block og_description %}{{ self.description() }}{% endblock %}">
-  <meta property="og:image" content="{{ request.url_root }}assets/logo.webp">
+  <meta property="og:image" content="{% block og_image %}{{ site_base_url }}/assets/logo.webp{% endblock %}">
+  <meta property="og:site_name" content="Wickersley Old Village Cricket Club">
   
   <!-- Twitter -->
-  <meta name="twitter:card" content="summary">
+  <meta name="twitter:card" content="{% block twitter_card %}summary{% endblock %}">
   <meta name="twitter:site" content="@wickersleyovcc">
   <meta name="twitter:title" content="{% block twitter_title %}{{ self.title() }}{% endblock %}">
   <meta name="twitter:description" content="{% block twitter_description %}{{ self.description() }}{% endblock %}">
-  <meta name="twitter:image" content="{{ request.url_root }}assets/logo.webp">
+  <meta name="twitter:image" content="{% block twitter_image %}{{ site_base_url }}/assets/logo.webp{% endblock %}">
+  
+  <!-- Canonical URL -->
+  <link rel="canonical" href="{% block canonical %}{{ site_base_url }}{{ request.path }}{% endblock %}">
   
   <!-- Preconnect to external domains -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -224,7 +228,7 @@
           <h3>Visit Us</h3>
           <p><strong>Wickersley Old Village Cricket Club</strong></p>
           <p style="margin-top: 8px;">
-            Northfield Lane<br>
+            59 Northfield Lane<br>
             Wickersley, Rotherham<br>
             S66 2HL
           </p>

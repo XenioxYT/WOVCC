@@ -27,9 +27,8 @@ function isDetailPage() {
 // ===================================
 
 // Listing page variables and functions
-let allEvents = [];
-let currentFilter = 'upcoming';
-let currentCategory = 'all';
+let upcomingEvents = [];
+let pastEvents = [];
 let searchTerm = '';
 let listenersInitialized = false;
 let listingPageInitialized = false;
@@ -62,238 +61,254 @@ document.addEventListener('DOMContentLoaded', () => {
 async function initEventsPage() {
   if (!isListingPage()) return;
   
-  // Load categories
-  await loadCategories();
-  
-  // Load events
-  await loadEvents();
+  // Load all events
+  await loadAllEvents();
   
   // Setup event listeners
   setupEventListeners();
 }
 
-async function loadCategories() {
-    try {
-      const response = await fetch(`${API_BASE}/events/categories`);
-      const data = await response.json();
-      
-      if (data.success && data.categories) {
-        const categoryFilter = document.getElementById('category-filter');
-        if (!categoryFilter) {
-          console.error('Category filter element not found');
-          return;
-        }
-        
-        // Clear existing options (except the first "All Categories" option)
-        while (categoryFilter.options.length > 1) {
-          categoryFilter.remove(1);
-        }
-        
-        // Add new categories
-        data.categories.forEach(cat => {
-          const option = document.createElement('option');
-          option.value = cat;
-          option.textContent = cat;
-          categoryFilter.appendChild(option);
-        });
-      }
-    } catch (error) {
-      console.error('Failed to load categories:', error);
-    }
-  }
-
-  async function loadEvents() {
-    try {
-      // Show skeleton loader
-      showSkeleton();
-      
-      const params = new URLSearchParams({
-        filter: currentFilter,
-        category: currentCategory,
-        search: searchTerm
-      });
-      
-      const response = await fetch(`${API_BASE}/events?${params}`);
-      const data = await response.json();
-      
-      if (data.success) {
-        allEvents = data.events;
-        renderEvents(allEvents);
-      } else {
-        showNoEvents();
-      }
-    } catch (error) {
-      console.error('Failed to load events:', error);
-      showNoEvents();
-    }
-  }
-
-  function renderEvents(events) {
-    const container = document.getElementById('events-container');
-    const noEventsMessage = document.getElementById('no-events-message');
-    const skeleton = document.getElementById('events-skeleton');
+async function loadAllEvents() {
+  try {
+    // Show skeleton loader
+    showSkeleton();
     
-    skeleton.style.display = 'none';
-    
-    if (!events || events.length === 0) {
-      container.style.display = 'none';
-      noEventsMessage.style.display = 'block';
-      return;
-    }
-    
-    container.style.display = 'grid';
-    noEventsMessage.style.display = 'none';
-    
-    container.innerHTML = events.map(event => createEventCard(event)).join('');
-    // Attach fallback handlers for images (CSP-compliant - no inline handlers)
-    container.querySelectorAll('img[data-fallback]').forEach(function(img) {
-      img.addEventListener('error', function() {
-        if (this.dataset.fallback && this.src !== this.dataset.fallback) {
-          this.src = this.dataset.fallback;
-        }
-      });
-    });
-  }
-
-  function createEventCard(event) {
-    const hasImage = event.image_url && event.image_url.trim() !== '';
-    const imageUrl = hasImage ? event.image_url : '/assets/logo.webp';
-    const categoryBadge = event.category ? `<div class="event-card-category">${event.category}</div>` : '';
-    
-    // Format date
-    const eventDate = new Date(event.date);
-    const dateDisplay = eventDate.toLocaleDateString('en-GB', { 
-      day: 'numeric', 
-      month: 'short', 
-      year: 'numeric' 
+    // Load upcoming events
+    const upcomingParams = new URLSearchParams({
+      filter: 'upcoming',
+      search: searchTerm
     });
     
-    // Time display - check for truthy value and non-empty string
-    const timeDisplay = (event.time && event.time.trim() !== '') ? `
-      <div class="event-card-meta-item">
-        <svg fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
-        </svg>
-        <span>${event.time}</span>
-      </div>
-    ` : '';
+    // Load past events
+    const pastParams = new URLSearchParams({
+      filter: 'past',
+      search: searchTerm
+    });
     
-    // Location display - check for truthy value and non-empty string
-    const locationDisplay = (event.location && event.location.trim() !== '') ? `
-      <div class="event-card-meta-item">
-        <svg fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
-        </svg>
-        <span>${event.location}</span>
-      </div>
-    ` : '';
+    // Fetch both in parallel
+    const [upcomingResponse, pastResponse] = await Promise.all([
+      fetch(`${API_BASE}/events?${upcomingParams}`),
+      fetch(`${API_BASE}/events?${pastParams}`)
+    ]);
     
-    return `
-      <a href="/events/${event.id}" class="event-card" style="text-decoration: none; color: inherit; display: block;">
-        <div class="event-card-image-container ${hasImage ? 'has-image' : ''}" style="${hasImage ? `--card-image: url('${imageUrl}');` : ''}">
-          <img src="${imageUrl}" alt="${event.title}" class="event-card-image" data-fallback="/assets/logo.webp">
-        </div>
-        <div class="event-card-body">
-          ${categoryBadge}
-          <h3 class="event-card-title">${event.title}</h3>
-          <p class="event-card-description">${event.short_description}</p>
-          <div class="event-card-meta">
-            <div class="event-card-meta-item">
-              <svg fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
-              </svg>
-              <span>${dateDisplay}</span>
-            </div>
-            ${timeDisplay}
-            ${locationDisplay}
-            ${event.interested_count > 0 ? `
-              <div class="event-card-interested">
-                <svg fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
-                </svg>
-                <span>${event.interested_count} interested</span>
-              </div>
-            ` : ''}
+    const [upcomingData, pastData] = await Promise.all([
+      upcomingResponse.json(),
+      pastResponse.json()
+    ]);
+    
+    upcomingEvents = upcomingData.success ? upcomingData.events : [];
+    pastEvents = pastData.success ? pastData.events : [];
+    
+    // Render both sections
+    renderAllEvents();
+    
+  } catch (error) {
+    console.error('Failed to load events:', error);
+    hideSkeleton();
+  }
+}
+
+function renderAllEvents() {
+  const skeleton = document.getElementById('events-skeleton');
+  const upcomingContainer = document.getElementById('upcoming-events-container');
+  const pastContainer = document.getElementById('past-events-container');
+  const noUpcomingMessage = document.getElementById('no-upcoming-message');
+  const noPastMessage = document.getElementById('no-past-message');
+  const upcomingCountText = document.getElementById('upcoming-count-text');
+  const pastCountText = document.getElementById('past-count-text');
+  const upcomingHeader = document.getElementById('upcoming-header');
+  const pastHeader = document.getElementById('past-header');
+  
+  // Hide skeleton and show headers
+  if (skeleton) skeleton.style.display = 'none';
+  if (upcomingHeader) upcomingHeader.style.display = 'block';
+  if (pastHeader) pastHeader.style.display = 'block';
+  
+  // Render upcoming events
+  if (upcomingContainer) {
+    if (upcomingEvents.length > 0) {
+      upcomingContainer.innerHTML = upcomingEvents.map(event => createEventCard(event, false)).join('');
+      upcomingContainer.style.display = 'grid';
+      if (noUpcomingMessage) noUpcomingMessage.style.display = 'none';
+      attachImageFallbacks(upcomingContainer);
+    } else {
+      upcomingContainer.innerHTML = '';
+      upcomingContainer.style.display = 'none';
+      if (noUpcomingMessage) noUpcomingMessage.style.display = 'block';
+    }
+    if (upcomingCountText) {
+      upcomingCountText.textContent = upcomingEvents.length > 0 
+        ? `${upcomingEvents.length} event${upcomingEvents.length !== 1 ? 's' : ''} coming up`
+        : 'No upcoming events scheduled';
+    }
+  }
+  
+  // Render past events
+  if (pastContainer) {
+    if (pastEvents.length > 0) {
+      pastContainer.innerHTML = pastEvents.map(event => createEventCard(event, true)).join('');
+      pastContainer.style.display = 'grid';
+      if (noPastMessage) noPastMessage.style.display = 'none';
+      attachImageFallbacks(pastContainer);
+    } else {
+      pastContainer.innerHTML = '';
+      pastContainer.style.display = 'none';
+      if (noPastMessage) noPastMessage.style.display = 'block';
+    }
+    if (pastCountText) {
+      pastCountText.textContent = pastEvents.length > 0
+        ? `${pastEvents.length} past event${pastEvents.length !== 1 ? 's' : ''}`
+        : 'No past events';
+    }
+  }
+}
+
+function attachImageFallbacks(container) {
+  container.querySelectorAll('img[data-fallback]').forEach(function(img) {
+    img.addEventListener('error', function() {
+      if (this.dataset.fallback && this.src !== this.dataset.fallback) {
+        this.src = this.dataset.fallback;
+      }
+    });
+  });
+}
+
+function createEventCard(event, isPast = false) {
+  const hasImage = event.image_url && event.image_url.trim() !== '';
+  const imageUrl = hasImage ? event.image_url : '/assets/logo.webp';
+  const categoryBadge = event.category ? `<div class="event-card-category">${event.category}</div>` : '';
+  const pastStyle = isPast ? 'opacity: 0.85;' : '';
+  
+  // Format date
+  const eventDate = new Date(event.date);
+  const dateDisplay = eventDate.toLocaleDateString('en-GB', { 
+    day: 'numeric', 
+    month: 'short', 
+    year: 'numeric' 
+  });
+  
+  // Time display - check for truthy value and non-empty string
+  const timeDisplay = (event.time && event.time.trim() !== '') ? `
+    <div class="event-card-meta-item">
+      <svg fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+      </svg>
+      <span>${event.time}</span>
+    </div>
+  ` : '';
+  
+  // Location display - check for truthy value and non-empty string
+  const locationDisplay = (event.location && event.location.trim() !== '') ? `
+    <div class="event-card-meta-item">
+      <svg fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+      </svg>
+      <span>${event.location}</span>
+    </div>
+  ` : '';
+  
+  return `
+    <a href="/events/${event.id}" class="event-card" style="text-decoration: none; color: inherit; display: block; ${pastStyle}">
+      <div class="event-card-image-container ${hasImage ? 'has-image' : ''}" style="${hasImage ? `--card-image: url('${imageUrl}');` : ''}">
+        <img src="${imageUrl}" alt="${event.title}" class="event-card-image" data-fallback="/assets/logo.webp">
+      </div>
+      <div class="event-card-body">
+        ${categoryBadge}
+        <h3 class="event-card-title">${event.title}</h3>
+        <p class="event-card-description">${event.short_description}</p>
+        <div class="event-card-meta">
+          <div class="event-card-meta-item">
+            <svg fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+            </svg>
+            <span>${dateDisplay}</span>
           </div>
+          ${timeDisplay}
+          ${locationDisplay}
+          ${event.interested_count > 0 ? `
+            <div class="event-card-interested">
+              <svg fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+              </svg>
+              <span>${event.interested_count} interested</span>
+            </div>
+          ` : ''}
         </div>
-      </a>
-    `;
-  }
+      </div>
+    </a>
+  `;
+}
 
-  function showSkeleton() {
-    const container = document.getElementById('events-container');
-    const skeleton = document.getElementById('events-skeleton');
-    const noEventsMessage = document.getElementById('no-events-message');
-    
-    container.style.display = 'none';
-    noEventsMessage.style.display = 'none';
+function showSkeleton() {
+  const skeleton = document.getElementById('events-skeleton');
+  const upcomingContainer = document.getElementById('upcoming-events-container');
+  const pastContainer = document.getElementById('past-events-container');
+  const upcomingHeader = document.getElementById('upcoming-header');
+  const pastHeader = document.getElementById('past-header');
+  const noUpcomingMessage = document.getElementById('no-upcoming-message');
+  const noPastMessage = document.getElementById('no-past-message');
+  
+  // Hide all content sections
+  if (upcomingContainer) upcomingContainer.style.display = 'none';
+  if (pastContainer) pastContainer.style.display = 'none';
+  if (upcomingHeader) upcomingHeader.style.display = 'none';
+  if (pastHeader) pastHeader.style.display = 'none';
+  if (noUpcomingMessage) noUpcomingMessage.style.display = 'none';
+  if (noPastMessage) noPastMessage.style.display = 'none';
+  
+  if (skeleton) {
     skeleton.style.display = 'block';
-    
     skeleton.innerHTML = `
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px;">
-        ${Array(12).fill(0).map(() => `
+      <div class="events-grid">
+        ${Array(6).fill(0).map(() => `
           <div class="skeleton-event-card">
             <div class="skeleton-image"></div>
             <div class="skeleton-content">
-              <div class="skeleton-line short" style="width: 30%; margin-bottom: 10px;"></div>
-              <div class="skeleton-line title" style="margin-bottom: 12px;"></div>
-              <div class="skeleton-line long" style="margin-bottom: 8px;"></div>
-              <div class="skeleton-line medium" style="margin-bottom: 20px;"></div>
-              <div class="skeleton-line short" style="width: 40%;"></div>
+              <div class="skeleton-badge"></div>
+              <div class="skeleton-line skeleton-title"></div>
+              <div class="skeleton-line skeleton-desc-1"></div>
+              <div class="skeleton-line skeleton-desc-2"></div>
+              <div class="skeleton-line skeleton-desc-3"></div>
+              <div class="skeleton-meta">
+                <div class="skeleton-meta-item"></div>
+                <div class="skeleton-meta-item"></div>
+              </div>
             </div>
           </div>
         `).join('')}
       </div>
     `;
   }
+}
 
-  function showNoEvents() {
-    const container = document.getElementById('events-container');
-    const skeleton = document.getElementById('events-skeleton');
-    const noEventsMessage = document.getElementById('no-events-message');
-    
-    container.style.display = 'none';
-    skeleton.style.display = 'none';
-    noEventsMessage.style.display = 'block';
-  }
+function hideSkeleton() {
+  const skeleton = document.getElementById('events-skeleton');
+  const upcomingHeader = document.getElementById('upcoming-header');
+  const pastHeader = document.getElementById('past-header');
+  
+  if (skeleton) skeleton.style.display = 'none';
+  if (upcomingHeader) upcomingHeader.style.display = 'block';
+  if (pastHeader) pastHeader.style.display = 'block';
+}
 
-  function setupEventListeners() {
-    // Only set up listeners once to avoid duplicates
-    if (listenersInitialized) return;
-    listenersInitialized = true;
-    
-    // Filter tabs
-    document.querySelectorAll('.filter-tab').forEach(tab => {
-      tab.addEventListener('click', function() {
-        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
-        currentFilter = this.dataset.filter;
-        loadEvents();
-      });
+function setupEventListeners() {
+  // Only set up listeners once to avoid duplicates
+  if (listenersInitialized) return;
+  listenersInitialized = true;
+  
+  // Search input (with debounce)
+  let searchTimeout;
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        searchTerm = this.value.trim();
+        loadAllEvents();
+      }, 300);
     });
-    
-    // Category filter
-    const categoryFilter = document.getElementById('category-filter');
-    if (categoryFilter) {
-      categoryFilter.addEventListener('change', function() {
-        currentCategory = this.value;
-        loadEvents();
-      });
-    }
-    
-    // Search input (with debounce)
-    let searchTimeout;
-    const searchInput = document.getElementById('search-input');
-    if (searchInput) {
-      searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-          searchTerm = this.value.trim();
-          loadEvents();
-        }, 300);
-      });
-    }
   }
+}
 
 // ===================================
 // EVENT DETAIL PAGE

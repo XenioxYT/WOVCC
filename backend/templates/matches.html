@@ -1,8 +1,37 @@
 {% extends "layout.html" %}
 
-{% block title %}Matches - WOVCC | Wickersley Old Village Cricket Club{% endblock %}
+{% block title %}Matches, Fixtures & Results - WOVCC | Wickersley Old Village Cricket Club{% endblock %}
 
-{% block description %}View upcoming fixtures and recent match results{% endblock %}
+{% block description %}{% if cricket_data %}View {{ cricket_data.fixtures_count }} upcoming fixtures and {{ cricket_data.results_count }} recent results for Wickersley Old Village Cricket Club teams in the Yorkshire Cricket Southern Premier League.{% else %}View upcoming cricket fixtures and recent match results for Wickersley Old Village Cricket Club teams in the Yorkshire Cricket Southern Premier League.{% endif %}{% endblock %}
+
+{% block extra_css %}
+<!-- Schema.org SportsOrganization structured data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SportsOrganization",
+  "name": "Wickersley Old Village Cricket Club",
+  "alternateName": "WOVCC",
+  "url": "{{ site_base_url }}",
+  "sport": "Cricket",
+  "location": {
+    "@type": "Place",
+    "name": "Northfield Lane Ground",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "59 Northfield Lane",
+      "addressLocality": "Wickersley, Rotherham",
+      "postalCode": "S66 2HL",
+      "addressCountry": "GB"
+    }
+  },
+  "memberOf": {
+    "@type": "SportsOrganization",
+    "name": "Yorkshire Cricket Southern Premier League"
+  }
+}
+</script>
+{% endblock %}
 
 {% block extra_js %}
 <script src="/scripts/api-client.js"></script>
@@ -18,8 +47,27 @@
     </div>
   </section>
 
+  <!-- SEO Intro Section -->
+  <section class="section" style="padding-bottom: 1.5rem;">
+    <div class="container">
+      <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+        <p style="color: var(--text-secondary); line-height: 1.8; font-size: 1.05rem; margin-bottom: 2rem;">
+          Follow all our teams' fixtures and results throughout the cricket season. 
+          Our senior teams compete in the Yorkshire Cricket Southern Premier League, 
+          while our women's teams (The Vixens) play in the Yorkshire Women's Cricket League.
+        </p>
+        {% if teams and teams|length > 0 %}
+        <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.75rem;">
+          <strong>Our Teams:</strong> 
+          {% for team in teams[:5] %}{{ team.name }}{% if not loop.last %}, {% endif %}{% endfor %}{% if teams|length > 5 %} and more{% endif %}
+        </p>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
   <!-- Matches Section -->
-  <section class="section">
+  <section class="section" style="padding-top: 2rem; padding-bottom: 3rem;">
     <div class="container">
       <!-- Team Filter -->
       <div style="text-align: center; margin-bottom: 30px;">
@@ -61,6 +109,45 @@
       
       <!-- Last Updated Timestamp -->
       <div id="last-updated-container" style="margin-top: 30px;"></div>
+    </div>
+  </section>
+
+  <!-- SEO Content Section -->
+  <section class="section" style="background: linear-gradient(180deg, var(--surface-color) 0%, white 100%); margin-top: 3rem;">
+    <div class="container">
+      <div style="max-width: 1000px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 3rem;">
+          <h2 style="font-size: 2rem; margin-bottom: 0.75rem; font-weight: 700; color: var(--primary-color);">About WOVCC Cricket</h2>
+          <p style="color: var(--text-secondary); font-size: 1.05rem;">Following our teams across all levels</p>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2.5rem; margin-bottom: 3rem;">
+          <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease;">
+            <h3 style="font-size: 1.2rem; margin-bottom: 0.75rem; font-weight: 700; color: var(--primary-color);">Senior Cricket</h3>
+            <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; margin: 0;">
+              Three senior teams competing in the Championship, Division 1 &amp; Division 5 of the Yorkshire Cricket Southern Premier League.
+            </p>
+          </div>
+          <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease;">
+            <h3 style="font-size: 1.2rem; margin-bottom: 0.75rem; font-weight: 700; color: var(--primary-color);">Women's Cricket</h3>
+            <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; margin: 0;">
+              The Vixens field three teams in the Yorkshire Women's Cricket League across hardball and softball divisions.
+            </p>
+          </div>
+          <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease;">
+            <h3 style="font-size: 1.2rem; margin-bottom: 0.75rem; font-weight: 700; color: var(--primary-color);">Junior Cricket</h3>
+            <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; margin: 0;">
+              Teams at U9, U11, U13, U15 and U18 levels in the Ben Jessop Junior Cricket League, plus All Stars and Dynamos programmes.
+            </p>
+          </div>
+        </div>
+        
+        <div style="text-align: center; padding: 2rem; background: var(--secondary-bg); border-radius: 12px;">
+          <p style="margin: 0; color: var(--text-secondary); font-size: 1rem;">
+            Match data sourced from <a href="https://wov.play-cricket.com/home" target="_blank" rel="noopener" style="color: var(--accent-color); font-weight: 600; text-decoration: underline;">Play-Cricket</a> — 
+            visit for detailed scorecards, league tables, and player statistics.
+          </p>
+        </div>
+      </div>
     </div>
   </section>
 

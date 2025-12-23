@@ -154,7 +154,7 @@ def init_cms_content_if_needed():
         },
         {
             'key': 'footer_opening_hours',
-            'content': 'Mon-Thu: 4pm-10pm<br>Tue: 4pm-10:30pm<br>Fri: 4pm-11pm<br>Sat: 12pm-11pm<br>Sun: 12pm-10pm',
+            'content': 'Monday: 4pm – 10pm<br>Tuesday: 4pm – 10:30pm<br>Wednesday: 4pm – 10pm<br>Thursday: 4pm – 10pm<br>Friday: 4pm – 11pm<br>Saturday: 12 noon – 11pm<br>Sunday: 12 noon – 10pm',
             'description': 'Footer - Opening hours (supports HTML <br> tags)'
         },
         {
@@ -478,13 +478,130 @@ def serve_uploads(filename):
 @app.route('/robots.txt')
 def robots():
     """Robots.txt file for search engines"""
+    # Use SITE_BASE_URL for consistent canonical URLs
+    base_url = SITE_BASE_URL or request.url_root.rstrip('/')
     return """User-agent: *
 Allow: /
-Disallow: /api/
+
+# Allow public API endpoints needed for page rendering
+Allow: /api/events
+Allow: /api/events/
+Allow: /api/data
+Allow: /api/sponsors
+Allow: /api/content
+Allow: /api/cricket
+Allow: /api/health
+
+# Block sensitive API endpoints
+Disallow: /api/auth/
+Disallow: /api/admin/
+Disallow: /api/webhooks/
+Disallow: /api/contact
+
+# Block private pages
 Disallow: /admin
+Disallow: /login
+Disallow: /membership
+Disallow: /members
+Disallow: /join/activate
+Disallow: /join/cancel
 
 Sitemap: {}/sitemap.xml
-""".format(request.url_root.rstrip('/')), 200, {'Content-Type': 'text/plain; charset=utf-8'}
+""".format(base_url), 200, {'Content-Type': 'text/plain; charset=utf-8'}
+
+
+@app.route('/sitemap.xml')
+def sitemap():
+    """Dynamic XML sitemap for search engines (Google Search Console compatible)"""
+    from database import get_db, Event
+    from datetime import datetime, timezone
+    
+    # Use SITE_BASE_URL for consistent canonical URLs
+    base_url = SITE_BASE_URL or request.url_root.rstrip('/')
+    
+    # Static pages with their priorities and change frequencies
+    static_pages = [
+        {'url': '/', 'priority': '1.0', 'changefreq': 'daily'},
+        {'url': '/events', 'priority': '0.9', 'changefreq': 'daily'},
+        {'url': '/matches', 'priority': '0.8', 'changefreq': 'daily'},
+        {'url': '/join', 'priority': '0.7', 'changefreq': 'monthly'},
+        {'url': '/contact', 'priority': '0.6', 'changefreq': 'monthly'},
+        {'url': '/privacy', 'priority': '0.3', 'changefreq': 'yearly'},
+    ]
+    
+    # Build XML
+    xml_parts = ['<?xml version="1.0" encoding="UTF-8"?>']
+    xml_parts.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+    
+    # Current timestamp for static pages
+    now_dt = datetime.now(timezone.utc)
+    now = now_dt.strftime('%Y-%m-%d')
+    
+    # Add static pages
+    for page in static_pages:
+        xml_parts.append('  <url>')
+        xml_parts.append(f'    <loc>{base_url}{page["url"]}</loc>')
+        xml_parts.append(f'    <lastmod>{now}</lastmod>')
+        xml_parts.append(f'    <changefreq>{page["changefreq"]}</changefreq>')
+        xml_parts.append(f'    <priority>{page["priority"]}</priority>')
+        xml_parts.append('  </url>')
+    
+    # Add dynamic event pages
+    try:
+        db = next(get_db())
+        try:
+            # Get all published events (both upcoming and past for SEO)
+            events = db.query(Event).filter(Event.is_published == True).all()
+            logger.info(f"Sitemap: Found {len(events)} published events")
+            
+            for event in events:
+                try:
+                    # Use updated_at or created_at for lastmod
+                    lastmod = event.updated_at or event.created_at
+                    lastmod_str = lastmod.strftime('%Y-%m-%d') if lastmod else now
+                    
+                    # Determine priority based on whether event is upcoming
+                    # Handle timezone-naive dates safely
+                    event_date = event.date
+                    is_upcoming = False
+                    if event_date:
+                        # Make comparison timezone-safe
+                        if event_date.tzinfo is None:
+                            # Naive datetime - compare with naive
+                            is_upcoming = event_date > datetime.utcnow()
+                        else:
+                            # Aware datetime - compare with aware
+                            is_upcoming = event_date > now_dt
+                    
+                    priority = '0.7' if is_upcoming else '0.5'
+                    
+                    xml_parts.append('  <url>')
+                    xml_parts.append(f'    <loc>{base_url}/events/{event.id}</loc>')
+                    xml_parts.append(f'    <lastmod>{lastmod_str}</lastmod>')
+                    xml_parts.append(f'    <changefreq>weekly</changefreq>')
+                    xml_parts.append(f'    <priority>{priority}</priority>')
+                    xml_parts.append('  </url>')
+                except Exception as event_error:
+                    logger.error(f"Error processing event {event.id} for sitemap: {event_error}")
+                    continue
+        finally:
+            db.close()
+    except Exception as e:
+        logger.error(f"Error fetching events for sitemap: {e}", exc_info=True)
+    
+    xml_parts.append('</urlset>')
+    
+    xml_content = '\n'.join(xml_parts)
+    
+    response = app.response_class(
+        response=xml_content,
+        status=200,
+        mimetype='application/xml'
+    )
+    # Allow caching for 1 hour
+    response.cache_control.max_age = 3600
+    response.cache_control.public = True
+    return response
 
 
 # Health check
