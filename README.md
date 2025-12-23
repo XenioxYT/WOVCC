@@ -223,6 +223,8 @@ docker-compose up -d --build
 
 5. Set up Nginx as a reverse proxy to forward requests from your domain (e.g., `https://wickersleycricket.com`) to `http://localhost:5000`. Use the `backend/nginx.conf` file as a template.
 
+   Note: If you see browser console warnings like "Error with Permissions-Policy header: Unrecognized feature: browsing-topics/run-ad-auction/..." those are coming from your reverse proxy/CDN header config. This repo's Flask app only sets a minimal `Permissions-Policy` (geolocation/microphone/camera). Remove the unsupported directives at the edge.
+
 6. Ensure you configure SSL using Let's Encrypt or another provider.
 
 ## Support

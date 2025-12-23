@@ -14,7 +14,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Base site URL for email links (configurable via .env)
-SITE_BASE_URL = os.environ.get("SITE_BASE_URL", "https://wovcc.xeniox.uk").rstrip('/')
+SITE_BASE_URL = os.environ.get("SITE_BASE_URL", "https://wickersleycricket.com").rstrip('/')
 
 
 def render_email_template(template_name: str, **context):

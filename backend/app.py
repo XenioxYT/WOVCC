@@ -71,19 +71,20 @@ def _get_www_variant(url_value):
 
 
 # Base URLs (configurable via .env)
-SITE_BASE_URL = _normalize_url(os.environ.get('SITE_BASE_URL', 'https://wovcc.xeniox.uk'))
+# Default points at the club's canonical domain; override in production via backend/.env.
+SITE_BASE_URL = _normalize_url(os.environ.get('SITE_BASE_URL', 'https://wickersleycricket.com'))
 
 
 def _resolve_api_base_url():
-    """Determine API base URL from env, falling back to site base or localhost."""
+    """
+    Determine API base URL from env.
+    Default to a relative path (`/api`) so the frontend calls the same origin, avoiding CORS
+    issues between www/non-www hostnames and simplifying deployments behind a reverse proxy.
+    """
     env_api = _normalize_url(os.environ.get('API_BASE_URL', ''))
     if env_api:
         return env_api
-    if DEBUG:
-        return 'http://localhost:5000/api'
-    if SITE_BASE_URL:
-        return f"{SITE_BASE_URL}/api"
-    return ''
+    return '/api'
 
 
 API_BASE_URL = _resolve_api_base_url()
@@ -96,6 +97,8 @@ def _build_cors_origins():
         return [_normalize_url(origin) for origin in env_origins]
     
     origins = ['http://localhost:5000', 'http://127.0.0.1:5000']
+    # Production defaults (www + non-www). Override with CORS_ORIGINS for other domains.
+    origins.extend(['https://wickersleycricket.com', 'https://www.wickersleycricket.com'])
     if SITE_BASE_URL:
         origins.append(SITE_BASE_URL)
         www_variant = _get_www_variant(SITE_BASE_URL)
@@ -292,9 +295,21 @@ def inject_snippets():
 @app.context_processor
 def inject_app_config():
     """Inject application configuration into all templates for JavaScript usage"""
-    # Determine API base URL from environment or default
-    env_api_raw = os.environ.get('API_BASE_URL', '')
-    api_base_url = _normalize_url(env_api_raw) if env_api_raw else API_BASE_URL
+    # PUBLIC API base used by browser JS:
+    # Prefer same-origin `/api` to avoid CORS (especially www vs non-www).
+    # - If you truly serve the frontend separately from the API, set PUBLIC_API_BASE_URL explicitly.
+    public_api_raw = os.environ.get('PUBLIC_API_BASE_URL', '').strip()
+    if public_api_raw:
+        api_base_url = _normalize_url(public_api_raw)
+    else:
+        # If API_BASE_URL points to the same origin as the current request, it's safe to expose.
+        env_api_raw = os.environ.get('API_BASE_URL', '').strip()
+        env_api_origin = _origin_from_url(env_api_raw)
+        current_origin = _origin_from_url(request.url_root)
+        if env_api_raw and (env_api_raw.startswith('/') or (env_api_origin and env_api_origin == current_origin)):
+            api_base_url = _normalize_url(env_api_raw)
+        else:
+            api_base_url = '/api'
     
     return {
         'app_config': {
