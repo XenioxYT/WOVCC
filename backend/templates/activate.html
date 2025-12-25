@@ -2,7 +2,10 @@
 
 {% block title %}Activating Your Account - WOVCC{% endblock %}
 
-{% block description %}Creating your WOVCC membership account{% endblock %}
+{% block description %}Creating your WOVCC membership account. Please wait while we set up your membership.{% endblock
+%}
+
+{% block robots %}noindex, nofollow{% endblock %}
 
 {% block extra_js %}
 <script src="/scripts/pages.js"></script>
@@ -15,7 +18,7 @@
     justify-content: center;
     padding: 40px 20px;
   }
-  
+
   .activation-card {
     background: white;
     border-radius: 12px;
@@ -25,7 +28,7 @@
     width: 100%;
     text-align: center;
   }
-  
+
   .status-icon {
     width: 60px;
     height: 60px;
@@ -34,7 +37,7 @@
     align-items: center;
     justify-content: center;
   }
-  
+
   /* Spinner Animation */
   .status-icon.spinner {
     border: 5px solid #f3f3f3;
@@ -42,23 +45,28 @@
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
-  
+
   @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+      transform: rotate(0deg);
+    }
+
+    100% {
+      transform: rotate(360deg);
+    }
   }
-  
+
   /* Checkmark Animation */
   .status-icon.checkmark {
     width: 60px;
     height: 60px;
   }
-  
+
   .status-icon.checkmark svg {
     width: 60px;
     height: 60px;
   }
-  
+
   .checkmark-circle {
     stroke-dasharray: 166;
     stroke-dashoffset: 166;
@@ -67,7 +75,7 @@
     stroke: var(--primary-color);
     animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
   }
-  
+
   .checkmark-check {
     transform-origin: 50% 50%;
     stroke-dasharray: 48;
@@ -76,26 +84,26 @@
     stroke-width: 3;
     animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
   }
-  
+
   @keyframes stroke {
     100% {
       stroke-dashoffset: 0;
     }
   }
-  
+
   #status-title {
     font-size: 1.8rem;
     margin-bottom: 15px;
     color: var(--text-dark);
   }
-  
+
   #status-message {
     color: var(--text-light);
     line-height: 1.6;
     font-size: 1.1rem;
     margin-bottom: 30px;
   }
-  
+
   #actions {
     display: none;
     gap: 15px;
@@ -106,12 +114,12 @@
 {% endblock %}
 
 {% block content %}
-  <div class="activation-container">
-    <div class="activation-card">
-      <div id="status-icon" class="status-icon spinner"></div>
-      <h2 id="status-title">Creating Your Account</h2>
-      <p id="status-message">Please wait while we set up your membership...</p>
-      <div id="actions"></div>
-    </div>
+<div class="activation-container">
+  <div class="activation-card">
+    <div id="status-icon" class="status-icon spinner"></div>
+    <h2 id="status-title">Creating Your Account</h2>
+    <p id="status-message">Please wait while we set up your membership...</p>
+    <div id="actions"></div>
   </div>
+</div>
 {% endblock %}

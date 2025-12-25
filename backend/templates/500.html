@@ -1,7 +1,10 @@
 {% extends "layout.html" %}
 
 {% block title %}Server Error | WOVCC{% endblock %}
-{% block description %}Something went wrong on our end.{% endblock %}
+{% block description %}Something went wrong on our end. Please try again later or contact Wickersley Old Village Cricket
+Club.{% endblock %}
+
+{% block robots %}noindex, nofollow{% endblock %}
 
 {% block content %}
 <section class="error-section section">
@@ -10,14 +13,14 @@
       <div class="error-code">500</div>
       <h1 class="error-title">Server Error</h1>
       <p class="error-message">
-        Oops! Something went wrong on our end. 
+        Oops! Something went wrong on our end.
         Our team has been notified and we're working to fix it.
       </p>
       <div class="error-actions">
         <a href="/" class="btn btn-primary">Go to Home</a>
         <a href="#" class="btn btn-secondary" data-js-action="reload-page">Try Again</a>
       </div>
-      
+
       <div class="error-help">
         <h3>What can you do?</h3>
         <ul>
@@ -27,7 +30,7 @@
           <li>Contact us if the problem persists</li>
         </ul>
       </div>
-      
+
       {% if error %}
       <div class="error-details">
         <details>
@@ -41,147 +44,147 @@
 </section>
 
 <style>
-.error-section {
-  min-height: 70vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-}
+  .error-section {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+  }
 
-.error-content {
-  text-align: center;
-  max-width: 700px;
-  margin: 0 auto;
-}
+  .error-content {
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto;
+  }
 
-.error-code {
-  font-size: 120px;
-  font-weight: 700;
-  color: #dc3545;
-  line-height: 1;
-  margin-bottom: 20px;
-  opacity: 0.2;
-  text-shadow: 0 4px 12px rgba(220, 53, 69, 0.1);
-}
-
-.error-title {
-  font-size: 2.5rem;
-  font-weight: 600;
-  color: var(--text-dark);
-  margin-bottom: 20px;
-}
-
-.error-message {
-  font-size: 1.2rem;
-  color: var(--text-light);
-  margin-bottom: 40px;
-  line-height: 1.8;
-}
-
-.error-actions {
-  display: flex;
-  gap: 15px;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-bottom: 60px;
-}
-
-.error-help {
-  background: var(--glass-bg);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  padding: 30px;
-  box-shadow: var(--glass-shadow);
-  margin-top: 40px;
-}
-
-.error-help h3 {
-  color: var(--primary-color);
-  margin-bottom: 15px;
-  font-size: 1.3rem;
-}
-
-.error-help ul {
-  list-style: none;
-  padding: 0;
-  text-align: left;
-}
-
-.error-help li {
-  margin: 12px 0;
-  padding-left: 25px;
-  position: relative;
-  color: var(--text-light);
-}
-
-.error-help li:before {
-  content: "•";
-  position: absolute;
-  left: 5px;
-  color: var(--primary-color);
-  font-size: 1.5rem;
-  line-height: 1;
-}
-
-.error-details {
-  margin-top: 30px;
-  text-align: left;
-}
-
-.error-details summary {
-  cursor: pointer;
-  padding: 12px 20px;
-  background: rgba(220, 53, 69, 0.1);
-  border-radius: 8px;
-  color: #dc3545;
-  font-weight: 500;
-  margin-bottom: 10px;
-  transition: var(--transition);
-}
-
-.error-details summary:hover {
-  background: rgba(220, 53, 69, 0.15);
-}
-
-.error-details pre {
-  background: #f8f9fa;
-  padding: 20px;
-  border-radius: 8px;
-  overflow-x: auto;
-  margin-top: 10px;
-  border-left: 4px solid #dc3545;
-}
-
-.error-details code {
-  font-family: 'Monaco', 'Courier New', monospace;
-  font-size: 0.9rem;
-  color: #dc3545;
-}
-
-@media (max-width: 768px) {
   .error-code {
-    font-size: 80px;
+    font-size: 120px;
+    font-weight: 700;
+    color: #dc3545;
+    line-height: 1;
+    margin-bottom: 20px;
+    opacity: 0.2;
+    text-shadow: 0 4px 12px rgba(220, 53, 69, 0.1);
   }
-  
+
   .error-title {
-    font-size: 2rem;
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 20px;
   }
-  
+
   .error-message {
-    font-size: 1rem;
+    font-size: 1.2rem;
+    color: var(--text-light);
+    margin-bottom: 40px;
+    line-height: 1.8;
   }
-  
+
   .error-actions {
-    flex-direction: column;
-    align-items: stretch;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 60px;
   }
-  
-  .error-actions .btn {
-    width: 100%;
+
+  .error-help {
+    background: var(--glass-bg);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: var(--glass-shadow);
+    margin-top: 40px;
   }
-}
+
+  .error-help h3 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+  }
+
+  .error-help ul {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+  }
+
+  .error-help li {
+    margin: 12px 0;
+    padding-left: 25px;
+    position: relative;
+    color: var(--text-light);
+  }
+
+  .error-help li:before {
+    content: "•";
+    position: absolute;
+    left: 5px;
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+
+  .error-details {
+    margin-top: 30px;
+    text-align: left;
+  }
+
+  .error-details summary {
+    cursor: pointer;
+    padding: 12px 20px;
+    background: rgba(220, 53, 69, 0.1);
+    border-radius: 8px;
+    color: #dc3545;
+    font-weight: 500;
+    margin-bottom: 10px;
+    transition: var(--transition);
+  }
+
+  .error-details summary:hover {
+    background: rgba(220, 53, 69, 0.15);
+  }
+
+  .error-details pre {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-top: 10px;
+    border-left: 4px solid #dc3545;
+  }
+
+  .error-details code {
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.9rem;
+    color: #dc3545;
+  }
+
+  @media (max-width: 768px) {
+    .error-code {
+      font-size: 80px;
+    }
+
+    .error-title {
+      font-size: 2rem;
+    }
+
+    .error-message {
+      font-size: 1rem;
+    }
+
+    .error-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .error-actions .btn {
+      width: 100%;
+    }
+  }
 </style>
 {% endblock %}

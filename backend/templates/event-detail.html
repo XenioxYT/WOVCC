@@ -1,24 +1,58 @@
 {% extends "layout.html" %}
 
-{% block title %}{% if event %}{{ event.title }} - {% endif %}WOVCC Events | Wickersley Old Village Cricket Club{% endblock %}
+{% block title %}{% if event %}{{ event.title }} | WOVCC{% else %}Event | WOVCC{% endif %}{% endblock %}
 
-{% block description %}{% if event %}{{ event.short_description }}{% else %}Event details for Wickersley Old Village Cricket Club{% endif %}{% endblock %}
+{% block description %}{% if event %}{{ event.short_description }} | Event at Wickersley Old Village Cricket Club{% if
+event.date_display %} on {{ event.date_display }}{% endif %}.{% else %}Event details for Wickersley Old Village Cricket
+Club{% endif %}{% endblock %}
 
 {% block og_type %}{% if event %}event{% else %}website{% endif %}{% endblock %}
 
-{% block og_title %}{% if event %}{{ event.title }} - WOVCC Event{% else %}Event Details - WOVCC{% endif %}{% endblock %}
+{% block og_title %}{% if event %}{{ event.title }} - WOVCC Event{% else %}Event Details - WOVCC{% endif %}{% endblock
+%}
 
-{% block og_description %}{% if event %}{{ event.short_description }}{% else %}Event details for Wickersley Old Village Cricket Club{% endif %}{% endblock %}
+{% block og_description %}{% if event %}{{ event.short_description }}{% else %}Event details for Wickersley Old Village
+Cricket Club{% endif %}{% endblock %}
 
-{% block og_image %}{% if event and event.image_url %}{{ site_base_url }}{{ event.image_url }}{% else %}{{ site_base_url }}/assets/logo.webp{% endif %}{% endblock %}
+{% block og_image %}{% if event and event.image_url %}{{ site_base_url }}{{ event.image_url }}{% else %}{{ site_base_url
+}}/assets/logo.webp{% endif %}{% endblock %}
+{% block og_image_alt %}{% if event %}{{ event.title }} event at WOVCC{% else %}WOVCC Event{% endif %}{% endblock %}
 
 {% block twitter_card %}{% if event and event.image_url %}summary_large_image{% else %}summary{% endif %}{% endblock %}
 
-{% block twitter_title %}{% if event %}{{ event.title }} - WOVCC Event{% else %}Event Details - WOVCC{% endif %}{% endblock %}
+{% block twitter_title %}{% if event %}{{ event.title }} - WOVCC Event{% else %}Event Details - WOVCC{% endif %}{%
+endblock %}
 
-{% block twitter_description %}{% if event %}{{ event.short_description }}{% else %}Event details for Wickersley Old Village Cricket Club{% endif %}{% endblock %}
+{% block twitter_description %}{% if event %}{{ event.short_description }}{% else %}Event details for Wickersley Old
+Village Cricket Club{% endif %}{% endblock %}
 
-{% block twitter_image %}{% if event and event.image_url %}{{ site_base_url }}{{ event.image_url }}{% else %}{{ site_base_url }}/assets/logo.webp{% endif %}{% endblock %}
+{% block twitter_image %}{% if event and event.image_url %}{{ site_base_url }}{{ event.image_url }}{% else %}{{
+site_base_url }}/assets/logo.webp{% endif %}{% endblock %}
+{% block twitter_image_alt %}{% if event %}{{ event.title }} event at WOVCC{% else %}WOVCC Event{% endif %}{% endblock
+%}
+
+{% block breadcrumb_items %}
+,{
+"@type": "ListItem",
+"position": 2,
+"name": "Events",
+"item": {
+"@type": "WebPage",
+"@id": "{{ site_base_url }}/events"
+}
+}
+{% if event %}
+,{
+"@type": "ListItem",
+"position": 3,
+"name": "{{ event.title | e }}",
+"item": {
+"@type": "WebPage",
+"@id": "{{ site_base_url }}/events/{{ event.id }}"
+}
+}
+{% endif %}
+{% endblock %}
 
 {% block extra_css %}
 {% if event %}
@@ -62,185 +96,194 @@
 {% endblock %}
 
 {% block content %}
-  <!-- Loading Skeleton -->
-  <div id="event-skeleton" class="event-skeleton-container">
-    <div class="event-skeleton-banner"></div>
-    <div class="container section">
-      <div class="event-skeleton-content">
-        <div class="skeleton-line short"></div>
-        <div class="skeleton-line title"></div>
-        <div class="skeleton-line long"></div>
-        <div class="skeleton-line medium"></div>
-        <div class="skeleton-line long"></div>
-      </div>
+<!-- Loading Skeleton -->
+<div id="event-skeleton" class="event-skeleton-container">
+  <div class="event-skeleton-banner"></div>
+  <div class="container section">
+    <div class="event-skeleton-content">
+      <div class="skeleton-line short"></div>
+      <div class="skeleton-line title"></div>
+      <div class="skeleton-line long"></div>
+      <div class="skeleton-line medium"></div>
+      <div class="skeleton-line long"></div>
     </div>
+  </div>
+</div>
+
+<!-- Event Content -->
+<div id="event-content" class="event-detail-page">
+  <!-- Banner Image -->
+  <div id="event-banner-container" class="event-banner-container">
+    <img id="event-banner" src="" alt="Event banner" class="event-banner-image">
   </div>
 
-  <!-- Event Content -->
-  <div id="event-content" class="event-detail-page">
-    <!-- Banner Image -->
-    <div id="event-banner-container" class="event-banner-container">
-      <img id="event-banner" src="" alt="Event banner" class="event-banner-image">
-    </div>
-    
-    <!-- Event Details -->
-    <section class="section">
-      <div class="container">
-        <div class="event-detail-grid">
-          
-          <!-- Main Content -->
-          <div class="event-main-content">
-            <!-- Category Badge -->
-            <div id="event-category" class="event-category-badge"></div>
-            
-            <!-- Title -->
-            <h1 id="event-title" class="event-detail-title"></h1>
-            
-            <!-- Short Description -->
-            <p id="event-short-description" class="event-short-desc"></p>
-            
-            <!-- Long Description -->
-            <div id="event-long-description" class="event-long-desc markdown-content">
-              <!-- Markdown rendered content will go here -->
-            </div>
+  <!-- Event Details -->
+  <section class="section">
+    <div class="container">
+      <div class="event-detail-grid">
+
+        <!-- Main Content -->
+        <div class="event-main-content">
+          <!-- Category Badge -->
+          <div id="event-category" class="event-category-badge"></div>
+
+          <!-- Title -->
+          <h1 id="event-title" class="event-detail-title"></h1>
+
+          <!-- Short Description -->
+          <p id="event-short-description" class="event-short-desc"></p>
+
+          <!-- Long Description -->
+          <div id="event-long-description" class="event-long-desc markdown-content">
+            <!-- Markdown rendered content will go here -->
           </div>
-          
-          <!-- Sidebar -->
-          <aside class="event-sidebar">
-            <div class="event-sidebar-card">
-              <h3 class="event-sidebar-title">Event Details</h3>
-              
-              <!-- Date & Time -->
-              <div class="event-detail-item">
-                <div class="event-detail-row">
-                  <svg class="event-detail-icon" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
-                  </svg>
-                  <div>
-                    <div class="event-detail-label">Date</div>
-                    <div id="event-date-display" class="event-detail-value"></div>
-                  </div>
-                </div>
-                
-                <div id="event-time-container" class="event-time-wrapper">
-                  <div class="event-detail-row">
-                    <svg class="event-detail-icon" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
-                    </svg>
-                    <div>
-                      <div class="event-detail-label">Time</div>
-                      <div id="event-time" class="event-detail-value"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Location -->
-              <div id="event-location-container" class="event-detail-item event-location-wrapper">
-                <div class="event-detail-row">
-                  <svg class="event-detail-icon" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
-                  </svg>
-                  <div>
-                    <div class="event-detail-label">Location</div>
-                    <div id="event-location" class="event-detail-value"></div>
-                  </div>
-                </div>
-                
-                <!-- Google Maps Embed -->
-                <div id="event-map-container" class="event-map-container">
-                  <iframe
-                    id="event-map"
-                    data-maps-api-key="{{ google_maps_api_key }}"
-                    width="100%"
-                    height="200"
-                    style="border:0;"
-                    loading="lazy"
-                    allowfullscreen
-                    referrerpolicy="no-referrer-when-downgrade">
-                  </iframe>
-                </div>
-              </div>
-              
-              <!-- Interested Count -->
-              <div class="event-interested-badge">
-                <svg class="event-interested-icon" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
-                </svg>
-                <span id="interested-count" class="event-interested-count">0</span>
-                <span>interested</span>
-              </div>
-              
-              <!-- Interest Button -->
-              <button id="interest-button" class="btn {{ 'btn-primary' if user_interested else 'btn-outline' }} event-interest-btn" data-initial-interested="{{ 'true' if user_interested else 'false' }}" aria-pressed="{{ 'true' if user_interested else 'false' }}">
-                <svg id="interest-icon" class="btn-icon" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
-                </svg>
-                <span id="interest-text">{{ "I'm Interested ✓" if user_interested else "I'm Interested" }}</span>
-              </button>
-              
-              <!-- Recurring Info -->
-              <div id="recurring-info" class="event-recurring-badge">
-                <strong>🔄 Recurring Event</strong>
-                <div id="recurring-pattern" class="recurring-pattern-text"></div>
-              </div>
-              
-              <!-- Back Button -->
-              <a href="/events" class="btn btn-outline event-back-btn">
-                <svg class="btn-icon" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
-                </svg>
-                Back to Events
-              </a>
-            </div>
-          </aside>
         </div>
-      </div>
-    </section>
-  </div>
-  
-  <!-- Error Message -->
-  <div id="event-error" class="event-error-container">
-    <section class="section">
-      <div class="container event-error-content">
-        <svg class="event-error-icon" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-        </svg>
-        <h2 class="event-error-title">Event Not Found</h2>
-        <p class="event-error-message">
-          The event you're looking for doesn't exist or has been removed.
-        </p>
-        <a href="/events" class="btn btn-primary">View All Events</a>
-      </div>
-    </section>
-  </div>
-  
-  <!-- Non-Member Interest Modal -->
-  <div id="interest-modal" class="interest-modal">
-    <div class="interest-modal-content">
-      <div class="interest-modal-header">
-        <h3 class="interest-modal-title">Show Your Interest</h3>
-        <button class="interest-modal-close" id="modal-close" aria-label="Close">&times;</button>
-      </div>
-      <div class="interest-modal-body">
-        <p class="interest-modal-description">
-          Please provide your details to show you're interested in this event.
-        </p>
-        <form id="interest-form" class="interest-form">
-          <div class="form-group">
-            <label class="form-label" for="interest-name">Name</label>
-            <input type="text" id="interest-name" class="form-input" required>
+
+        <!-- Sidebar -->
+        <aside class="event-sidebar">
+          <div class="event-sidebar-card">
+            <h3 class="event-sidebar-title">Event Details</h3>
+
+            <!-- Date & Time -->
+            <div class="event-detail-item">
+              <div class="event-detail-row">
+                <svg class="event-detail-icon" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd"
+                    d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                    clip-rule="evenodd" />
+                </svg>
+                <div>
+                  <div class="event-detail-label">Date</div>
+                  <div id="event-date-display" class="event-detail-value"></div>
+                </div>
+              </div>
+
+              <div id="event-time-container" class="event-time-wrapper">
+                <div class="event-detail-row">
+                  <svg class="event-detail-icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                      clip-rule="evenodd" />
+                  </svg>
+                  <div>
+                    <div class="event-detail-label">Time</div>
+                    <div id="event-time" class="event-detail-value"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Location -->
+            <div id="event-location-container" class="event-detail-item event-location-wrapper">
+              <div class="event-detail-row">
+                <svg class="event-detail-icon" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd"
+                    d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                    clip-rule="evenodd" />
+                </svg>
+                <div>
+                  <div class="event-detail-label">Location</div>
+                  <div id="event-location" class="event-detail-value"></div>
+                </div>
+              </div>
+
+              <!-- Google Maps Embed -->
+              <div id="event-map-container" class="event-map-container">
+                <iframe id="event-map" data-maps-api-key="{{ google_maps_api_key }}" width="100%" height="200"
+                  style="border:0;" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+              </div>
+            </div>
+
+            <!-- Interested Count -->
+            <div class="event-interested-badge">
+              <svg class="event-interested-icon" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+              </svg>
+              <span id="interested-count" class="event-interested-count">0</span>
+              <span>interested</span>
+            </div>
+
+            <!-- Interest Button -->
+            <button id="interest-button"
+              class="btn {{ 'btn-primary' if user_interested else 'btn-outline' }} event-interest-btn"
+              data-initial-interested="{{ 'true' if user_interested else 'false' }}"
+              aria-pressed="{{ 'true' if user_interested else 'false' }}">
+              <svg id="interest-icon" class="btn-icon" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                  d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                  clip-rule="evenodd" />
+              </svg>
+              <span id="interest-text">{{ "I'm Interested ✓" if user_interested else "I'm Interested" }}</span>
+            </button>
+
+            <!-- Recurring Info -->
+            <div id="recurring-info" class="event-recurring-badge">
+              <strong>🔄 Recurring Event</strong>
+              <div id="recurring-pattern" class="recurring-pattern-text"></div>
+            </div>
+
+            <!-- Back Button -->
+            <a href="/events" class="btn btn-outline event-back-btn">
+              <svg class="btn-icon" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                  d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+                  clip-rule="evenodd" />
+              </svg>
+              Back to Events
+            </a>
           </div>
-          <div class="form-group">
-            <label class="form-label" for="interest-email">Email</label>
-            <input type="email" id="interest-email" class="form-input" required>
-          </div>
-          <div class="interest-form-actions">
-            <button type="button" class="btn btn-outline" id="modal-cancel">Cancel</button>
-            <button type="submit" class="btn btn-primary">Submit</button>
-          </div>
-        </form>
+        </aside>
       </div>
     </div>
+  </section>
+</div>
+
+<!-- Error Message -->
+<div id="event-error" class="event-error-container">
+  <section class="section">
+    <div class="container event-error-content">
+      <svg class="event-error-icon" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd"
+          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+          clip-rule="evenodd" />
+      </svg>
+      <h2 class="event-error-title">Event Not Found</h2>
+      <p class="event-error-message">
+        The event you're looking for doesn't exist or has been removed.
+      </p>
+      <a href="/events" class="btn btn-primary">View All Events</a>
+    </div>
+  </section>
+</div>
+
+<!-- Non-Member Interest Modal -->
+<div id="interest-modal" class="interest-modal">
+  <div class="interest-modal-content">
+    <div class="interest-modal-header">
+      <h3 class="interest-modal-title">Show Your Interest</h3>
+      <button class="interest-modal-close" id="modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="interest-modal-body">
+      <p class="interest-modal-description">
+        Please provide your details to show you're interested in this event.
+      </p>
+      <form id="interest-form" class="interest-form">
+        <div class="form-group">
+          <label class="form-label" for="interest-name">Name</label>
+          <input type="text" id="interest-name" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="interest-email">Email</label>
+          <input type="email" id="interest-email" class="form-input" required>
+        </div>
+        <div class="interest-form-actions">
+          <button type="button" class="btn btn-outline" id="modal-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+      </form>
+    </div>
   </div>
+</div>
 {% endblock %}

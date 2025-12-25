@@ -1,8 +1,24 @@
 {% extends "layout.html" %}
 
-{% block title %}Matches, Fixtures & Results - WOVCC | Wickersley Old Village Cricket Club{% endblock %}
+{% block title %}Fixtures & Results | WOVCC{% endblock %}
 
-{% block description %}{% if cricket_data %}View {{ cricket_data.fixtures_count }} upcoming fixtures and {{ cricket_data.results_count }} recent results for Wickersley Old Village Cricket Club teams in the Yorkshire Cricket Southern Premier League.{% else %}View upcoming cricket fixtures and recent match results for Wickersley Old Village Cricket Club teams in the Yorkshire Cricket Southern Premier League.{% endif %}{% endblock %}
+{% block description %}{% if cricket_data %}View {{ cricket_data.fixtures_count }} upcoming fixtures and {{
+cricket_data.results_count }} recent results for Wickersley Old Village Cricket Club teams in the Yorkshire Cricket
+Southern Premier League.{% else %}View upcoming cricket fixtures and recent match results for Wickersley Old Village
+Cricket Club teams competing in the Yorkshire Cricket Southern Premier League, Women's Cricket League, and Junior
+Cricket.{% endif %}{% endblock %}
+
+{% block breadcrumb_items %}
+,{
+"@type": "ListItem",
+"position": 2,
+"name": "Matches",
+"item": {
+"@type": "WebPage",
+"@id": "{{ site_base_url }}/matches"
+}
+}
+{% endblock %}
 
 {% block extra_css %}
 <!-- Schema.org SportsOrganization structured data -->
@@ -39,184 +55,206 @@
 {% endblock %}
 
 {% block content %}
-  <!-- Page Header -->
-  <section class="hero matches-hero">
-    <div class="hero-content">
-      <h1>Matches</h1>
-      <p>Fixtures and Results</p>
-    </div>
-  </section>
+<!-- Page Header -->
+<section class="hero matches-hero">
+  <div class="hero-content">
+    <h1>Matches</h1>
+    <p>Fixtures and Results</p>
+  </div>
+</section>
 
-  <!-- SEO Intro Section -->
-  <section class="section" style="padding-bottom: 1.5rem;">
-    <div class="container">
-      <div style="max-width: 800px; margin: 0 auto; text-align: center;">
-        <p style="color: var(--text-secondary); line-height: 1.8; font-size: 1.05rem; margin-bottom: 2rem;">
-          Follow all our teams' fixtures and results throughout the cricket season. 
-          Our senior teams compete in the Yorkshire Cricket Southern Premier League, 
-          while our women's teams (The Vixens) play in the Yorkshire Women's Cricket League.
-        </p>
-        {% if teams and teams|length > 0 %}
-        <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.75rem;">
-          <strong>Our Teams:</strong> 
-          {% for team in teams[:5] %}{{ team.name }}{% if not loop.last %}, {% endif %}{% endfor %}{% if teams|length > 5 %} and more{% endif %}
-        </p>
-        {% endif %}
+<!-- SEO Intro Section -->
+<section class="section" style="padding-bottom: 1.5rem;">
+  <div class="container">
+    <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+      <p style="color: var(--text-secondary); line-height: 1.8; font-size: 1.05rem; margin-bottom: 2rem;">
+        Follow all our teams' fixtures and results throughout the cricket season.
+        Our senior teams compete in the Yorkshire Cricket Southern Premier League,
+        while our women's teams (The Vixens) play in the Yorkshire Women's Cricket League.
+      </p>
+      {% if teams and teams|length > 0 %}
+      <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.75rem;">
+        <strong>Our Teams:</strong>
+        {% for team in teams[:5] %}{{ team.name }}{% if not loop.last %}, {% endif %}{% endfor %}{% if teams|length > 5
+        %} and more{% endif %}
+      </p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- Matches Section -->
+<section class="section" style="padding-top: 2rem; padding-bottom: 3rem;">
+  <div class="container">
+    <!-- Team Filter -->
+    <div style="text-align: center; margin-bottom: 30px;">
+      <label for="team-selector" style="font-weight: 600; margin-right: 10px; color: var(--text-dark);">Select
+        Team:</label>
+      <select id="team-selector"
+        style="padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border-color); background: white; font-family: var(--font-family); font-size: 1rem; cursor: pointer;">
+        <option value="all">All Teams</option>
+        <!-- Options will be populated by JavaScript -->
+      </select>
+    </div>
+
+    <!-- Tabs -->
+    <div class="match-tabs">
+      <button class="tab-btn active" data-tab="fixtures" id="fixtures-tab-btn">
+        <svg style="width: 18px; height: 18px; margin-right: 6px; vertical-align: middle;" fill="currentColor"
+          viewBox="0 0 20 20">
+          <path fill-rule="evenodd"
+            d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+            clip-rule="evenodd" />
+        </svg>
+        Upcoming Fixtures
+      </button>
+      <button class="tab-btn" data-tab="results" id="results-tab-btn">
+        <svg style="width: 18px; height: 18px; margin-right: 6px; vertical-align: middle;" fill="currentColor"
+          viewBox="0 0 20 20">
+          <path fill-rule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+            clip-rule="evenodd" />
+        </svg>
+        Recent Results
+      </button>
+    </div>
+
+    <!-- Tab Contents -->
+    <div class="tab-content active" id="fixtures-content">
+      <div id="fixtures-container">
+        <!-- Skeleton loader will be shown here -->
       </div>
     </div>
-  </section>
 
-  <!-- Matches Section -->
-  <section class="section" style="padding-top: 2rem; padding-bottom: 3rem;">
-    <div class="container">
-      <!-- Team Filter -->
-      <div style="text-align: center; margin-bottom: 30px;">
-        <label for="team-selector" style="font-weight: 600; margin-right: 10px; color: var(--text-dark);">Select Team:</label>
-        <select id="team-selector" style="padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border-color); background: white; font-family: var(--font-family); font-size: 1rem; cursor: pointer;">
-          <option value="all">All Teams</option>
-          <!-- Options will be populated by JavaScript -->
-        </select>
+    <div class="tab-content" id="results-content">
+      <div id="results-container">
+        <!-- Skeleton loader will be shown here -->
       </div>
-      
-      <!-- Tabs -->
-      <div class="match-tabs">
-        <button class="tab-btn active" data-tab="fixtures" id="fixtures-tab-btn">
-          <svg style="width: 18px; height: 18px; margin-right: 6px; vertical-align: middle;" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
-          </svg>
-          Upcoming Fixtures
-        </button>
-        <button class="tab-btn" data-tab="results" id="results-tab-btn">
-          <svg style="width: 18px; height: 18px; margin-right: 6px; vertical-align: middle;" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-          </svg>
-          Recent Results
-        </button>
-      </div>
-      
-      <!-- Tab Contents -->
-      <div class="tab-content active" id="fixtures-content">
-        <div id="fixtures-container">
-          <!-- Skeleton loader will be shown here -->
-        </div>
-      </div>
-      
-      <div class="tab-content" id="results-content">
-        <div id="results-container">
-          <!-- Skeleton loader will be shown here -->
-        </div>
-      </div>
-      
-      <!-- Last Updated Timestamp -->
-      <div id="last-updated-container" style="margin-top: 30px;"></div>
     </div>
-  </section>
 
-  <!-- SEO Content Section -->
-  <section class="section" style="background: linear-gradient(180deg, var(--surface-color) 0%, white 100%); margin-top: 3rem;">
-    <div class="container">
-      <div style="max-width: 1000px; margin: 0 auto;">
-        <div style="text-align: center; margin-bottom: 3rem;">
-          <h2 style="font-size: 2rem; margin-bottom: 0.75rem; font-weight: 700; color: var(--primary-color);">About WOVCC Cricket</h2>
-          <p style="color: var(--text-secondary); font-size: 1.05rem;">Following our teams across all levels</p>
+    <!-- Last Updated Timestamp -->
+    <div id="last-updated-container" style="margin-top: 30px;"></div>
+  </div>
+</section>
+
+<!-- SEO Content Section -->
+<section class="section"
+  style="background: linear-gradient(180deg, var(--surface-color) 0%, white 100%); margin-top: 3rem;">
+  <div class="container">
+    <div style="max-width: 1000px; margin: 0 auto;">
+      <div style="text-align: center; margin-bottom: 3rem;">
+        <h2 style="font-size: 2rem; margin-bottom: 0.75rem; font-weight: 700; color: var(--primary-color);">About WOVCC
+          Cricket</h2>
+        <p style="color: var(--text-secondary); font-size: 1.05rem;">Following our teams across all levels</p>
+      </div>
+      <div
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2.5rem; margin-bottom: 3rem;">
+        <div
+          style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease;">
+          <h3 style="font-size: 1.2rem; margin-bottom: 0.75rem; font-weight: 700; color: var(--primary-color);">Senior
+            Cricket</h3>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; margin: 0;">
+            Three senior teams competing in the Championship, Division 1 &amp; Division 5 of the Yorkshire Cricket
+            Southern Premier League.
+          </p>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2.5rem; margin-bottom: 3rem;">
-          <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease;">
-            <h3 style="font-size: 1.2rem; margin-bottom: 0.75rem; font-weight: 700; color: var(--primary-color);">Senior Cricket</h3>
-            <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; margin: 0;">
-              Three senior teams competing in the Championship, Division 1 &amp; Division 5 of the Yorkshire Cricket Southern Premier League.
-            </p>
-          </div>
-          <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease;">
-            <h3 style="font-size: 1.2rem; margin-bottom: 0.75rem; font-weight: 700; color: var(--primary-color);">Women's Cricket</h3>
-            <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; margin: 0;">
-              The Vixens field three teams in the Yorkshire Women's Cricket League across hardball and softball divisions.
-            </p>
-          </div>
-          <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease;">
-            <h3 style="font-size: 1.2rem; margin-bottom: 0.75rem; font-weight: 700; color: var(--primary-color);">Junior Cricket</h3>
-            <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; margin: 0;">
-              Teams at U9, U11, U13, U15 and U18 levels in the Ben Jessop Junior Cricket League, plus All Stars and Dynamos programmes.
-            </p>
-          </div>
+        <div
+          style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease;">
+          <h3 style="font-size: 1.2rem; margin-bottom: 0.75rem; font-weight: 700; color: var(--primary-color);">Women's
+            Cricket</h3>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; margin: 0;">
+            The Vixens field three teams in the Yorkshire Women's Cricket League across hardball and softball divisions.
+          </p>
         </div>
-        
-        <div style="text-align: center; padding: 2rem; background: var(--secondary-bg); border-radius: 12px;">
-          <p style="margin: 0; color: var(--text-secondary); font-size: 1rem;">
-            Match data sourced from <a href="https://wov.play-cricket.com/home" target="_blank" rel="noopener" style="color: var(--accent-color); font-weight: 600; text-decoration: underline;">Play-Cricket</a> — 
-            visit for detailed scorecards, league tables, and player statistics.
+        <div
+          style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease;">
+          <h3 style="font-size: 1.2rem; margin-bottom: 0.75rem; font-weight: 700; color: var(--primary-color);">Junior
+            Cricket</h3>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; margin: 0;">
+            Teams at U9, U11, U13, U15 and U18 levels in the Ben Jessop Junior Cricket League, plus All Stars and
+            Dynamos programmes.
           </p>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- Tab Styles -->
-  <style>
-    .match-tabs {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 30px;
-      border-bottom: 2px solid var(--border-color);
-      justify-content: center;
-      flex-wrap: wrap;
+      <div style="text-align: center; padding: 2rem; background: var(--secondary-bg); border-radius: 12px;">
+        <p style="margin: 0; color: var(--text-secondary); font-size: 1rem;">
+          Match data sourced from <a href="https://wov.play-cricket.com/home" target="_blank" rel="noopener"
+            style="color: var(--accent-color); font-weight: 600; text-decoration: underline;">Play-Cricket</a> —
+          visit for detailed scorecards, league tables, and player statistics.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Tab Styles -->
+<style>
+  .match-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    border-bottom: 2px solid var(--border-color);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    padding: 12px 24px;
+    background: none;
+    border: none;
+    color: var(--text-light);
+    font-family: var(--font-family);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    display: flex;
+    align-items: center;
+  }
+
+  .tab-btn:hover {
+    color: var(--primary-color);
+  }
+
+  .tab-btn.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+  }
+
+  .tab-content {
+    display: none;
+  }
+
+  .tab-content.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
     }
-    
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 768px) {
     .tab-btn {
-      padding: 12px 24px;
-      background: none;
-      border: none;
-      color: var(--text-light);
-      font-family: var(--font-family);
-      font-size: 1rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: var(--transition);
-      border-bottom: 3px solid transparent;
-      margin-bottom: -2px;
-      display: flex;
-      align-items: center;
+      font-size: 0.9rem;
+      padding: 10px 16px;
     }
-    
-    .tab-btn:hover {
-      color: var(--primary-color);
+
+    .tab-btn svg {
+      width: 16px;
+      height: 16px;
     }
-    
-    .tab-btn.active {
-      color: var(--primary-color);
-      border-bottom-color: var(--primary-color);
-    }
-    
-    .tab-content {
-      display: none;
-    }
-    
-    .tab-content.active {
-      display: block;
-      animation: fadeIn 0.3s ease;
-    }
-    
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    
-    @media (max-width: 768px) {
-      .tab-btn {
-        font-size: 0.9rem;
-        padding: 10px 16px;
-      }
-      
-      .tab-btn svg {
-        width: 16px;
-        height: 16px;
-      }
-    }
-  </style>
+  }
+</style>
 {% endblock %}

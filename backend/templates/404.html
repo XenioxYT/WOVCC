@@ -1,7 +1,10 @@
 {% extends "layout.html" %}
 
 {% block title %}Page Not Found | WOVCC{% endblock %}
-{% block description %}The page you're looking for could not be found.{% endblock %}
+{% block description %}The page you're looking for could not be found at Wickersley Old Village Cricket Club website.{%
+endblock %}
+
+{% block robots %}noindex, nofollow{% endblock %}
 
 {% block content %}
 <section class="error-section section">
@@ -10,7 +13,7 @@
       <div class="error-code">404</div>
       <h1 class="error-title">Page Not Found</h1>
       <p class="error-message">
-        Sorry, we couldn't find the page you're looking for. 
+        Sorry, we couldn't find the page you're looking for.
         It may have been moved or deleted.
       </p>
       <div class="error-actions">
@@ -18,7 +21,7 @@
         <a href="/matches" class="btn btn-secondary">View Matches</a>
         <a href="/join" class="btn btn-secondary">Join WOVCC</a>
       </div>
-      
+
       <div class="error-help">
         <h3>Need Help?</h3>
         <p>Try one of these popular pages:</p>
@@ -33,116 +36,116 @@
 </section>
 
 <style>
-.error-section {
-  min-height: 70vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-}
+  .error-section {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+  }
 
-.error-content {
-  text-align: center;
-  max-width: 700px;
-  margin: 0 auto;
-}
+  .error-content {
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto;
+  }
 
-.error-code {
-  font-size: 120px;
-  font-weight: 700;
-  color: var(--primary-color);
-  line-height: 1;
-  margin-bottom: 20px;
-  opacity: 0.2;
-  text-shadow: 0 4px 12px rgba(26, 95, 95, 0.1);
-}
-
-.error-title {
-  font-size: 2.5rem;
-  font-weight: 600;
-  color: var(--text-dark);
-  margin-bottom: 20px;
-}
-
-.error-message {
-  font-size: 1.2rem;
-  color: var(--text-light);
-  margin-bottom: 40px;
-  line-height: 1.8;
-}
-
-.error-actions {
-  display: flex;
-  gap: 15px;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-bottom: 60px;
-}
-
-.error-help {
-  background: var(--glass-bg);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  padding: 30px;
-  box-shadow: var(--glass-shadow);
-  margin-top: 40px;
-}
-
-.error-help h3 {
-  color: var(--primary-color);
-  margin-bottom: 15px;
-  font-size: 1.3rem;
-}
-
-.error-help p {
-  color: var(--text-light);
-  margin-bottom: 20px;
-}
-
-.error-help ul {
-  list-style: none;
-  padding: 0;
-}
-
-.error-help li {
-  margin: 10px 0;
-}
-
-.error-help a {
-  color: var(--primary-color);
-  text-decoration: none;
-  font-weight: 500;
-  transition: var(--transition);
-}
-
-.error-help a:hover {
-  color: var(--primary-dark);
-  text-decoration: underline;
-}
-
-@media (max-width: 768px) {
   .error-code {
-    font-size: 80px;
+    font-size: 120px;
+    font-weight: 700;
+    color: var(--primary-color);
+    line-height: 1;
+    margin-bottom: 20px;
+    opacity: 0.2;
+    text-shadow: 0 4px 12px rgba(26, 95, 95, 0.1);
   }
-  
+
   .error-title {
-    font-size: 2rem;
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 20px;
   }
-  
+
   .error-message {
-    font-size: 1rem;
+    font-size: 1.2rem;
+    color: var(--text-light);
+    margin-bottom: 40px;
+    line-height: 1.8;
   }
-  
+
   .error-actions {
-    flex-direction: column;
-    align-items: stretch;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 60px;
   }
-  
-  .error-actions .btn {
-    width: 100%;
+
+  .error-help {
+    background: var(--glass-bg);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: var(--glass-shadow);
+    margin-top: 40px;
   }
-}
+
+  .error-help h3 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+  }
+
+  .error-help p {
+    color: var(--text-light);
+    margin-bottom: 20px;
+  }
+
+  .error-help ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .error-help li {
+    margin: 10px 0;
+  }
+
+  .error-help a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: var(--transition);
+  }
+
+  .error-help a:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+  }
+
+  @media (max-width: 768px) {
+    .error-code {
+      font-size: 80px;
+    }
+
+    .error-title {
+      font-size: 2rem;
+    }
+
+    .error-message {
+      font-size: 1rem;
+    }
+
+    .error-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .error-actions .btn {
+      width: 100%;
+    }
+  }
 </style>
 {% endblock %}

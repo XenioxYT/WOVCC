@@ -1,45 +1,207 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <meta name="description" content="{% block description %}Wickersley Old Village Cricket Club - Community cricket in Rotherham{% endblock %}">
+  <meta name="description"
+    content="{% block description %}Wickersley Old Village Cricket Club - Community cricket in Rotherham{% endblock %}">
   <title>{% block title %}WOVCC | Wickersley Old Village Cricket Club{% endblock %}</title>
-  
+
+  <!-- Robots Meta Tag -->
+  <meta name="robots" content="{% block robots %}index, follow{% endblock %}">
+
+  <!-- Additional SEO Meta Tags -->
+  <meta name="author" content="Wickersley Old Village Cricket Club">
+  <meta name="theme-color" content="#1a5f5f">
+  <meta name="format-detection" content="telephone=yes">
+
+  <!-- Geo Meta Tags (Local SEO) -->
+  <meta name="geo.region" content="GB-SYK">
+  <meta name="geo.placename" content="Wickersley, Rotherham">
+  <meta name="geo.position" content="53.4147;-1.2978">
+  <meta name="ICBM" content="53.4147, -1.2978">
+
   <!-- Favicons -->
   <link rel="icon" type="image/webp" href="/assets/logo_favicon.webp">
   <link rel="apple-touch-icon" href="/assets/logo_favicon.webp">
-  
+  <link rel="icon" type="image/webp" sizes="32x32" href="/assets/logo_favicon.webp">
+  <link rel="icon" type="image/webp" sizes="16x16" href="/assets/logo_favicon.webp">
+
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="{% block og_type %}website{% endblock %}">
   <meta property="og:url" content="{{ request.url }}">
   <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
   <meta property="og:description" content="{% block og_description %}{{ self.description() }}{% endblock %}">
   <meta property="og:image" content="{% block og_image %}{{ site_base_url }}/assets/logo.webp{% endblock %}">
+  <meta property="og:image:width" content="{% block og_image_width %}400{% endblock %}">
+  <meta property="og:image:height" content="{% block og_image_height %}400{% endblock %}">
+  <meta property="og:image:alt"
+    content="{% block og_image_alt %}Wickersley Old Village Cricket Club Logo{% endblock %}">
   <meta property="og:site_name" content="Wickersley Old Village Cricket Club">
-  
+  <meta property="og:locale" content="en_GB">
+
   <!-- Twitter -->
   <meta name="twitter:card" content="{% block twitter_card %}summary{% endblock %}">
   <meta name="twitter:site" content="@wickersleyovcc">
+  <meta name="twitter:creator" content="@wickersleyovcc">
   <meta name="twitter:title" content="{% block twitter_title %}{{ self.title() }}{% endblock %}">
   <meta name="twitter:description" content="{% block twitter_description %}{{ self.description() }}{% endblock %}">
   <meta name="twitter:image" content="{% block twitter_image %}{{ site_base_url }}/assets/logo.webp{% endblock %}">
-  
+  <meta name="twitter:image:alt"
+    content="{% block twitter_image_alt %}Wickersley Old Village Cricket Club Logo{% endblock %}">
+
   <!-- Canonical URL -->
   <link rel="canonical" href="{% block canonical %}{{ site_base_url }}{{ request.path }}{% endblock %}">
-  
+
   <!-- Preconnect to external domains -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  
+
   <!-- Preload critical scripts -->
   <link rel="preload" href="/scripts/page-transitions.js" as="script">
-  
+
+  <!-- Organization Schema.org Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SportsClub",
+    "@id": "{{ site_base_url }}/#organization",
+    "name": "Wickersley Old Village Cricket Club",
+    "alternateName": ["WOVCC", "Wickersley Cricket Club", "Wickersley OV CC"],
+    "url": "{{ site_base_url }}",
+    "logo": "{{ site_base_url }}/assets/logo.webp",
+    "image": "{{ site_base_url }}/assets/banner.webp",
+    "description": "Community cricket club in Wickersley, Rotherham offering ECB Premier League Cricket, Women's Cricket, and Junior Cricket including Dynamos and All Stars programmes.",
+    "sport": "Cricket",
+    "foundingDate": "1900",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "59 Northfield Lane",
+      "addressLocality": "Wickersley",
+      "addressRegion": "South Yorkshire",
+      "postalCode": "S66 2HL",
+      "addressCountry": "GB"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 53.4147,
+      "longitude": -1.2978
+    },
+    "telephone": "+441709700536",
+    "email": "wovcc10@gmail.com",
+    "openingHoursSpecification": [
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday", "Wednesday", "Thursday"],
+        "opens": "16:00",
+        "closes": "22:00"
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": "Tuesday",
+        "opens": "16:00",
+        "closes": "22:30"
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": "Friday",
+        "opens": "16:00",
+        "closes": "23:00"
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": "Saturday",
+        "opens": "12:00",
+        "closes": "23:00"
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": "Sunday",
+        "opens": "12:00",
+        "closes": "22:00"
+      }
+    ],
+    "sameAs": [
+      "https://www.facebook.com/wickersleyovcc/",
+      "https://www.instagram.com/wovcc/",
+      "https://x.com/wickersleyovcc",
+      "https://wov.play-cricket.com/home"
+    ],
+    "memberOf": {
+      "@type": "SportsOrganization",
+      "name": "Yorkshire Cricket Southern Premier League"
+    },
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "Membership",
+      "itemListElement": [
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Annual Membership",
+            "description": "Annual membership with bar discounts and member benefits"
+          },
+          "price": "15.00",
+          "priceCurrency": "GBP"
+        }
+      ]
+    }
+  }
+  </script>
+
+  <!-- WebSite Schema.org (for Sitelinks Search Box) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": "{{ site_base_url }}/#website",
+    "name": "Wickersley Old Village Cricket Club",
+    "alternateName": "WOVCC",
+    "url": "{{ site_base_url }}",
+    "publisher": {
+      "@id": "{{ site_base_url }}/#organization"
+    },
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "{{ site_base_url }}/events?search={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+
+  <!-- BreadcrumbList Schema.org -->
+  {% block breadcrumb_schema %}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": {
+          "@type": "WebPage",
+          "@id": "{{ site_base_url }}/"
+        }
+      }
+      {% block breadcrumb_items %}{% endblock %}
+    ]
+  }
+  </script>
+  {% endblock %}
+
   <!-- Stylesheets -->
   <link rel="stylesheet" href="/styles/main.css">
   <link rel="stylesheet" href="/styles/pages.css">
   {% block extra_css %}{% endblock %}
 </head>
+
 <body>
   <!-- Navigation Bar -->
   <nav class="navbar">
@@ -49,12 +211,12 @@
         <span></span>
         <span></span>
       </button>
-      
+
       <a href="/" class="navbar-brand">
         <img src="/assets/logo.webp" alt="WOVCC Logo" width="40" height="40">
         <span>WOVCC</span>
       </a>
-      
+
       <ul class="nav-menu" id="nav-menu" role="menubar">
         <li><a href="/" class="nav-link">Home</a></li>
         <li><a href="/matches" class="nav-link">Matches</a></li>
@@ -65,7 +227,7 @@
         <li><a href="/contact" class="nav-link">Contact</a></li>
         <li id="admin-nav-link" style="display: none;"><a href="/admin" class="nav-link">Admin</a></li>
       </ul>
-      
+
       <!-- User Dropdown (shown when logged in) -->
       <div class="user-menu" id="user-menu">
         <span class="user-name" id="user-name-display">Member</span>
@@ -89,56 +251,26 @@
       <div class="sponsors-band">
         {% for sponsor in sponsors %}
         {% if sponsor.website_url %}
-        <a 
-          href="{{ sponsor.website_url }}" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          class="sponsor-logo-link"
+        <a href="{{ sponsor.website_url }}" target="_blank" rel="noopener noreferrer" class="sponsor-logo-link"
           title="{{ sponsor.name }}">
-          <img 
-            src="{{ sponsor.logo_url }}" 
-            alt="{{ sponsor.name }}" 
-            class="sponsor-logo"
-            loading="lazy">
+          <img src="{{ sponsor.logo_url }}" alt="{{ sponsor.name }}" class="sponsor-logo" loading="lazy">
         </a>
         {% else %}
-        <span 
-          class="sponsor-logo-link"
-          style="cursor: default;"
-          title="{{ sponsor.name }}">
-          <img 
-            src="{{ sponsor.logo_url }}" 
-            alt="{{ sponsor.name }}" 
-            class="sponsor-logo"
-            loading="lazy">
+        <span class="sponsor-logo-link" style="cursor: default;" title="{{ sponsor.name }}">
+          <img src="{{ sponsor.logo_url }}" alt="{{ sponsor.name }}" class="sponsor-logo" loading="lazy">
         </span>
         {% endif %}
         {% endfor %}
         <!-- Duplicate for seamless loop -->
         {% for sponsor in sponsors %}
         {% if sponsor.website_url %}
-        <a 
-          href="{{ sponsor.website_url }}" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          class="sponsor-logo-link"
+        <a href="{{ sponsor.website_url }}" target="_blank" rel="noopener noreferrer" class="sponsor-logo-link"
           title="{{ sponsor.name }}">
-          <img 
-            src="{{ sponsor.logo_url }}" 
-            alt="{{ sponsor.name }}" 
-            class="sponsor-logo"
-            loading="lazy">
+          <img src="{{ sponsor.logo_url }}" alt="{{ sponsor.name }}" class="sponsor-logo" loading="lazy">
         </a>
         {% else %}
-        <span 
-          class="sponsor-logo-link"
-          style="cursor: default;"
-          title="{{ sponsor.name }}">
-          <img 
-            src="{{ sponsor.logo_url }}" 
-            alt="{{ sponsor.name }}" 
-            class="sponsor-logo"
-            loading="lazy">
+        <span class="sponsor-logo-link" style="cursor: default;" title="{{ sponsor.name }}">
+          <img src="{{ sponsor.logo_url }}" alt="{{ sponsor.name }}" class="sponsor-logo" loading="lazy">
         </span>
         {% endif %}
         {% endfor %}
@@ -151,14 +283,10 @@
     <div class="container">
       <div class="newsletter-content">
         <h2>Want to hear more about us?</h2>
-        <p>Stay up to date with match results, club news, events and exclusive member updates delivered straight to your inbox.</p>
+        <p>Stay up to date with match results, club news, events and exclusive member updates delivered straight to your
+          inbox.</p>
         <form class="newsletter-form-main">
-          <input 
-            type="email" 
-            placeholder="Enter your email address" 
-            class="form-input newsletter-input-main"
-            required
-          >
+          <input type="email" placeholder="Enter your email address" class="form-input newsletter-input-main" required>
           <button type="submit" class="btn btn-primary">Subscribe</button>
         </form>
       </div>
@@ -175,14 +303,16 @@
           <p>
             Community cricket in Wickersley. All ages and abilities welcome.
           </p>
-          <img src="/assets/logo.webp" alt="WOVCC Logo" loading="lazy" width="80" height="80" style="margin-top: 15px; border-radius: 50%;">
+          <img src="/assets/logo.webp" alt="WOVCC Logo" loading="lazy" width="80" height="80"
+            style="margin-top: 15px; border-radius: 50%;">
         </div>
-        
+
         <!-- Opening Hours -->
         <div class="footer-section">
           <h3>Opening Hours</h3>
           <p style="font-size: 0.95rem; line-height: 1.8;">
-            {{ snippets.get('footer_opening_hours', 'Mon-Thu: 4pm-10pm<br>Tue: 4pm-10:30pm<br>Fri: 4pm-11pm<br>Sat: 12pm-11pm<br>Sun: 12pm-10pm') }}
+            {{ snippets.get('footer_opening_hours', 'Mon-Thu: 4pm-10pm<br>Tue: 4pm-10:30pm<br>Fri: 4pm-11pm<br>Sat:
+            12pm-11pm<br>Sun: 12pm-10pm') }}
           </p>
         </div>
 
@@ -203,26 +333,38 @@
           {% endif %}
         </div>
         {% endif %}
-        
+
         <!-- Follow Us -->
         <div class="footer-section">
           <h3>Follow Us</h3>
           <div class="social-links">
             <a href="https://www.facebook.com/wickersleyovcc/" target="_blank" class="social-link" title="Facebook">
-              <svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+              <svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+              </svg>
             </a>
             <a href="https://www.instagram.com/wovcc/" target="_blank" class="social-link" title="Instagram">
-              <svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+              <svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+              </svg>
             </a>
             <a href="https://x.com/wickersleyovcc" target="_blank" class="social-link" title="X (Twitter)">
-              <svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              <svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
             </a>
             <a href="https://wov.play-cricket.com/home" target="_blank" class="social-link" title="Play-Cricket">
-              <svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+              <svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+              </svg>
             </a>
           </div>
         </div>
-        
+
         <!-- Visit Us -->
         <div class="footer-section">
           <h3>Visit Us</h3>
@@ -237,27 +379,23 @@
           </p>
           {% if app_config.google_maps_api_key %}
           <div style="margin-top: 12px; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
-            <iframe
-              title="Map to WOVCC"
-              width="100%"
-              height="200"
-              style="border:0;"
-              loading="lazy"
-              allowfullscreen
+            <iframe title="Map to WOVCC" width="100%" height="200" style="border:0;" loading="lazy" allowfullscreen
               referrerpolicy="no-referrer-when-downgrade"
               src="https://www.google.com/maps/embed/v1/place?key={{ app_config.google_maps_api_key }}&q=Wickersley+Old+Village+Cricket+Club,S66+2HL">
             </iframe>
           </div>
           {% else %}
           <p style="margin-top: 10px; font-size: 0.95rem;">
-            <a href="https://www.google.com/maps?q=Wickersley+Old+Village+Cricket+Club+S66+2HL" target="_blank" rel="noopener" style="color: var(--accent-color); text-decoration: underline;">Open in Google Maps</a>
+            <a href="https://www.google.com/maps?q=Wickersley+Old+Village+Cricket+Club+S66+2HL" target="_blank"
+              rel="noopener" style="color: var(--accent-color); text-decoration: underline;">Open in Google Maps</a>
           </p>
           {% endif %}
         </div>
       </div>
-      
+
       <div class="footer-bottom">
-        <p>&copy; 2025 Wickersley Old Village Cricket Club. All rights reserved. | <a href="/privacy" style="color: var(--accent-color); text-decoration: underline;">Privacy Policy</a></p>
+        <p>&copy; 2025 Wickersley Old Village Cricket Club. All rights reserved. | <a href="/privacy"
+            style="color: var(--accent-color); text-decoration: underline;">Privacy Policy</a></p>
       </div>
     </div>
   </footer>
@@ -282,4 +420,5 @@
   <script src="/scripts/main.js"></script>
   {% block extra_js %}{% endblock %}
 </body>
+
 </html>

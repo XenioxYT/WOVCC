@@ -2,6 +2,10 @@
 
 {% block title %}Payment Cancelled - WOVCC{% endblock %}
 
+{% block description %}Your payment was cancelled. You can try again or return to the homepage.{% endblock %}
+
+{% block robots %}noindex, nofollow{% endblock %}
+
 {% block content %}
 <div class="container" style="max-width: 600px; margin: 100px auto; text-align: center;">
     <div class="card" style="padding: 40px;">
@@ -34,13 +38,23 @@
 
 <style>
     @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
     }
 
     @keyframes drawCross {
-        0% { stroke-dashoffset: 100; }
-        100% { stroke-dashoffset: 0; }
+        0% {
+            stroke-dashoffset: 100;
+        }
+
+        100% {
+            stroke-dashoffset: 0;
+        }
     }
 
     .cross-icon {

@@ -1,308 +1,332 @@
 {% extends "layout.html" %}
 
-{% block title %}Membership - WOVCC | Wickersley Old Village Cricket Club{% endblock %}
+{% block title %}My Membership | WOVCC{% endblock %}
 
-{% block description %}Your membership details and benefits{% endblock %}
+{% block description %}Manage your WOVCC membership, view benefits, and update account settings.{% endblock %}
+
+{% block robots %}noindex, nofollow{% endblock %}
 
 {% block content %}
-  <!-- Page Header -->
-  <section class="hero page-hero" id="membership-hero">
-    <div class="hero-content">
-      <h1 id="membership-hero-title">Your Membership</h1>
-      <p id="membership-hero-subtitle">Manage your membership and benefits</p>
+<!-- Page Header -->
+<section class="hero page-hero" id="membership-hero">
+  <div class="hero-content">
+    <h1 id="membership-hero-title">Your Membership</h1>
+    <p id="membership-hero-subtitle">Manage your membership and benefits</p>
+  </div>
+</section>
+
+<!-- Members Content -->
+<section class="section" style="padding-top: 40px;">
+  <div class="container" style="max-width: 900px;">
+
+    <!-- Logout Button -->
+    <div style="text-align: right; margin-bottom: 20px;">
+      <button id="logout-button" class="btn btn-outline" style="padding: 10px 24px;">
+        Logout
+      </button>
     </div>
-  </section>
 
-  <!-- Members Content -->
-  <section class="section" style="padding-top: 40px;">
-    <div class="container" style="max-width: 900px;">
-      
-      <!-- Logout Button -->
-      <div style="text-align: right; margin-bottom: 20px;">
-        <button id="logout-button" class="btn btn-outline" style="padding: 10px 24px;">
-          Logout
-        </button>
+    <!-- Member Info Grid -->
+    <div style="display: grid; grid-template-columns: 1fr; gap: 25px;">
+
+      <!-- Membership Status Card -->
+      <div class="card" style="border-left: 4px solid var(--primary-color);">
+        <div class="card-body">
+          <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 20px;">
+            <div style="flex: 1; min-width: 250px;">
+              <h3 style="color: var(--primary-color); margin-bottom: 20px; font-size: 1.4rem;">Your Membership</h3>
+
+              <div style="display: grid; gap: 15px;">
+                <div>
+                  <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 4px;">Status</p>
+                  <p style="margin: 0; font-size: 1.1rem; font-weight: 600;">
+                    <span id="membership-status" style="color: green;">Active</span>
+                  </p>
+                </div>
+
+                <div id="membership-dates">
+                  <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 4px;">Membership Period</p>
+                  <p style="margin: 0; font-size: 0.95rem; color: var(--text-dark);">
+                    <span id="start-date">-</span> to <span id="expiry-date">-</span>
+                  </p>
+                </div>
+
+                <div id="days-remaining-container">
+                  <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 4px;">Days Remaining</p>
+                  <p style="margin: 0;">
+                    <span id="days-remaining"
+                      style="font-size: 1.8rem; font-weight: 700; color: var(--accent-color);">-</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div
+              style="background: var(--secondary-bg); padding: 25px; border-radius: 8px; text-align: center; min-width: 200px;">
+              <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 8px;">Membership Type</p>
+              <p style="margin: 0 0 15px 0; font-size: 1.2rem; font-weight: 600; color: var(--primary-color);"
+                id="membership-type">Annual Member</p>
+              <div style="padding: 12px; background: white; border-radius: 6px; margin-top: 10px;">
+                <p style="margin: 0; font-size: 0.85rem; color: var(--text-light);">Initial: <strong
+                    style="color: var(--accent-color);">£15</strong></p>
+                <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-light);">Renewal: <strong
+                    style="color: var(--accent-color);">£10</strong></p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      
-      <!-- Member Info Grid -->
-      <div style="display: grid; grid-template-columns: 1fr; gap: 25px;">
-        
-        <!-- Membership Status Card -->
-        <div class="card" style="border-left: 4px solid var(--primary-color);">
-          <div class="card-body">
-            <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 20px;">
-              <div style="flex: 1; min-width: 250px;">
-                <h3 style="color: var(--primary-color); margin-bottom: 20px; font-size: 1.4rem;">Your Membership</h3>
-                
-                <div style="display: grid; gap: 15px;">
-                  <div>
-                    <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 4px;">Status</p>
-                    <p style="margin: 0; font-size: 1.1rem; font-weight: 600;">
-                      <span id="membership-status" style="color: green;">Active</span>
-                    </p>
-                  </div>
-                  
-                  <div id="membership-dates">
-                    <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 4px;">Membership Period</p>
-                    <p style="margin: 0; font-size: 0.95rem; color: var(--text-dark);">
-                      <span id="start-date">-</span> to <span id="expiry-date">-</span>
-                    </p>
-                  </div>
-                  
-                  <div id="days-remaining-container">
-                    <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 4px;">Days Remaining</p>
-                    <p style="margin: 0;">
-                      <span id="days-remaining" style="font-size: 1.8rem; font-weight: 700; color: var(--accent-color);">-</span>
-                    </p>
-                  </div>
-                </div>
+
+      <!-- Benefits Card -->
+      <div class="card">
+        <div class="card-body">
+          <h3 style="color: var(--primary-color); margin-bottom: 20px; font-size: 1.2rem;">Your Benefits</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+            <div style="display: flex; align-items: start; gap: 12px;">
+              <span style="font-size: 1.5rem;">🍺</span>
+              <div>
+                <p style="margin: 0 0 4px 0; font-weight: 600; color: var(--text-dark);">Drink Discounts</p>
+                <p style="margin: 0; font-size: 0.9rem; color: var(--text-light);">Save money at the bar</p>
               </div>
-              
-              <div style="background: var(--secondary-bg); padding: 25px; border-radius: 8px; text-align: center; min-width: 200px;">
-                <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 8px;">Membership Type</p>
-                <p style="margin: 0 0 15px 0; font-size: 1.2rem; font-weight: 600; color: var(--primary-color);" id="membership-type">Annual Member</p>
-                <div style="padding: 12px; background: white; border-radius: 6px; margin-top: 10px;">
-                  <p style="margin: 0; font-size: 0.85rem; color: var(--text-light);">Initial: <strong style="color: var(--accent-color);">£15</strong></p>
-                  <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-light);">Renewal: <strong style="color: var(--accent-color);">£10</strong></p>
-                </div>
+            </div>
+            <div style="display: flex; align-items: start; gap: 12px;">
+              <span style="font-size: 1.5rem;">💳</span>
+              <div>
+                <p style="margin: 0 0 4px 0; font-weight: 600; color: var(--text-dark);">Card Top-Up</p>
+                <p style="margin: 0; font-size: 0.9rem; color: var(--text-light);">Top up at the tills</p>
+              </div>
+            </div>
+            <div style="display: flex; align-items: start; gap: 12px;">
+              <span style="font-size: 1.5rem;">📧</span>
+              <div>
+                <p style="margin: 0 0 4px 0; font-weight: 600; color: var(--text-dark);">Club Updates</p>
+                <p style="margin: 0; font-size: 0.9rem; color: var(--text-light);">Stay informed</p>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Benefits Card -->
-        <div class="card">
-          <div class="card-body">
-            <h3 style="color: var(--primary-color); margin-bottom: 20px; font-size: 1.2rem;">Your Benefits</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-              <div style="display: flex; align-items: start; gap: 12px;">
-                <span style="font-size: 1.5rem;">🍺</span>
-                <div>
-                  <p style="margin: 0 0 4px 0; font-weight: 600; color: var(--text-dark);">Drink Discounts</p>
-                  <p style="margin: 0; font-size: 0.9rem; color: var(--text-light);">Save money at the bar</p>
-                </div>
-              </div>
-              <div style="display: flex; align-items: start; gap: 12px;">
-                <span style="font-size: 1.5rem;">💳</span>
-                <div>
-                  <p style="margin: 0 0 4px 0; font-weight: 600; color: var(--text-dark);">Card Top-Up</p>
-                  <p style="margin: 0; font-size: 0.9rem; color: var(--text-light);">Top up at the tills</p>
-                </div>
-              </div>
-              <div style="display: flex; align-items: start; gap: 12px;">
-                <span style="font-size: 1.5rem;">📧</span>
-                <div>
-                  <p style="margin: 0 0 4px 0; font-weight: 600; color: var(--text-dark);">Club Updates</p>
-                  <p style="margin: 0; font-size: 0.9rem; color: var(--text-light);">Stay informed</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Extra Card Add-on (show only if user doesn't have it) -->
-        <div id="spouse-card-addon" class="card" style="border-left: 4px solid var(--accent-color); display: none;">
-          <div class="card-body">
-            <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 20px;">
-              <div style="flex: 1;">
-                <h3 style="color: var(--accent-color); margin-bottom: 15px; font-size: 1.3rem;">Add Extra Card</h3>
-                <p style="color: var(--text-dark); font-size: 0.95rem; line-height: 1.6; margin-bottom: 15px;">
-                  Get an additional physical card for just £5. Both cards share the same membership account and benefits.
-                </p>
-                <ul style="list-style: none; padding: 0; margin: 15px 0;">
-                  <li style="padding: 8px 0; display: flex; align-items: center; gap: 10px;">
-                    <span style="color: var(--accent-color);">✓</span>
-                    <span style="color: var(--text-dark);">Shares your membership benefits</span>
-                  </li>
-                  <li style="padding: 8px 0; display: flex; align-items: center; gap: 10px;">
-                    <span style="color: var(--accent-color);">✓</span>
-                    <span style="color: var(--text-dark);">Both cards use same account balance</span>
-                  </li>
-                  <li style="padding: 8px 0; display: flex; align-items: center; gap: 10px;">
-                    <span style="color: var(--accent-color);">✓</span>
-                    <span style="color: var(--text-dark);">Extra card only - not a separate membership</span>
-                  </li>
-                </ul>
-              </div>
-              <div style="text-align: center; min-width: 180px;">
-                <div style="background: var(--secondary-bg); padding: 20px; border-radius: 8px; margin-bottom: 15px;">
-                  <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 5px;">One-time fee</p>
-                  <p style="margin: 0; font-size: 2.5rem; font-weight: 700; color: var(--accent-color);">£5</p>
-                </div>
-                <button id="purchase-spouse-card-btn" class="btn btn-primary" style="width: 100%;">
-                  Purchase Now
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Extra Card Status (show if user has it) -->
-        <div id="spouse-card-status" style="padding: 20px; background: linear-gradient(135deg, rgba(76, 175, 80, 0.05), rgba(76, 175, 80, 0.1)); border-radius: 8px; border: 1px solid rgba(76, 175, 80, 0.3); display: none;">
-          <div style="display: flex; align-items: start; gap: 15px;">
-            <span style="font-size: 1.8rem;">✓</span>
-            <div>
-              <p style="margin: 0 0 8px 0; font-weight: 600; color: #4CAF50; font-size: 1.05rem;">Additional Card Purchased</p>
-              <p style="margin: 0; color: var(--text-dark); font-size: 0.95rem; line-height: 1.6;">
-                Your additional card is ready. Collect it from the club - cards are usually ready within 7 days. Both cards share the same membership account.
+      <!-- Extra Card Add-on (show only if user doesn't have it) -->
+      <div id="spouse-card-addon" class="card" style="border-left: 4px solid var(--accent-color); display: none;">
+        <div class="card-body">
+          <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 20px;">
+            <div style="flex: 1;">
+              <h3 style="color: var(--accent-color); margin-bottom: 15px; font-size: 1.3rem;">Add Extra Card</h3>
+              <p style="color: var(--text-dark); font-size: 0.95rem; line-height: 1.6; margin-bottom: 15px;">
+                Get an additional physical card for just £5. Both cards share the same membership account and benefits.
               </p>
+              <ul style="list-style: none; padding: 0; margin: 15px 0;">
+                <li style="padding: 8px 0; display: flex; align-items: center; gap: 10px;">
+                  <span style="color: var(--accent-color);">✓</span>
+                  <span style="color: var(--text-dark);">Shares your membership benefits</span>
+                </li>
+                <li style="padding: 8px 0; display: flex; align-items: center; gap: 10px;">
+                  <span style="color: var(--accent-color);">✓</span>
+                  <span style="color: var(--text-dark);">Both cards use same account balance</span>
+                </li>
+                <li style="padding: 8px 0; display: flex; align-items: center; gap: 10px;">
+                  <span style="color: var(--accent-color);">✓</span>
+                  <span style="color: var(--text-dark);">Extra card only - not a separate membership</span>
+                </li>
+              </ul>
+            </div>
+            <div style="text-align: center; min-width: 180px;">
+              <div style="background: var(--secondary-bg); padding: 20px; border-radius: 8px; margin-bottom: 15px;">
+                <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 5px;">One-time fee</p>
+                <p style="margin: 0; font-size: 2.5rem; font-weight: 700; color: var(--accent-color);">£5</p>
+              </div>
+              <button id="purchase-spouse-card-btn" class="btn btn-primary" style="width: 100%;">
+                Purchase Now
+              </button>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Renewal Info -->
-        <div style="padding: 20px; background: linear-gradient(135deg, rgba(26, 95, 95, 0.05), rgba(26, 95, 95, 0.1)); border-radius: 8px; border: 1px solid rgba(26, 95, 95, 0.2);">
-          <div style="display: flex; align-items: start; gap: 15px;">
-            <span style="font-size: 1.8rem;">💡</span>
-            <div>
-              <p style="margin: 0 0 8px 0; font-weight: 600; color: var(--primary-color); font-size: 1.05rem;">Membership Renewal</p>
-              <p style="margin: 0; color: var(--text-dark); font-size: 0.95rem; line-height: 1.6;">
-                When your membership expires, visit the club to renew in person at the till for £10. Your support helps keep WOVCC thriving!
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Contact Details -->
-        <div class="card" style="border-left: 4px solid var(--primary-color);">
-          <div class="card-body">
-            <h3 style="color: var(--primary-color); margin-bottom: 20px; font-size: 1.2rem;">Contact Details</h3>
-            <p style="color: var(--text-light); font-size: 0.95rem; margin-bottom: 15px;">
-              Update the address and phone number linked to your membership. These are collected at checkout and required to keep your account current.
+      <!-- Extra Card Status (show if user has it) -->
+      <div id="spouse-card-status"
+        style="padding: 20px; background: linear-gradient(135deg, rgba(76, 175, 80, 0.05), rgba(76, 175, 80, 0.1)); border-radius: 8px; border: 1px solid rgba(76, 175, 80, 0.3); display: none;">
+        <div style="display: flex; align-items: start; gap: 15px;">
+          <span style="font-size: 1.8rem;">✓</span>
+          <div>
+            <p style="margin: 0 0 8px 0; font-weight: 600; color: #4CAF50; font-size: 1.05rem;">Additional Card
+              Purchased</p>
+            <p style="margin: 0; color: var(--text-dark); font-size: 0.95rem; line-height: 1.6;">
+              Your additional card is ready. Collect it from the club - cards are usually ready within 7 days. Both
+              cards share the same membership account.
             </p>
-            <form id="contact-details-form" style="max-width: 620px;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Renewal Info -->
+      <div
+        style="padding: 20px; background: linear-gradient(135deg, rgba(26, 95, 95, 0.05), rgba(26, 95, 95, 0.1)); border-radius: 8px; border: 1px solid rgba(26, 95, 95, 0.2);">
+        <div style="display: flex; align-items: start; gap: 15px;">
+          <span style="font-size: 1.8rem;">💡</span>
+          <div>
+            <p style="margin: 0 0 8px 0; font-weight: 600; color: var(--primary-color); font-size: 1.05rem;">Membership
+              Renewal</p>
+            <p style="margin: 0; color: var(--text-dark); font-size: 0.95rem; line-height: 1.6;">
+              When your membership expires, visit the club to renew in person at the till for £10. Your support helps
+              keep WOVCC thriving!
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Details -->
+      <div class="card" style="border-left: 4px solid var(--primary-color);">
+        <div class="card-body">
+          <h3 style="color: var(--primary-color); margin-bottom: 20px; font-size: 1.2rem;">Contact Details</h3>
+          <p style="color: var(--text-light); font-size: 0.95rem; margin-bottom: 15px;">
+            Update the address and phone number linked to your membership. These are collected at checkout and required
+            to keep your account current.
+          </p>
+          <form id="contact-details-form" style="max-width: 620px;">
+            <div class="form-group" style="margin-bottom: 15px;">
+              <label class="form-label" for="contact-phone">Phone Number</label>
+              <input type="text" id="contact-phone" class="form-input" placeholder="e.g. 07123 456789" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 15px;">
+              <label class="form-label" for="contact-address-line1">Address Line 1</label>
+              <input type="text" id="contact-address-line1" class="form-input"
+                placeholder="House name/number and street" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 15px;">
+              <label class="form-label" for="contact-address-line2">Address Line 2 (optional)</label>
+              <input type="text" id="contact-address-line2" class="form-input" placeholder="Apartment, suite, etc.">
+            </div>
+            <div class="form-group" style="margin-bottom: 15px;">
+              <label class="form-label" for="contact-city">Town/City</label>
+              <input type="text" id="contact-city" class="form-input" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 15px;">
+              <label class="form-label" for="contact-postal-code">Postcode</label>
+              <input type="text" id="contact-postal-code" class="form-input" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 15px;">
+              <label class="form-label" for="contact-country">Country (ISO code)</label>
+              <input type="text" id="contact-country" class="form-input" placeholder="e.g. GB" required>
+            </div>
+            <div id="contact-details-error"
+              style="display: none; padding: 12px; background: #ffe6e6; border-left: 4px solid #dc3545; border-radius: 4px; margin-bottom: 15px;">
+              <p style="margin: 0; color: #dc3545; font-size: 0.95rem;"></p>
+            </div>
+            <div id="contact-details-success"
+              style="display: none; padding: 12px; background: #e6f7e6; border-left: 4px solid #28a745; border-radius: 4px; margin-bottom: 15px;">
+              <p style="margin: 0; color: #28a745; font-size: 0.95rem;"></p>
+            </div>
+            <button type="submit" class="btn btn-primary" id="contact-details-submit">
+              Save Contact Details
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Account Settings Card -->
+      <div class="card" style="border-left: 4px solid var(--accent-color);">
+        <div class="card-body">
+          <h3 style="color: var(--accent-color); margin-bottom: 20px; font-size: 1.3rem;">Account Settings</h3>
+
+          <!-- Email Change Section -->
+          <div style="margin-bottom: 30px; padding-bottom: 30px; border-bottom: 1px solid var(--border-color);">
+            <h4 style="color: var(--text-dark); margin-bottom: 15px; font-size: 1.1rem;">Change Email Address</h4>
+            <p style="color: var(--text-light); font-size: 0.95rem; margin-bottom: 15px;">
+              Update the email address associated with your membership account.
+            </p>
+
+            <form id="change-email-form" style="max-width: 500px;">
               <div class="form-group" style="margin-bottom: 15px;">
-                <label class="form-label" for="contact-phone">Phone Number</label>
-                <input type="text" id="contact-phone" class="form-input" placeholder="e.g. 07123 456789" required>
+                <label class="form-label" for="current-email-display">Current Email</label>
+                <input type="text" id="current-email-display" class="form-input" readonly
+                  style="background: var(--secondary-bg); cursor: not-allowed;">
               </div>
+
               <div class="form-group" style="margin-bottom: 15px;">
-                <label class="form-label" for="contact-address-line1">Address Line 1</label>
-                <input type="text" id="contact-address-line1" class="form-input" placeholder="House name/number and street" required>
+                <label class="form-label" for="new-email">New Email Address</label>
+                <input type="email" id="new-email" class="form-input" placeholder="Enter new email address" required>
               </div>
-              <div class="form-group" style="margin-bottom: 15px;">
-                <label class="form-label" for="contact-address-line2">Address Line 2 (optional)</label>
-                <input type="text" id="contact-address-line2" class="form-input" placeholder="Apartment, suite, etc.">
-              </div>
-              <div class="form-group" style="margin-bottom: 15px;">
-                <label class="form-label" for="contact-city">Town/City</label>
-                <input type="text" id="contact-city" class="form-input" required>
-              </div>
-              <div class="form-group" style="margin-bottom: 15px;">
-                <label class="form-label" for="contact-postal-code">Postcode</label>
-                <input type="text" id="contact-postal-code" class="form-input" required>
-              </div>
-              <div class="form-group" style="margin-bottom: 15px;">
-                <label class="form-label" for="contact-country">Country (ISO code)</label>
-                <input type="text" id="contact-country" class="form-input" placeholder="e.g. GB" required>
-              </div>
-              <div id="contact-details-error" style="display: none; padding: 12px; background: #ffe6e6; border-left: 4px solid #dc3545; border-radius: 4px; margin-bottom: 15px;">
+
+              <div id="email-change-error"
+                style="display: none; padding: 12px; background: #ffe6e6; border-left: 4px solid #dc3545; border-radius: 4px; margin-bottom: 15px;">
                 <p style="margin: 0; color: #dc3545; font-size: 0.95rem;"></p>
               </div>
-              <div id="contact-details-success" style="display: none; padding: 12px; background: #e6f7e6; border-left: 4px solid #28a745; border-radius: 4px; margin-bottom: 15px;">
+
+              <div id="email-change-success"
+                style="display: none; padding: 12px; background: #e6f7e6; border-left: 4px solid #28a745; border-radius: 4px; margin-bottom: 15px;">
                 <p style="margin: 0; color: #28a745; font-size: 0.95rem;"></p>
               </div>
-              <button type="submit" class="btn btn-primary" id="contact-details-submit">
-                Save Contact Details
+
+              <button type="submit" class="btn btn-primary" id="change-email-btn">
+                Change Email
               </button>
             </form>
           </div>
-        </div>
 
-        <!-- Account Settings Card -->
-        <div class="card" style="border-left: 4px solid var(--accent-color);">
-          <div class="card-body">
-            <h3 style="color: var(--accent-color); margin-bottom: 20px; font-size: 1.3rem;">Account Settings</h3>
-            
-            <!-- Email Change Section -->
-            <div style="margin-bottom: 30px; padding-bottom: 30px; border-bottom: 1px solid var(--border-color);">
-              <h4 style="color: var(--text-dark); margin-bottom: 15px; font-size: 1.1rem;">Change Email Address</h4>
-              <p style="color: var(--text-light); font-size: 0.95rem; margin-bottom: 15px;">
-                Update the email address associated with your membership account.
+          <!-- Account Deletion Section -->
+          <div>
+            <h4 style="color: #dc3545; margin-bottom: 15px; font-size: 1.1rem;">Delete Account</h4>
+            <p style="color: var(--text-light); font-size: 0.95rem; margin-bottom: 15px; line-height: 1.6;">
+              Permanently delete your account and all associated data. This action cannot be undone.
+            </p>
+
+            <div
+              style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+              <p style="margin: 0; color: #856404; font-size: 0.9rem; line-height: 1.6;">
+                <strong>Warning:</strong> Deleting your account will permanently remove:
               </p>
-              
-              <form id="change-email-form" style="max-width: 500px;">
-                <div class="form-group" style="margin-bottom: 15px;">
-                  <label class="form-label" for="current-email-display">Current Email</label>
-                  <input type="text" id="current-email-display" class="form-input" readonly style="background: var(--secondary-bg); cursor: not-allowed;">
-                </div>
-                
-                <div class="form-group" style="margin-bottom: 15px;">
-                  <label class="form-label" for="new-email">New Email Address</label>
-                  <input type="email" id="new-email" class="form-input" placeholder="Enter new email address" required>
-                </div>
-                
-                <div id="email-change-error" style="display: none; padding: 12px; background: #ffe6e6; border-left: 4px solid #dc3545; border-radius: 4px; margin-bottom: 15px;">
-                  <p style="margin: 0; color: #dc3545; font-size: 0.95rem;"></p>
-                </div>
-                
-                <div id="email-change-success" style="display: none; padding: 12px; background: #e6f7e6; border-left: 4px solid #28a745; border-radius: 4px; margin-bottom: 15px;">
-                  <p style="margin: 0; color: #28a745; font-size: 0.95rem;"></p>
-                </div>
-                
-                <button type="submit" class="btn btn-primary" id="change-email-btn">
-                  Change Email
-                </button>
-              </form>
+              <ul style="margin: 10px 0 0 20px; color: #856404; font-size: 0.9rem; line-height: 1.6;">
+                <li>Your membership account and profile</li>
+                <li>Your payment history from Stripe</li>
+                <li>Your newsletter subscription (if subscribed)</li>
+                <li>All personal data we hold about you</li>
+              </ul>
             </div>
-            
-            <!-- Account Deletion Section -->
-            <div>
-              <h4 style="color: #dc3545; margin-bottom: 15px; font-size: 1.1rem;">Delete Account</h4>
-              <p style="color: var(--text-light); font-size: 0.95rem; margin-bottom: 15px; line-height: 1.6;">
-                Permanently delete your account and all associated data. This action cannot be undone.
-              </p>
-              
-              <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
-                <p style="margin: 0; color: #856404; font-size: 0.9rem; line-height: 1.6;">
-                  <strong>Warning:</strong> Deleting your account will permanently remove:
-                </p>
-                <ul style="margin: 10px 0 0 20px; color: #856404; font-size: 0.9rem; line-height: 1.6;">
-                  <li>Your membership account and profile</li>
-                  <li>Your payment history from Stripe</li>
-                  <li>Your newsletter subscription (if subscribed)</li>
-                  <li>All personal data we hold about you</li>
-                </ul>
-              </div>
-              
-              <button type="button" class="btn" id="delete-account-btn" style="background: #dc3545; color: white; border: none;">
-                Delete My Account
-              </button>
-            </div>
-            
+
+            <button type="button" class="btn" id="delete-account-btn"
+              style="background: #dc3545; color: white; border: none;">
+              Delete My Account
+            </button>
           </div>
+
         </div>
-
-        <!-- GDPR Rights Info -->
-        <div style="padding: 20px; background: var(--secondary-bg); border-radius: 8px; margin-top: 20px;">
-          <p style="margin: 0; color: var(--text-dark); font-size: 0.95rem; line-height: 1.6; text-align: center;">
-            Your data rights are protected under UK GDPR. For more information, read our <a href="/privacy" style="color: var(--primary-color); text-decoration: underline;">Privacy Policy</a>.
-          </p>
-        </div>
-
       </div>
-    </div>
-  </section>
 
-  <!-- Account Deletion Confirmation Modal -->
-  <div id="delete-account-modal" class="delete-account-modal">
-    <div class="delete-account-modal-content">
-      <h3 class="delete-account-modal-title">Confirm Account Deletion</h3>
-      <p class="delete-account-modal-text">
-        Are you absolutely sure you want to delete your account? This action is <strong>permanent and cannot be undone</strong>.
-      </p>
-      <p class="delete-account-modal-text">
-        All your personal data, including membership details and payment history, will be permanently deleted.
-      </p>
-      <div class="delete-account-modal-actions">
-        <button type="button" class="btn btn-outline" id="cancel-delete-btn">
-          Cancel
-        </button>
-        <button type="button" class="btn btn-danger" id="confirm-delete-btn">
-          Yes, Delete My Account
-        </button>
+      <!-- GDPR Rights Info -->
+      <div style="padding: 20px; background: var(--secondary-bg); border-radius: 8px; margin-top: 20px;">
+        <p style="margin: 0; color: var(--text-dark); font-size: 0.95rem; line-height: 1.6; text-align: center;">
+          Your data rights are protected under UK GDPR. For more information, read our <a href="/privacy"
+            style="color: var(--primary-color); text-decoration: underline;">Privacy Policy</a>.
+        </p>
       </div>
+
     </div>
   </div>
+</section>
+
+<!-- Account Deletion Confirmation Modal -->
+<div id="delete-account-modal" class="delete-account-modal">
+  <div class="delete-account-modal-content">
+    <h3 class="delete-account-modal-title">Confirm Account Deletion</h3>
+    <p class="delete-account-modal-text">
+      Are you absolutely sure you want to delete your account? This action is <strong>permanent and cannot be
+        undone</strong>.
+    </p>
+    <p class="delete-account-modal-text">
+      All your personal data, including membership details and payment history, will be permanently deleted.
+    </p>
+    <div class="delete-account-modal-actions">
+      <button type="button" class="btn btn-outline" id="cancel-delete-btn">
+        Cancel
+      </button>
+      <button type="button" class="btn btn-danger" id="confirm-delete-btn">
+        Yes, Delete My Account
+      </button>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_css %}
@@ -324,7 +348,7 @@
     overflow-y: auto;
     box-sizing: border-box;
   }
-  
+
   .delete-account-modal-content {
     background: white;
     border-radius: 12px;
@@ -334,38 +358,38 @@
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     box-sizing: border-box;
   }
-  
+
   .delete-account-modal-title {
     color: #dc3545;
     margin-bottom: 20px;
     font-size: 1.5rem;
   }
-  
+
   .delete-account-modal-text {
     color: var(--text-dark);
     margin-bottom: 20px;
     line-height: 1.6;
   }
-  
+
   .delete-account-modal-actions {
     display: flex;
     gap: 15px;
     justify-content: flex-end;
     flex-wrap: wrap;
   }
-  
+
   .btn-danger {
     background: #dc3545;
     color: white;
     border: none;
   }
-  
+
   .btn-danger:hover {
     background: #c82333;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
   }
-  
+
   /* Mobile responsive */
   @media screen and (max-width: 768px) {
     .delete-account-modal {
@@ -373,37 +397,37 @@
       align-items: flex-start;
       padding-top: 20px;
     }
-    
+
     .delete-account-modal-content {
       width: 100%;
       padding: 25px;
     }
-    
+
     .delete-account-modal-title {
       font-size: 1.3rem;
     }
-    
+
     .delete-account-modal-actions {
       flex-direction: column;
     }
-    
+
     .delete-account-modal-actions .btn {
       width: 100%;
     }
   }
-  
+
   @media screen and (max-width: 575px) {
     .delete-account-modal {
       padding: 5px;
       padding-top: 10px;
     }
-    
+
     .delete-account-modal-content {
       width: 100%;
       padding: 20px;
       border-radius: 8px;
     }
-    
+
     .delete-account-modal-title {
       font-size: 1.2rem;
     }
@@ -412,5 +436,5 @@
 {% endblock %}
 
 {% block extra_js %}
-  <script src="/scripts/pages.js"></script>
+<script src="/scripts/pages.js"></script>
 {% endblock %}

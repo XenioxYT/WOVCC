@@ -1,21 +1,55 @@
 {% extends "layout.html" %}
 
-{% block title %}Join - WOVCC | Wickersley Old Village Cricket Club{% endblock %}
+{% block title %}Join WOVCC - £15/Year Membership{% endblock %}
 
-{% block description %}Join our club - Annual membership for just £15/year{% endblock %}
+{% block description %}Join Wickersley Old Village Cricket Club for just £15/year (renewals £10). Enjoy member benefits
+including bar discounts, club access, and community events. Become part of Rotherham's premier cricket community
+today.{% endblock %}
+
+{% block breadcrumb_items %}
+,{
+"@type": "ListItem",
+"position": 2,
+"name": "Join",
+"item": {
+"@type": "WebPage",
+"@id": "{{ site_base_url }}/join"
+}
+}
+{% endblock %}
 
 {% block extra_css %}
+<!-- Product Schema for Membership -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "WOVCC Annual Membership",
+  "description": "Annual membership to Wickersley Old Village Cricket Club including bar discounts, club access, and community benefits",
+  "image": "{{ site_base_url }}/assets/logo_favicon.webp",
+  "brand": "Wickersley Old Village Cricket Club",
+  "offers": {
+    "@type": "Offer",
+    "url": "{{ site_base_url }}/join",
+    "priceCurrency": "GBP",
+    "price": "15.00",
+    "priceValidUntil": "2025-12-31",
+    "availability": "https://schema.org/InStock"
+  }
+}
+</script>
 <style>
   /* Two-column form layout */
   .form-row {
     display: flex;
     gap: 15px;
   }
+
   .form-group-half {
     flex: 1;
     min-width: 0;
   }
-  
+
   /* Password requirements - compact grid */
   .password-requirements {
     margin-bottom: 15px;
@@ -29,36 +63,42 @@
     padding: 0 12px;
     margin-bottom: 0;
   }
+
   .password-requirements.visible {
     max-height: 60px;
     opacity: 1;
     padding: 10px 12px;
     margin-bottom: 15px;
   }
+
   .password-req-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 8px 16px;
     font-size: 0.8rem;
   }
+
   .req-item {
     color: var(--text-light);
     white-space: nowrap;
   }
+
   .req-item.met {
     color: #28a745;
   }
-  
+
   /* Stack on mobile */
   @media (max-width: 500px) {
     .form-row {
       flex-direction: column;
       gap: 0;
     }
+
     .password-req-grid {
       gap: 4px 12px;
       font-size: 0.75rem;
     }
+
     .password-requirements.visible {
       max-height: 80px;
     }
@@ -71,162 +111,173 @@
 {% endblock %}
 
 {% block content %}
-  <!-- Page Header -->
-  <section class="hero page-hero">
-    <div class="hero-content">
-      <h1>Join WOVCC</h1>
-      <p>Be part of something special - support your local cricket club</p>
-    </div>
-  </section>
+<!-- Page Header -->
+<section class="hero page-hero">
+  <div class="hero-content">
+    <h1>Join WOVCC</h1>
+    <p>Be part of something special - support your local cricket club</p>
+  </div>
+</section>
 
-  <!-- Membership Section -->
-  <section class="section">
-    <div class="container">
-      <div class="join-grid">
-        
-        <!-- Membership Info Card -->
-        <div class="card" id="membership-card" style="padding: 40px 30px;">
-          <h2 style="color: var(--primary-color); margin-bottom: 20px; text-align: center;">Annual Membership</h2>
-          
-          <p style="font-size: 1.05rem; line-height: 1.7; color: var(--text-dark); margin-bottom: 30px; text-align: center;">
-            Join WOVCC and become part of our community. Your membership supports the club and provides you with benefits including drink discounts at the bar.
+<!-- Membership Section -->
+<section class="section">
+  <div class="container">
+    <div class="join-grid">
+
+      <!-- Membership Info Card -->
+      <div class="card" id="membership-card" style="padding: 40px 30px;">
+        <h2 style="color: var(--primary-color); margin-bottom: 20px; text-align: center;">Annual Membership</h2>
+
+        <p
+          style="font-size: 1.05rem; line-height: 1.7; color: var(--text-dark); margin-bottom: 30px; text-align: center;">
+          Join WOVCC and become part of our community. Your membership supports the club and provides you with benefits
+          including drink discounts at the bar.
+        </p>
+
+        <div
+          style="margin-bottom: 30px; text-align: center; padding: 20px; background: var(--secondary-bg); border-radius: 8px;">
+          <div style="font-size: 2.5rem; font-weight: 700; color: var(--accent-color); margin-bottom: 10px;">
+            £15
+          </div>
+          <p style="color: var(--text-dark); font-size: 0.95rem; margin: 0;">
+            Initial membership fee<br>
+            <span style="color: var(--text-light); font-size: 0.9rem;">Then £10 annually to renew</span>
           </p>
-          
-          <div style="margin-bottom: 30px; text-align: center; padding: 20px; background: var(--secondary-bg); border-radius: 8px;">
-            <div style="font-size: 2.5rem; font-weight: 700; color: var(--accent-color); margin-bottom: 10px;">
-              £15
-            </div>
-            <p style="color: var(--text-dark); font-size: 0.95rem; margin: 0;">
-              Initial membership fee<br>
-              <span style="color: var(--text-light); font-size: 0.9rem;">Then £10 annually to renew</span>
-            </p>
-          </div>
-          
-          <div>
-            <h4 style="color: var(--primary-color); margin-bottom: 20px; font-size: 1.1rem;">Membership Benefits:</h4>
-            <ul style="list-style: none; padding: 0;">
-              <li style="padding: 12px 0; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px;">
-                <span style="color: var(--primary-color); font-size: 1.2rem;">🍺</span>
-                <span style="color: var(--text-dark); font-size: 0.95rem;">Drink discounts at the bar</span>
-              </li>
-              <li style="padding: 12px 0; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px;">
-                <span style="color: var(--primary-color); font-size: 1.2rem;">💳</span>
-                <span style="color: var(--text-dark); font-size: 0.95rem;">Top up your card at the tills</span>
-              </li>
-              <li style="padding: 12px 0; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px;">
-                <span style="color: var(--primary-color); font-size: 1.2rem;">❤️</span>
-                <span style="color: var(--text-dark); font-size: 0.95rem;">Support your local club</span>
-              </li>
-              <li style="padding: 12px 0; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px;">
-                <span style="color: var(--primary-color); font-size: 1.2rem;">🔒</span>
-                <span style="color: var(--text-dark); font-size: 0.95rem;">Access to members area</span>
-              </li>
-              <li style="padding: 12px 0; display: flex; align-items: center; gap: 12px;">
-                <span style="color: var(--primary-color); font-size: 1.2rem;">📧</span>
-                <span style="color: var(--text-dark); font-size: 0.95rem;">Club news and updates</span>
-              </li>
-            </ul>
-          </div>
         </div>
 
-        <!-- Signup Form -->
-        <div id="new-member-form" class="card signup-form">
-          <h3 style="color: var(--primary-color); margin-bottom: 20px;">Sign Up</h3>
-          
-          <form id="signup-form">
-            <div class="form-group">
-              <label class="form-label" for="name">Full Name</label>
-              <input type="text" id="name" class="form-input" required>
-            </div>
-            
-            <!-- Email fields in a row on larger screens -->
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label class="form-label" for="email">Email Address</label>
-                <input type="email" id="email" class="form-input" required>
-              </div>
-              <div class="form-group form-group-half">
-                <label class="form-label" for="confirmEmail">Confirm Email</label>
-                <input type="email" id="confirmEmail" class="form-input" required>
-              </div>
-            </div>
-            
-            <!-- Password fields in a row on larger screens -->
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label class="form-label" for="password">Create Password</label>
-                <input type="password" id="password" class="form-input" required>
-              </div>
-              <div class="form-group form-group-half">
-                <label class="form-label" for="confirmPassword">Confirm Password</label>
-                <input type="password" id="confirmPassword" class="form-input" required>
-              </div>
-            </div>
-            
-            <!-- Password requirements - shown on focus -->
-            <div id="password-requirements" class="password-requirements">
-              <div class="password-req-grid">
-                <span id="req-length" class="req-item">✗ 8+ chars</span>
-                <span id="req-uppercase" class="req-item">✗ Uppercase</span>
-                <span id="req-lowercase" class="req-item">✗ Lowercase</span>
-                <span id="req-number" class="req-item">✗ Number</span>
-                <span id="req-special" class="req-item">✗ Special (!@#$)</span>
-              </div>
-            </div>
-            
-            <div class="form-group">
-              <div class="form-checkbox">
-                <input type="checkbox" id="newsletter" name="newsletter">
-                <label for="newsletter">Receive club news and updates via email</label>
-              </div>
-            </div>
-            
-            <div style="background: var(--secondary-bg); padding: 15px; border-radius: 6px; margin-bottom: 20px;">
-              <p style="margin: 0; font-size: 0.9rem; color: var(--text-dark); line-height: 1.6;">
-                By signing up, you agree to our <a href="/privacy" style="color: var(--primary-color); text-decoration: underline;">Privacy Policy</a>. 
-                We will process your data to manage your membership and send you club updates (if you opt in).
-              </p>
-            </div>
-            
-            <div class="form-group">
-              <div class="form-checkbox">
-                <input type="checkbox" id="spouseCard" name="spouseCard">
-                <label for="spouseCard" style="font-weight: 600; color: var(--text-dark);">
-                  Add extra card (+£5)
-                  <span style="display: block; font-size: 0.85rem; color: var(--text-light); font-weight: 400; margin-top: 4px;">
-                    Additional physical card that shares your membership account
-                  </span>
-                </label>
-              </div>
-            </div>
-            
-            <div style="background: var(--secondary-bg); padding: 15px; border-radius: 6px; margin-bottom: 20px;">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="color: var(--text-dark); font-weight: 500;">Total:</span>
-                <span id="totalPrice" style="color: var(--accent-color); font-size: 1.5rem; font-weight: 700;">£15</span>
-              </div>
-            </div>
-            
-            <button type="submit" class="btn btn-primary" style="width: 100%;">
-              Continue to Payment
-            </button>
-            
-            <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
-              <p style="color: var(--text-light); font-size: 0.95rem; margin-bottom: 12px;">
-                Already have an account?
-              </p>
-              <a href="/members" class="btn btn-outline" style="padding: 10px 24px;">
-                Login to Members Area
-              </a>
-            </div>
-            
-            <p class="text-center mt-2" style="color: var(--text-light); font-size: 0.9rem; margin-top: 20px;">
-              Need help? Contact us at <a href="mailto:wovcc10@gmail.com" style="color: var(--primary-color);">wovcc10@gmail.com</a>
-            </p>
-          </form>
+        <div>
+          <h4 style="color: var(--primary-color); margin-bottom: 20px; font-size: 1.1rem;">Membership Benefits:</h4>
+          <ul style="list-style: none; padding: 0;">
+            <li
+              style="padding: 12px 0; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px;">
+              <span style="color: var(--primary-color); font-size: 1.2rem;">🍺</span>
+              <span style="color: var(--text-dark); font-size: 0.95rem;">Drink discounts at the bar</span>
+            </li>
+            <li
+              style="padding: 12px 0; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px;">
+              <span style="color: var(--primary-color); font-size: 1.2rem;">💳</span>
+              <span style="color: var(--text-dark); font-size: 0.95rem;">Top up your card at the tills</span>
+            </li>
+            <li
+              style="padding: 12px 0; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px;">
+              <span style="color: var(--primary-color); font-size: 1.2rem;">❤️</span>
+              <span style="color: var(--text-dark); font-size: 0.95rem;">Support your local club</span>
+            </li>
+            <li
+              style="padding: 12px 0; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px;">
+              <span style="color: var(--primary-color); font-size: 1.2rem;">🔒</span>
+              <span style="color: var(--text-dark); font-size: 0.95rem;">Access to members area</span>
+            </li>
+            <li style="padding: 12px 0; display: flex; align-items: center; gap: 12px;">
+              <span style="color: var(--primary-color); font-size: 1.2rem;">📧</span>
+              <span style="color: var(--text-dark); font-size: 0.95rem;">Club news and updates</span>
+            </li>
+          </ul>
         </div>
-
       </div>
+
+      <!-- Signup Form -->
+      <div id="new-member-form" class="card signup-form">
+        <h3 style="color: var(--primary-color); margin-bottom: 20px;">Sign Up</h3>
+
+        <form id="signup-form">
+          <div class="form-group">
+            <label class="form-label" for="name">Full Name</label>
+            <input type="text" id="name" class="form-input" required>
+          </div>
+
+          <!-- Email fields in a row on larger screens -->
+          <div class="form-row">
+            <div class="form-group form-group-half">
+              <label class="form-label" for="email">Email Address</label>
+              <input type="email" id="email" class="form-input" required>
+            </div>
+            <div class="form-group form-group-half">
+              <label class="form-label" for="confirmEmail">Confirm Email</label>
+              <input type="email" id="confirmEmail" class="form-input" required>
+            </div>
+          </div>
+
+          <!-- Password fields in a row on larger screens -->
+          <div class="form-row">
+            <div class="form-group form-group-half">
+              <label class="form-label" for="password">Create Password</label>
+              <input type="password" id="password" class="form-input" required>
+            </div>
+            <div class="form-group form-group-half">
+              <label class="form-label" for="confirmPassword">Confirm Password</label>
+              <input type="password" id="confirmPassword" class="form-input" required>
+            </div>
+          </div>
+
+          <!-- Password requirements - shown on focus -->
+          <div id="password-requirements" class="password-requirements">
+            <div class="password-req-grid">
+              <span id="req-length" class="req-item">✗ 8+ chars</span>
+              <span id="req-uppercase" class="req-item">✗ Uppercase</span>
+              <span id="req-lowercase" class="req-item">✗ Lowercase</span>
+              <span id="req-number" class="req-item">✗ Number</span>
+              <span id="req-special" class="req-item">✗ Special (!@#$)</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="form-checkbox">
+              <input type="checkbox" id="newsletter" name="newsletter">
+              <label for="newsletter">Receive club news and updates via email</label>
+            </div>
+          </div>
+
+          <div style="background: var(--secondary-bg); padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+            <p style="margin: 0; font-size: 0.9rem; color: var(--text-dark); line-height: 1.6;">
+              By signing up, you agree to our <a href="/privacy"
+                style="color: var(--primary-color); text-decoration: underline;">Privacy Policy</a>.
+              We will process your data to manage your membership and send you club updates (if you opt in).
+            </p>
+          </div>
+
+          <div class="form-group">
+            <div class="form-checkbox">
+              <input type="checkbox" id="spouseCard" name="spouseCard">
+              <label for="spouseCard" style="font-weight: 600; color: var(--text-dark);">
+                Add extra card (+£5)
+                <span
+                  style="display: block; font-size: 0.85rem; color: var(--text-light); font-weight: 400; margin-top: 4px;">
+                  Additional physical card that shares your membership account
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div style="background: var(--secondary-bg); padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: var(--text-dark); font-weight: 500;">Total:</span>
+              <span id="totalPrice" style="color: var(--accent-color); font-size: 1.5rem; font-weight: 700;">£15</span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            Continue to Payment
+          </button>
+
+          <div
+            style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+            <p style="color: var(--text-light); font-size: 0.95rem; margin-bottom: 12px;">
+              Already have an account?
+            </p>
+            <a href="/members" class="btn btn-outline" style="padding: 10px 24px;">
+              Login to Members Area
+            </a>
+          </div>
+
+          <p class="text-center mt-2" style="color: var(--text-light); font-size: 0.9rem; margin-top: 20px;">
+            Need help? Contact us at <a href="mailto:wovcc10@gmail.com"
+              style="color: var(--primary-color);">wovcc10@gmail.com</a>
+          </p>
+        </form>
+      </div>
+
     </div>
-  </section>
+  </div>
+</section>
 {% endblock %}

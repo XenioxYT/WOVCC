@@ -1,51 +1,53 @@
 {% extends "layout.html" %}
 
-{% block title %}Login - WOVCC | Wickersley Old Village Cricket Club{% endblock %}
+{% block title %}Member Login | WOVCC{% endblock %}
 
-{% block description %}Login to access your membership account and benefits{% endblock %}
+{% block description %}Login to access your WOVCC membership account and member benefits.{% endblock %}
+
+{% block robots %}noindex, nofollow{% endblock %}
 
 {% block content %}
-  <!-- Page Header -->
-  <section class="hero page-hero" id="login-hero">
-    <div class="hero-content">
-      <h1>Members Login</h1>
-      <p>Access your membership account</p>
-    </div>
-  </section>
+<!-- Page Header -->
+<section class="hero page-hero" id="login-hero">
+  <div class="hero-content">
+    <h1>Members Login</h1>
+    <p>Access your membership account</p>
+  </div>
+</section>
 
-  <!-- Login Section -->
-  <section class="section">
-    <div class="login-container">
-      <h2>Login to Your Account</h2>
-      <p class="text-center" style="color: var(--text-light); margin-bottom: 30px;">
-        Enter your credentials to access member content
+<!-- Login Section -->
+<section class="section">
+  <div class="login-container">
+    <h2>Login to Your Account</h2>
+    <p class="text-center" style="color: var(--text-light); margin-bottom: 30px;">
+      Enter your credentials to access member content
+    </p>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label class="form-label" for="login-email">Email</label>
+        <input type="email" id="login-email" class="form-input" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="login-password">Password</label>
+        <input type="password" id="login-password" class="form-input" required>
+      </div>
+
+      <div id="login-error" class="alert alert-error" style="display: none;"></div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%;">
+        Login
+      </button>
+
+      <p class="text-center mt-2" style="color: var(--text-light);">
+        Not a member? <a href="/join" style="color: var(--primary-color); font-weight: 600;">Join Now</a>
       </p>
-      
-      <form id="login-form">
-        <div class="form-group">
-          <label class="form-label" for="login-email">Email</label>
-          <input type="email" id="login-email" class="form-input" required>
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label" for="login-password">Password</label>
-          <input type="password" id="login-password" class="form-input" required>
-        </div>
-        
-        <div id="login-error" class="alert alert-error" style="display: none;"></div>
-        
-        <button type="submit" class="btn btn-primary" style="width: 100%;">
-          Login
-        </button>
-        
-        <p class="text-center mt-2" style="color: var(--text-light);">
-          Not a member? <a href="/join" style="color: var(--primary-color); font-weight: 600;">Join Now</a>
-        </p>
-      </form>
-    </div>
-  </section>
+    </form>
+  </div>
+</section>
 {% endblock %}
 
 {% block extra_js %}
-  <script src="/scripts/pages.js"></script>
+<script src="/scripts/pages.js"></script>
 {% endblock %}
