@@ -116,6 +116,7 @@ class Event(Base):
     __tablename__ = 'events'
     
     id = Column(Integer, primary_key=True, index=True)
+    slug = Column(String(300), unique=True, index=True, nullable=True)  # SEO-friendly URL slug
     title = Column(String(255), nullable=False)
     short_description = Column(String(255), nullable=False)
     long_description = Column(Text, nullable=False)
@@ -151,6 +152,7 @@ class Event(Base):
         """Convert event to dictionary"""
         data = {
             'id': self.id,
+            'slug': self.slug,
             'title': self.title,
             'short_description': self.short_description,
             'long_description': self.long_description,

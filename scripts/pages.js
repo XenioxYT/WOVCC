@@ -13,7 +13,7 @@
  * - Full compatibility with page-transitions.js (including SPA nav)
  * - Preserve existing behavior as closely as possible
  */
-(function() {
+(function () {
   'use strict';
 
   // Utility: safe showNotification wrapper
@@ -45,7 +45,7 @@
       runIfMatch();
     }
 
-    document.addEventListener('pageTransitionComplete', function(e) {
+    document.addEventListener('pageTransitionComplete', function (e) {
       if (e && e.detail && e.detail.path === path) {
         initFn();
       }
@@ -59,12 +59,12 @@
   function initLoginPage() {
     // Scroll to top immediately when initializing login page
     window.scrollTo(0, 0);
-    
+
     var loginForm = document.getElementById('login-form');
     var loginError = document.getElementById('login-error');
 
     if (!loginForm) return;
-    
+
     if (!window.WOVCCAuth) {
       console.warn('[Login] WOVCCAuth not available yet');
       return;
@@ -77,7 +77,7 @@
     }
 
     // Bind login form submit
-    loginForm.addEventListener('submit', function(e) {
+    loginForm.addEventListener('submit', function (e) {
       e.preventDefault();
       if (!window.WOVCCAuth) return;
 
@@ -93,7 +93,7 @@
       submitBtn.disabled = true;
       submitBtn.textContent = 'Logging in...';
 
-      window.WOVCCAuth.login(email, password).then(function(result) {
+      window.WOVCCAuth.login(email, password).then(function (result) {
         if (result && result.success) {
           window.WOVCCAuth.updateNavbar();
           // Redirect to membership page
@@ -106,7 +106,7 @@
           submitBtn.disabled = false;
           submitBtn.textContent = originalText;
         }
-      }).catch(function() {
+      }).catch(function () {
         if (loginError) {
           loginError.textContent = 'Failed to login. Please try again.';
           loginError.style.display = 'block';
@@ -121,7 +121,7 @@
   if (window.location.pathname === '/login') {
     initLoginPage();
   }
-  document.addEventListener('pageTransitionComplete', function(e) {
+  document.addEventListener('pageTransitionComplete', function (e) {
     if (e && e.detail && e.detail.path === '/login') {
       initLoginPage();
     }
@@ -134,7 +134,7 @@
   function initMembershipPage() {
     // Scroll to top immediately when initializing membership page
     window.scrollTo(0, 0);
-    
+
     if (!window.WOVCCAuth) {
       console.warn('[Membership] WOVCCAuth not available yet');
       return;
@@ -151,7 +151,7 @@
     var heroSubtitle = document.getElementById('membership-hero-subtitle');
 
     var user = window.WOVCCAuth.getCurrentUser();
-    
+
     if (!user) {
       window.location.href = '/login';
       return;
@@ -168,7 +168,7 @@
     // Check if we have all required membership fields, if not refresh profile
     if (!user.payment_status || !user.membership_tier) {
       console.log('[MEMBERSHIP] Missing membership fields, refreshing profile...');
-      window.WOVCCAuth.refreshUserProfile().then(function(freshUser) {
+      window.WOVCCAuth.refreshUserProfile().then(function (freshUser) {
         if (freshUser) {
           console.log('[MEMBERSHIP] Profile refreshed successfully');
           updateMembershipInfo(freshUser);
@@ -181,7 +181,7 @@
       // Update membership info
       updateMembershipInfo(user);
     }
-    
+
     setupContactDetailsForm();
     setupSpouseCardButton();
     setupEmailChangeForm();
@@ -193,9 +193,9 @@
       logoutButton.parentNode.replaceChild(newLogoutBtn, logoutButton);
       logoutButton = newLogoutBtn;
 
-      logoutButton.addEventListener('click', function(e) {
+      logoutButton.addEventListener('click', function (e) {
         e.preventDefault();
-        window.WOVCCAuth.logout().then(function() {
+        window.WOVCCAuth.logout().then(function () {
           window.WOVCCAuth.updateNavbar();
           window.location.href = '/login';
         });
@@ -217,7 +217,7 @@
     console.log('[MEMBERSHIP] membership_start_date:', user.membership_start_date);
     console.log('[MEMBERSHIP] membership_expiry_date:', user.membership_expiry_date);
     console.log('[MEMBERSHIP] stripe_customer_id:', user.stripe_customer_id);
-    
+
     var membershipTypeEl = document.getElementById('membership-type');
     if (membershipTypeEl && user.membership_tier) {
       membershipTypeEl.textContent = user.membership_tier;
@@ -229,7 +229,7 @@
       console.log('[MEMBERSHIP] user.payment_status === "active":', user.payment_status === 'active');
       console.log('[MEMBERSHIP] user.is_member:', user.is_member);
       console.log('[MEMBERSHIP] Both conditions:', user.payment_status === 'active' && user.is_member);
-      
+
       if (user.payment_status === 'active' && user.is_member) {
         console.log('[MEMBERSHIP] Setting status to: Active (green)');
         statusElement.textContent = 'Active';
@@ -248,7 +248,7 @@
     // Show/hide spouse card sections based on user status
     var spouseCardAddon = document.getElementById('spouse-card-addon');
     var spouseCardStatus = document.getElementById('spouse-card-status');
-    
+
     if (user.has_spouse_card) {
       if (spouseCardAddon) spouseCardAddon.style.display = 'none';
       if (spouseCardStatus) spouseCardStatus.style.display = 'block';
@@ -350,7 +350,7 @@
       if (errorDiv) errorDiv.style.display = 'none';
     }
 
-    form.addEventListener('submit', function(e) {
+    form.addEventListener('submit', function (e) {
       e.preventDefault();
       if (!window.WOVCCAuth) return;
 
@@ -384,13 +384,13 @@
           postal_code: postal,
           country: country
         })
-      }).then(function(res) { return res.json(); })
-        .then(function(data) {
+      }).then(function (res) { return res.json(); })
+        .then(function (data) {
           if (data.success) {
             showSuccess('Contact details updated successfully');
             notify('Contact details updated', 'success');
             if (window.WOVCCAuth && window.WOVCCAuth.refreshUserProfile) {
-              window.WOVCCAuth.refreshUserProfile().then(function(updatedUser) {
+              window.WOVCCAuth.refreshUserProfile().then(function (updatedUser) {
                 if (updatedUser) {
                   updateMembershipInfo(updatedUser);
                 }
@@ -401,12 +401,12 @@
             notify(data.error || data.message || 'Failed to update contact details', 'error');
           }
         })
-        .catch(function(err) {
+        .catch(function (err) {
           console.error('Contact details update error:', err);
           showError('Failed to connect to server');
           notify('Failed to connect to server', 'error');
         })
-        .finally(function() {
+        .finally(function () {
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.textContent = originalText;
@@ -418,14 +418,14 @@
   function setupSpouseCardButton() {
     var purchaseSpouseCardBtn = document.getElementById('purchase-spouse-card-btn');
     if (!purchaseSpouseCardBtn) return;
-    
+
     var newBtn = purchaseSpouseCardBtn.cloneNode(true);
     purchaseSpouseCardBtn.parentNode.replaceChild(newBtn, purchaseSpouseCardBtn);
     purchaseSpouseCardBtn = newBtn;
 
-    purchaseSpouseCardBtn.addEventListener('click', function() {
+    purchaseSpouseCardBtn.addEventListener('click', function () {
       if (!window.WOVCCAuth) return;
-      
+
       var originalText = purchaseSpouseCardBtn.textContent;
       purchaseSpouseCardBtn.disabled = true;
       purchaseSpouseCardBtn.textContent = 'Processing...';
@@ -447,8 +447,8 @@
         },
         credentials: 'include'
       })
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
           if (data.success && data.checkout_url) {
             window.location.href = data.checkout_url;
           } else {
@@ -457,7 +457,7 @@
             purchaseSpouseCardBtn.textContent = originalText;
           }
         })
-        .catch(function(error) {
+        .catch(function (error) {
           console.error('Spouse card purchase error:', error);
           notify('Failed to connect to server', 'error');
           purchaseSpouseCardBtn.disabled = false;
@@ -469,45 +469,45 @@
   function setupEmailChangeForm() {
     var form = document.getElementById('change-email-form');
     if (!form) return;
-    
+
     var errorDiv = document.getElementById('email-change-error');
     var successDiv = document.getElementById('email-change-success');
     var submitBtn = document.getElementById('change-email-btn');
-    
+
     // Clone form to remove old event listeners
     var newForm = form.cloneNode(true);
     form.parentNode.replaceChild(newForm, form);
     form = newForm;
-    
+
     // Re-get elements after cloning
     errorDiv = document.getElementById('email-change-error');
     successDiv = document.getElementById('email-change-success');
     submitBtn = document.getElementById('change-email-btn');
-    
-    form.addEventListener('submit', function(e) {
+
+    form.addEventListener('submit', function (e) {
       e.preventDefault();
-      
+
       if (!window.WOVCCAuth) return;
-      
+
       var newEmail = document.getElementById('new-email').value.trim();
-      
+
       // Hide previous messages
       if (errorDiv) errorDiv.style.display = 'none';
       if (successDiv) successDiv.style.display = 'none';
-      
-      const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;  
-      if (!newEmail || !emailRegex.test(newEmail)) { 
+
+      const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+      if (!newEmail || !emailRegex.test(newEmail)) {
         if (errorDiv) {
           errorDiv.querySelector('p').textContent = 'Please enter a valid email address';
           errorDiv.style.display = 'block';
         }
         return;
       }
-      
+
       var originalText = submitBtn.textContent;
       submitBtn.disabled = true;
       submitBtn.textContent = 'Changing...';
-      
+
       var token = sessionStorage.getItem('wovcc_access_token') || localStorage.getItem('wovcc_access_token');
       if (!token) {
         notify('Please log in to change your email', 'error');
@@ -515,7 +515,7 @@
         submitBtn.textContent = originalText;
         return;
       }
-      
+
       fetch('/api/user/change-email', {
         method: 'POST',
         headers: {
@@ -525,25 +525,25 @@
         credentials: 'include',
         body: JSON.stringify({ new_email: newEmail })
       })
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
           if (data.success) {
             if (successDiv) {
               successDiv.querySelector('p').textContent = 'Email address updated successfully';
               successDiv.style.display = 'block';
             }
             notify('Email updated successfully', 'success');
-            
+
             // Update user data
             if (window.WOVCCAuth && window.WOVCCAuth.refreshUserProfile) {
-              window.WOVCCAuth.refreshUserProfile().then(function() {
+              window.WOVCCAuth.refreshUserProfile().then(function () {
                 var user = window.WOVCCAuth.getCurrentUser();
                 if (user) {
                   updateMembershipInfo(user);
                 }
               });
             }
-            
+
             // Clear form
             document.getElementById('new-email').value = '';
           } else {
@@ -555,7 +555,7 @@
           submitBtn.disabled = false;
           submitBtn.textContent = originalText;
         })
-        .catch(function(error) {
+        .catch(function (error) {
           console.error('Email change error:', error);
           if (errorDiv) {
             errorDiv.querySelector('p').textContent = 'Failed to connect to server';
@@ -572,43 +572,43 @@
     var modal = document.getElementById('delete-account-modal');
     var cancelBtn = document.getElementById('cancel-delete-btn');
     var confirmBtn = document.getElementById('confirm-delete-btn');
-    
+
     if (!deleteBtn || !modal || !cancelBtn || !confirmBtn) return;
-    
+
     // Clone buttons to remove old event listeners
     var newDeleteBtn = deleteBtn.cloneNode(true);
     deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
     deleteBtn = newDeleteBtn;
-    
+
     var newCancelBtn = cancelBtn.cloneNode(true);
     cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
     cancelBtn = newCancelBtn;
-    
+
     var newConfirmBtn = confirmBtn.cloneNode(true);
     confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
     confirmBtn = newConfirmBtn;
-    
+
     // Show modal when delete button clicked
-    deleteBtn.addEventListener('click', function() {
+    deleteBtn.addEventListener('click', function () {
       modal.style.display = 'flex';
       document.body.style.overflow = 'hidden';
     });
-    
+
     // Hide modal when cancel clicked
-    cancelBtn.addEventListener('click', function() {
+    cancelBtn.addEventListener('click', function () {
       modal.style.display = 'none';
       document.body.style.overflow = '';
     });
-    
+
     // Handle account deletion
-    confirmBtn.addEventListener('click', function() {
+    confirmBtn.addEventListener('click', function () {
       if (!window.WOVCCAuth) return;
-      
+
       var originalText = confirmBtn.textContent;
       confirmBtn.disabled = true;
       confirmBtn.textContent = 'Deleting...';
       cancelBtn.disabled = true;
-      
+
       var token = sessionStorage.getItem('wovcc_access_token') || localStorage.getItem('wovcc_access_token');
       if (!token) {
         notify('Please log in to delete your account', 'error');
@@ -619,7 +619,7 @@
         document.body.style.overflow = '';
         return;
       }
-      
+
       fetch('/api/user/delete-account', {
         method: 'DELETE',
         headers: {
@@ -628,18 +628,18 @@
         },
         credentials: 'include'
       })
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
           if (data.success) {
             notify('Your account has been permanently deleted', 'success');
-            
+
             // Clear auth data
             if (window.WOVCCAuth && window.WOVCCAuth.logout) {
               window.WOVCCAuth.logout();
             }
-            
+
             // Redirect to home page after short delay
-            setTimeout(function() {
+            setTimeout(function () {
               window.location.href = '/';
             }, 2000);
           } else {
@@ -651,7 +651,7 @@
             document.body.style.overflow = '';
           }
         })
-        .catch(function(error) {
+        .catch(function (error) {
           console.error('Account deletion error:', error);
           notify('Failed to connect to server', 'error');
           confirmBtn.disabled = false;
@@ -661,9 +661,9 @@
           document.body.style.overflow = '';
         });
     });
-    
+
     // Close modal when clicking outside
-    modal.addEventListener('click', function(e) {
+    modal.addEventListener('click', function (e) {
       if (e.target === modal) {
         modal.style.display = 'none';
         document.body.style.overflow = '';
@@ -676,7 +676,7 @@
     if (urlParams.get('spouse_card') === 'success') {
       notify('Additional card purchased successfully! It will be ready for collection at the club within 7 days.', 'success');
       if (window.WOVCCAuth && window.WOVCCAuth.refreshUserProfile) {
-        window.WOVCCAuth.refreshUserProfile().then(function() {
+        window.WOVCCAuth.refreshUserProfile().then(function () {
           var user = window.WOVCCAuth.getCurrentUser();
           if (user) {
             updateMembershipInfo(user);
@@ -694,7 +694,7 @@
   if (window.location.pathname === '/membership') {
     initMembershipPage();
   }
-  document.addEventListener('pageTransitionComplete', function(e) {
+  document.addEventListener('pageTransitionComplete', function (e) {
     if (e && e.detail && e.detail.path === '/membership') {
       initMembershipPage();
     }
@@ -724,7 +724,7 @@
   if (window.location.pathname === '/members') {
     initMembersPage();
   }
-  document.addEventListener('pageTransitionComplete', function(e) {
+  document.addEventListener('pageTransitionComplete', function (e) {
     if (e && e.detail && e.detail.path === '/members') {
       initMembersPage();
     }
@@ -819,7 +819,7 @@
       // Show/hide spouse card sections based on user status
       var spouseCardAddon = document.getElementById('spouse-card-addon');
       var spouseCardStatus = document.getElementById('spouse-card-status');
-      
+
       if (user.has_spouse_card) {
         if (spouseCardAddon) spouseCardAddon.style.display = 'none';
         if (spouseCardStatus) spouseCardStatus.style.display = 'block';
@@ -878,7 +878,7 @@
     }
 
     // Bind login form submit once (avoid duplicates on SPA)
-    loginForm.addEventListener('submit', function(e) {
+    loginForm.addEventListener('submit', function (e) {
       e.preventDefault();
       if (!window.WOVCCAuth) return;
 
@@ -894,7 +894,7 @@
       submitBtn.disabled = true;
       submitBtn.textContent = 'Logging in...';
 
-      window.WOVCCAuth.login(email, password).then(function(result) {
+      window.WOVCCAuth.login(email, password).then(function (result) {
         if (result && result.success) {
           showMembersContent(result.user);
           window.WOVCCAuth.updateNavbar();
@@ -906,7 +906,7 @@
           submitBtn.disabled = false;
           submitBtn.textContent = originalText;
         }
-      }).catch(function() {
+      }).catch(function () {
         if (loginError) {
           loginError.textContent = 'Failed to login. Please try again.';
           loginError.style.display = 'block';
@@ -919,7 +919,7 @@
     // Replace inline handleLogout() with a single bound handler
     function handleLogout() {
       if (!window.WOVCCAuth) return;
-      window.WOVCCAuth.logout().then(function() {
+      window.WOVCCAuth.logout().then(function () {
         showLoginForm();
         window.WOVCCAuth.updateNavbar();
         window.scrollTo(0, 0);
@@ -932,7 +932,7 @@
       logoutButton.parentNode.replaceChild(newLogoutBtn, logoutButton);
       logoutButton = newLogoutBtn;
 
-      logoutButton.addEventListener('click', function(e) {
+      logoutButton.addEventListener('click', function (e) {
         e.preventDefault();
         handleLogout();
       });
@@ -947,9 +947,9 @@
       purchaseSpouseCardBtn.parentNode.replaceChild(newBtn, purchaseSpouseCardBtn);
       purchaseSpouseCardBtn = newBtn;
 
-      purchaseSpouseCardBtn.addEventListener('click', function() {
+      purchaseSpouseCardBtn.addEventListener('click', function () {
         if (!window.WOVCCAuth) return;
-        
+
         var originalText = purchaseSpouseCardBtn.textContent;
         purchaseSpouseCardBtn.disabled = true;
         purchaseSpouseCardBtn.textContent = 'Processing...';
@@ -972,8 +972,8 @@
           },
           credentials: 'include'
         })
-          .then(function(res) { return res.json(); })
-          .then(function(data) {
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
             if (data.success && data.checkout_url) {
               // Redirect to Stripe checkout
               window.location.href = data.checkout_url;
@@ -983,7 +983,7 @@
               purchaseSpouseCardBtn.textContent = originalText;
             }
           })
-          .catch(function(error) {
+          .catch(function (error) {
             console.error('Spouse card purchase error:', error);
             notify('Failed to connect to server', 'error');
             purchaseSpouseCardBtn.disabled = false;
@@ -999,7 +999,7 @@
         notify('Additional card purchased successfully! It will be ready for collection at the club within 7 days.', 'success');
         // Refresh user profile to get updated spouse card status
         if (window.WOVCCAuth && window.WOVCCAuth.refreshUserProfile) {
-          window.WOVCCAuth.refreshUserProfile().then(function() {
+          window.WOVCCAuth.refreshUserProfile().then(function () {
             var user = window.WOVCCAuth.getCurrentUser();
             if (user) {
               updateMembershipInfo(user);
@@ -1026,9 +1026,11 @@
    * Extracted from inline IIFE; exposes same behavior via script.
    */
   function initMatchesPage() {
+    console.log('[MatchesPage] initMatchesPage called, path:', window.location.pathname);
+
     // Ensure API client is ready
     if (!window.wovccApi) {
-      console.warn('[Matches] wovccApi not ready');
+      console.warn('[MatchesPage] wovccApi not ready');
       return;
     }
 
@@ -1041,8 +1043,11 @@
 
     // If core elements are missing, do nothing (likely not on matches page)
     if (!teamSelector || !fixturesTabBtn || !resultsTabBtn || !fixturesContent || !resultsContent) {
+      console.log('[MatchesPage] Core elements missing, exiting');
       return;
     }
+
+    console.log('[MatchesPage] All elements found, proceeding with init');
 
     // To work with SPA transitions we must allow re-init when navigating back to /matches.
     // So we do not global-lock with _initialized; instead:
@@ -1055,9 +1060,9 @@
       teamSelector.style.opacity = '0.6';
       teamSelector.disabled = true;
 
-      window.wovccApi.getTeams().then(function(teams) {
+      window.wovccApi.getTeams().then(function (teams) {
         teamSelector.innerHTML = '<option value="all">All Teams</option>';
-        (teams || []).forEach(function(team) {
+        (teams || []).forEach(function (team) {
           var option = document.createElement('option');
           option.value = team.id;
           option.textContent = team.name;
@@ -1069,41 +1074,46 @@
         teamSelector.parentNode.replaceChild(newSelector, teamSelector);
         teamSelector = newSelector;
 
-        teamSelector.addEventListener('change', function() {
+        teamSelector.addEventListener('change', function () {
           currentTeam = teamSelector.value;
           loadMatchesData();
         });
 
         teamSelector.style.opacity = '1';
         teamSelector.disabled = false;
-      }).catch(function(error) {
+      }).catch(function (error) {
         console.error('[Matches] Failed to setup team selector:', error);
         teamSelector.style.opacity = '1';
         teamSelector.disabled = false;
       });
     }
 
-    function switchTab(tab) {
+    function switchTab(tab, animate) {
       currentTab = tab;
-      
+
       // Determine which elements should be active
       var targetBtn = (tab === 'fixtures') ? fixturesTabBtn : resultsTabBtn;
       var targetContent = (tab === 'fixtures') ? fixturesContent : resultsContent;
-      
+      var otherContent = (tab === 'fixtures') ? resultsContent : fixturesContent;
+
       // Only modify classes if the target isn't already active
       // This prevents re-triggering CSS animations on page load
       if (!targetBtn.classList.contains('active')) {
-        [fixturesTabBtn, resultsTabBtn].forEach(function(btn) {
+        [fixturesTabBtn, resultsTabBtn].forEach(function (btn) {
           btn.classList.remove('active');
         });
         targetBtn.classList.add('active');
       }
 
       if (!targetContent.classList.contains('active')) {
-        [fixturesContent, resultsContent].forEach(function(el) {
-          el.classList.remove('active');
-        });
+        // Remove active and animate from other content
+        otherContent.classList.remove('active', 'tab-animate');
+
+        // Add active to target, and animate only if explicitly requested
         targetContent.classList.add('active');
+        if (animate) {
+          targetContent.classList.add('tab-animate');
+        }
       }
     }
 
@@ -1117,22 +1127,25 @@
       resultsTabBtn.parentNode.replaceChild(newResultsBtn, resultsTabBtn);
       resultsTabBtn = newResultsBtn;
 
-      fixturesTabBtn.addEventListener('click', function() {
-        switchTab('fixtures');
+      fixturesTabBtn.addEventListener('click', function () {
+        switchTab('fixtures', true); // animate on user click
       });
-      resultsTabBtn.addEventListener('click', function() {
-        switchTab('results');
+      resultsTabBtn.addEventListener('click', function () {
+        switchTab('results', true); // animate on user click
       });
     }
 
     function loadFixtures() {
+      console.log('[MatchesPage] loadFixtures called');
       var container = document.getElementById('fixtures-container');
       if (!container) return;
+      console.log('[MatchesPage] Rendering fixtures skeleton');
       window.wovccApi.renderFixturesSkeleton(container, 5);
-      window.wovccApi.getFixtures(currentTeam).then(function(fixtures) {
+      window.wovccApi.getFixtures(currentTeam).then(function (fixtures) {
+        console.log('[MatchesPage] Rendering fixtures data, count:', fixtures.length);
         window.wovccApi.renderFixtures(fixtures, container);
-      }).catch(function(error) {
-        console.error('[Matches] Failed to load fixtures:', error);
+      }).catch(function (error) {
+        console.error('[MatchesPage] Failed to load fixtures:', error);
         container.innerHTML =
           '<p style="text-align: center; color: var(--text-light); padding: 40px;">' +
           'Failed to load fixtures. Please try again later.' +
@@ -1141,13 +1154,16 @@
     }
 
     function loadResults() {
+      console.log('[MatchesPage] loadResults called');
       var container = document.getElementById('results-container');
       if (!container) return;
+      console.log('[MatchesPage] Rendering results skeleton');
       window.wovccApi.renderResultsSkeleton(container, 5);
-      window.wovccApi.getResults(currentTeam, 9999).then(function(results) {
+      window.wovccApi.getResults(currentTeam, 9999).then(function (results) {
+        console.log('[MatchesPage] Rendering results data, count:', results.length);
         window.wovccApi.renderResults(results, container);
-      }).catch(function(error) {
-        console.error('[Matches] Failed to load results:', error);
+      }).catch(function (error) {
+        console.error('[MatchesPage] Failed to load results:', error);
         container.innerHTML =
           '<p style="text-align: center; color: var(--text-light); padding: 40px;">' +
           'Failed to load results. Please try again later.' +
@@ -1156,7 +1172,9 @@
     }
 
     function loadMatchesData() {
-      Promise.all([loadFixtures(), loadResults()]).then(function() {
+      console.log('[MatchesPage] loadMatchesData called');
+      Promise.all([loadFixtures(), loadResults()]).then(function () {
+        console.log('[MatchesPage] loadMatchesData complete');
         if (lastUpdatedContainer && window.wovccApi.renderLastUpdated) {
           window.wovccApi.renderLastUpdated(lastUpdatedContainer);
         }
@@ -1164,25 +1182,54 @@
     }
 
     function init() {
+      console.log('[MatchesPage] inner init() called');
       setupTeamSelector();
       setupTabs();
       switchTab(currentTab);
       loadMatchesData();
+      console.log('[MatchesPage] inner init() complete');
     }
 
     init();
   }
 
   // Ensure matches page initializes on both direct load and SPA transitions,
-  // without causing duplicate entrance animations:
-  // - Tab content fade-in is tied to .tab-content.active in matches.html.
-  // - SPA calls re-run initMatchesPage() but cloning prevents duplicate handlers.
-  if (window.location.pathname === '/matches') {
-    initMatchesPage();
-  }
-  document.addEventListener('pageTransitionComplete', function(e) {
-    if (e && e.detail && e.detail.path === '/matches') {
+  // without causing duplicate entrance animations.
+  // Use a flag to prevent double initialization when SPA re-evaluates this script.
+  var matchesPageInitialized = false;
+
+  function tryInitMatchesPage(source) {
+    if (matchesPageInitialized) {
+      console.log('[MatchesPage] Already initialized this page view, skipping (' + source + ')');
+      return;
+    }
+    if (window.location.pathname === '/matches') {
+      console.log('[MatchesPage] Initializing from:', source);
+      matchesPageInitialized = true;
       initMatchesPage();
+    }
+  }
+
+  // For direct page loads, use DOMContentLoaded to ensure we only run once
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      tryInitMatchesPage('DOMContentLoaded');
+    });
+  } else {
+    // DOM already loaded - but only init if this is the first script evaluation
+    // Check if SPA is currently navigating (page-transitions sets this)
+    if (!window._spaNavigating) {
+      tryInitMatchesPage('immediate');
+    }
+  }
+
+  // For SPA transitions
+  document.addEventListener('pageTransitionComplete', function (e) {
+    console.log('[MatchesPage] pageTransitionComplete event, path:', e && e.detail && e.detail.path);
+    // Reset the flag on each navigation so we can re-init
+    matchesPageInitialized = false;
+    if (e && e.detail && e.detail.path === '/matches') {
+      tryInitMatchesPage('pageTransitionComplete');
     }
   });
 
@@ -1193,7 +1240,7 @@
   function initJoinPage() {
     // Scroll to top immediately when initializing join page
     window.scrollTo(0, 0);
-    
+
     var form = document.getElementById('signup-form');
     if (!form) return;
 
@@ -1221,42 +1268,42 @@
       var passwordInput = document.getElementById('password');
       var confirmPasswordInput = document.getElementById('confirmPassword');
       var passwordRequirements = document.getElementById('password-requirements');
-      
+
       if (passwordInput && passwordRequirements) {
         // Show requirements on focus
-        passwordInput.addEventListener('focus', function() {
+        passwordInput.addEventListener('focus', function () {
           passwordRequirements.classList.add('visible');
         });
-        
+
         // Hide requirements on blur (if password is valid or empty)
-        passwordInput.addEventListener('blur', function() {
+        passwordInput.addEventListener('blur', function () {
           var password = passwordInput.value;
-          var allMet = password.length >= 8 && 
-                       /[A-Z]/.test(password) && 
-                       /[a-z]/.test(password) && 
-                       /[0-9]/.test(password) && 
-                       /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password);
+          var allMet = password.length >= 8 &&
+            /[A-Z]/.test(password) &&
+            /[a-z]/.test(password) &&
+            /[0-9]/.test(password) &&
+            /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password);
           if (allMet || password.length === 0) {
             passwordRequirements.classList.remove('visible');
           }
         });
-        
+
         // Also show on confirm password focus if password requirements not met
         if (confirmPasswordInput) {
-          confirmPasswordInput.addEventListener('focus', function() {
+          confirmPasswordInput.addEventListener('focus', function () {
             var password = passwordInput.value;
-            var allMet = password.length >= 8 && 
-                         /[A-Z]/.test(password) && 
-                         /[a-z]/.test(password) && 
-                         /[0-9]/.test(password) && 
-                         /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password);
+            var allMet = password.length >= 8 &&
+              /[A-Z]/.test(password) &&
+              /[a-z]/.test(password) &&
+              /[0-9]/.test(password) &&
+              /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password);
             if (!allMet && password.length > 0) {
               passwordRequirements.classList.add('visible');
             }
           });
         }
-        
-        passwordInput.addEventListener('input', function() {
+
+        passwordInput.addEventListener('input', function () {
           var password = passwordInput.value;
           var reqLength = document.getElementById('req-length');
           var reqUppercase = document.getElementById('req-uppercase');
@@ -1313,22 +1360,22 @@
             reqSpecial.classList.remove('met');
             reqSpecial.textContent = '✗ Special (!@#$)';
           }
-          
+
           // Hide if all requirements met
-          var allMet = password.length >= 8 && 
-                       /[A-Z]/.test(password) && 
-                       /[a-z]/.test(password) && 
-                       /[0-9]/.test(password) && 
-                       /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password);
+          var allMet = password.length >= 8 &&
+            /[A-Z]/.test(password) &&
+            /[a-z]/.test(password) &&
+            /[0-9]/.test(password) &&
+            /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password);
           if (allMet) {
-            setTimeout(function() {
+            setTimeout(function () {
               passwordRequirements.classList.remove('visible');
             }, 500);
           }
         });
       }
 
-      form.addEventListener('submit', function(e) {
+      form.addEventListener('submit', function (e) {
         e.preventDefault();
         if (!window.WOVCCAuth) return;
 
@@ -1381,7 +1428,7 @@
           submitBtn.textContent = 'Processing...';
         }
 
-        window.WOVCCAuth.signup(name, email, password, newsletter, includeSpouseCard).then(function(result) {
+        window.WOVCCAuth.signup(name, email, password, newsletter, includeSpouseCard).then(function (result) {
           if (result && result.success && result.checkout_url) {
             window.location.href = result.checkout_url;
           } else {
@@ -1391,7 +1438,7 @@
               submitBtn.textContent = originalText;
             }
           }
-        }).catch(function() {
+        }).catch(function () {
           notify('Failed to connect to server. Please try again.', 'error');
           if (submitBtn) {
             submitBtn.disabled = false;
@@ -1404,7 +1451,7 @@
     function initJoin() {
       // Note: Removed success=true redirect - Stripe now redirects directly to /join/activate?token=...
       var urlParams = new URLSearchParams(window.location.search);
-      
+
       if (urlParams.get('canceled') === 'true') {
         notify('Payment was canceled. Please try again if you\'d like to join.', 'warning');
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -1435,7 +1482,7 @@
   }
 
   // Initialize event detail logic whenever navigating under /events
-  onPage('/events', function() {
+  onPage('/events', function () {
     initEventDetailPage();
   });
 
@@ -1449,7 +1496,7 @@
     var actionButton = document.getElementById('action-button');
     if (!iconContainer || !messageContainer || !actionButton) return;
 
-    setTimeout(function() {
+    setTimeout(function () {
       iconContainer.innerHTML =
         '<svg class="cross-icon" viewBox="0 0 100 100">' +
         '<circle cx="50" cy="50" r="45"/>' +
@@ -1487,7 +1534,7 @@
     console.log('[Activate] window.location.pathname:', window.location.pathname);
     console.log('[Activate] window.location.search:', window.location.search);
     console.log('[Activate] window.location.hash:', window.location.hash);
-    
+
     var statusIcon = document.getElementById('status-icon');
     var statusTitle = document.getElementById('status-title');
     var statusMessage = document.getElementById('status-message');
@@ -1536,7 +1583,7 @@
 
       var retryBtn = actionsDiv.querySelector('[data-action="retry-activation"]');
       if (retryBtn) {
-        retryBtn.addEventListener('click', function() {
+        retryBtn.addEventListener('click', function () {
           window.location.reload();
         });
       }
@@ -1559,15 +1606,15 @@
 
     (async function run() {
       console.log('[Activate] ========== ASYNC RUN FUNCTION START ==========');
-      
+
       // SECURITY FIX: Get activation token from URL parameter (not from localStorage)
       console.log('[Activate] Creating URLSearchParams from:', window.location.search);
       var urlParams = new URLSearchParams(window.location.search);
       console.log('[Activate] URLSearchParams created:', urlParams);
       console.log('[Activate] All URL params:', Array.from(urlParams.entries()));
-      
+
       var activationToken = urlParams.get('token');
-      
+
       console.log('[Activate] ========== TOKEN EXTRACTION ==========');
       console.log('[Activate] window.location.href:', window.location.href);
       console.log('[Activate] window.location.search:', window.location.search);
@@ -1590,7 +1637,7 @@
         showError('No activation token found. Please check your email or try signing up again.');
         return;
       }
-      
+
       console.log('[Activate] Starting activation with token:', activationToken.substring(0, 10) + '...');
 
       updateStatus('processing', 'Creating Your Account', 'Please wait while we set up your membership...');
@@ -1602,11 +1649,11 @@
         attempts++;
         try {
           var result = await window.WOVCCAuth.activate(activationToken);
-          
+
           if (result && result.success) {
             // Account activated successfully
             updateStatus('success', 'Welcome to WOVCC!', 'Your membership is now active. Redirecting to your members area...');
-            
+
             try {
               await window.WOVCCAuth.refreshUserProfile();
             } catch (e) {
@@ -1614,7 +1661,7 @@
             }
             window.WOVCCAuth.updateNavbar();
 
-            setTimeout(function() {
+            setTimeout(function () {
               window.location.href = '/membership';
             }, 2000);
             return;
@@ -1631,7 +1678,7 @@
         }
 
         if (attempts < maxAttempts) {
-          await new Promise(function(resolve) { setTimeout(resolve, 2000); });
+          await new Promise(function (resolve) { setTimeout(resolve, 2000); });
         }
       }
 
@@ -1642,10 +1689,10 @@
   onPage('/join/activate', initActivatePage);
 
   // 500.html javascript: URL will be fixed in template by switching to a normal button + click listener.
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     var tryAgainLink = document.querySelector('[data-js-action="reload-page"]');
     if (tryAgainLink) {
-      tryAgainLink.addEventListener('click', function(e) {
+      tryAgainLink.addEventListener('click', function (e) {
         e.preventDefault();
         window.location.reload();
       });
@@ -1659,7 +1706,7 @@
   function initContactPage() {
     // Scroll to top immediately when initializing contact page
     window.scrollTo(0, 0);
-    
+
     var form = document.getElementById('contact-form');
     if (!form) return;
 
@@ -1683,7 +1730,7 @@
     form.parentNode.replaceChild(freshForm, form);
     form = freshForm;
 
-    form.addEventListener('submit', function(e) {
+    form.addEventListener('submit', function (e) {
       e.preventDefault();
       hideBoxes();
 
@@ -1704,7 +1751,7 @@
         subject: subject,
         message: message
       };
-      
+
       // Add phone number if provided
       if (phone) {
         payload.phone = phone;
@@ -1723,12 +1770,12 @@
         },
         body: JSON.stringify(payload)
       })
-        .then(function(res) {
-          return res.json().catch(function() { return {}; }).then(function(data) {
+        .then(function (res) {
+          return res.json().catch(function () { return {}; }).then(function (data) {
             return { res: res, data: data };
           });
         })
-        .then(function(result) {
+        .then(function (result) {
           var res = result.res;
           var data = result.data || {};
           if (res.ok && data.success) {
@@ -1742,11 +1789,11 @@
             showBox(errorBox, msg);
           }
         })
-        .catch(function(err) {
+        .catch(function (err) {
           console.error('Contact form error:', err);
           showBox(errorBox, 'Network error sending message. Please try again.');
         })
-        .finally(function() {
+        .finally(function () {
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.textContent = originalText;

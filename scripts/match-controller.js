@@ -14,6 +14,7 @@
     };
     class MatchController {
         constructor() {
+            console.log('[MatchController] Constructor called, path:', window.location.pathname);
             this.liveSection = document.getElementById("live-match-section");
             this.noMatchSection = document.getElementById("no-match-section");
             this.fixturesContainer = document.getElementById("upcoming-fixtures-container");
@@ -25,28 +26,33 @@
             this._boundTeamChange = null; // Store bound handler for cleanup
         }
         async init() {
+            console.log('[MatchController] init() called, path:', window.location.pathname, 'initialized:', this.initialized);
             if (this.initialized) {
                 // Re-initialize if already initialized (for page transitions)
+                console.log('[MatchController] Already initialized, calling cleanup');
                 this.cleanup();
             }
-            
+
             // Scroll to top immediately when initializing match page
             window.scrollTo(0, 0);
-            
+
             // Re-get elements in case of page transition
             this.liveSection = document.getElementById("live-match-section");
             this.noMatchSection = document.getElementById("no-match-section");
             this.fixturesContainer = document.getElementById("upcoming-fixtures-container");
             this.resultsContainer = document.getElementById("recent-results-container");
             this.teamSelector = document.getElementById("team-selector");
-            
+
+            console.log('[MatchController] Elements found - fixtures:', !!this.fixturesContainer, 'results:', !!this.resultsContainer);
+
             await this.setupTeamSelector();
             await this.checkMatchStatus();
             await this.loadData();
             this.startPolling();
             this.initialized = true;
+            console.log('[MatchController] init() complete');
         }
-        
+
         cleanup() {
             if (this.pollInterval) {
                 clearInterval(this.pollInterval);
@@ -246,40 +252,49 @@
             }
         }
     }
-    
+
     // Initialize function for page transitions
     let matchdayInitialized = false;
-    
-    window.initializeMatchday = async function() {
+
+    window.initializeMatchday = async function () {
+        console.log('[MatchController] initializeMatchday called, flag:', matchdayInitialized, 'path:', window.location.pathname);
         // Prevent double initialization
-        if (matchdayInitialized) return;
+        if (matchdayInitialized) {
+            console.log('[MatchController] Already initialized, skipping');
+            return;
+        }
         matchdayInitialized = true;
-        
+
         const controller = new MatchController();
         window.matchController = controller;
         await controller.init();
     };
-    
-    // Initialize immediately if DOM is already loaded, otherwise wait
-    const init = async () => {  
-        await window.initializeMatchday();  
-    };  
 
-    if (document.readyState === 'loading') {  
-        document.addEventListener("DOMContentLoaded", init);  
-    } else {  
-        // DOM is already loaded (page transition scenario)  
-        init();  
-    }  
-    
+    // Initialize immediately if DOM is already loaded, otherwise wait
+    const init = async () => {
+        console.log('[MatchController] init wrapper called, readyState:', document.readyState, 'path:', window.location.pathname);
+        await window.initializeMatchday();
+    };
+
+    if (document.readyState === 'loading') {
+        console.log('[MatchController] Adding DOMContentLoaded listener');
+        document.addEventListener("DOMContentLoaded", init);
+    } else {
+        // DOM is already loaded (page transition scenario)
+        console.log('[MatchController] DOM ready, calling init immediately');
+        init();
+    }
+
     // Re-initialize on page transitions
-    document.addEventListener("pageTransitionComplete", async function(e) {
+    document.addEventListener("pageTransitionComplete", async function (e) {
+        console.log('[MatchController] pageTransitionComplete event, path:', e.detail.path);
         if (e.detail.path === '/') {
+            console.log('[MatchController] Resetting flag for home page');
             matchdayInitialized = false; // Reset flag for new page load
             await window.initializeMatchday();
         }
     });
-    
+
     window.addEventListener("beforeunload", function () {
         if (window.matchController) {
             window.matchController.stopPolling();

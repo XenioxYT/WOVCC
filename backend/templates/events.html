@@ -49,7 +49,7 @@ site_base_url }}{{ upcoming_events[0].image_url }}{% else %}{{ site_base_url }}/
         "description": "{{ event.short_description | e }}",
         {% if event.date %}"startDate": "{{ event.date }}",{% endif %}
         {% if event.image_url %}"image": "{{ site_base_url }}{{ event.image_url }}",{% endif %}
-        "url": "{{ site_base_url }}/events/{{ event.id }}",
+        "url": "{{ site_base_url }}/events/{% if event.slug %}{{ event.slug }}{% else %}{{ event.id }}{% endif %}",
         "location": {
           "@type": "Place",
           "name": "{% if event.location %}{{ event.location | e }}{% else %}Wickersley Old Village Cricket Club{% endif %}",
@@ -76,8 +76,8 @@ site_base_url }}{{ upcoming_events[0].image_url }}{% else %}{{ site_base_url }}/
 {% endblock %}
 
 {% block extra_js %}
-<script src="/scripts/api-client.js"></script>
-<script src="/scripts/events.js"></script>
+<script src="/scripts/api-client.js?v={{ asset_version }}"></script>
+<script src="/scripts/events.js?v={{ asset_version }}"></script>
 {% endblock %}
 
 {% block content %}
@@ -108,14 +108,85 @@ site_base_url }}{{ upcoming_events[0].image_url }}{% else %}{{ site_base_url }}/
   </div>
 </section>
 
+<!-- Loading Skeleton (shown initially) -->
+<section class="section" id="events-skeleton-section" style="padding-top: 2rem; padding-bottom: 3rem;">
+  <div class="container">
+    <!-- Skeleton Header -->
+    <div class="skeleton-section-header">
+      <div class="skeleton-header-line skeleton-shimmer"
+        style="width: 200px; height: 28px; margin-bottom: 8px; border-radius: 6px;"></div>
+      <div class="skeleton-header-line skeleton-shimmer" style="width: 150px; height: 16px; border-radius: 4px;"></div>
+    </div>
+    <!-- Skeleton Grid -->
+    <div class="events-grid" style="margin-top: 2rem;">
+      <div class="skeleton-event-card">
+        <div class="skeleton-image skeleton-shimmer"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-badge skeleton-shimmer"></div>
+          <div class="skeleton-line skeleton-title skeleton-shimmer"></div>
+          <div class="skeleton-line skeleton-desc-1 skeleton-shimmer"></div>
+          <div class="skeleton-line skeleton-desc-2 skeleton-shimmer"></div>
+          <div class="skeleton-line skeleton-desc-3 skeleton-shimmer"></div>
+          <div class="skeleton-meta">
+            <div class="skeleton-meta-item skeleton-shimmer"></div>
+            <div class="skeleton-meta-item skeleton-shimmer" style="width: 60%;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="skeleton-event-card">
+        <div class="skeleton-image skeleton-shimmer"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-badge skeleton-shimmer"></div>
+          <div class="skeleton-line skeleton-title skeleton-shimmer"></div>
+          <div class="skeleton-line skeleton-desc-1 skeleton-shimmer"></div>
+          <div class="skeleton-line skeleton-desc-2 skeleton-shimmer"></div>
+          <div class="skeleton-line skeleton-desc-3 skeleton-shimmer"></div>
+          <div class="skeleton-meta">
+            <div class="skeleton-meta-item skeleton-shimmer"></div>
+            <div class="skeleton-meta-item skeleton-shimmer" style="width: 60%;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="skeleton-event-card">
+        <div class="skeleton-image skeleton-shimmer"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-badge skeleton-shimmer"></div>
+          <div class="skeleton-line skeleton-title skeleton-shimmer"></div>
+          <div class="skeleton-line skeleton-desc-1 skeleton-shimmer"></div>
+          <div class="skeleton-line skeleton-desc-2 skeleton-shimmer"></div>
+          <div class="skeleton-line skeleton-desc-3 skeleton-shimmer"></div>
+          <div class="skeleton-meta">
+            <div class="skeleton-meta-item skeleton-shimmer"></div>
+            <div class="skeleton-meta-item skeleton-shimmer" style="width: 60%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Happening Today Section (hidden by default) -->
+<section class="section" id="today-section" style="padding-top: 2rem; padding-bottom: 2rem; display: none;">
+  <div class="container">
+    <div class="events-section-header" id="today-header" style="margin-bottom: 2rem;">
+      <h2 style="font-size: 1.75rem; margin: 0 0 0.5rem 0; font-weight: 700; color: var(--primary-color);">
+        Happening Today
+      </h2>
+      <p style="color: var(--text-secondary); margin: 0; font-size: 1rem;" id="today-count-text">
+        Events taking place today
+      </p>
+    </div>
+
+    <div id="today-events-container" class="events-grid">
+      <!-- Today's events will be loaded here by JavaScript -->
+    </div>
+  </div>
+</section>
+
 <!-- Upcoming Events Section -->
 <section class="section" style="padding-top: 2rem; padding-bottom: 3rem;" id="upcoming-section">
   <div class="container">
-    <!-- Loading Skeleton -->
-    <div id="events-skeleton" class="events-skeleton">
-      <!-- Skeleton cards will be injected here -->
-    </div>
-    <div class="events-section-header" id="upcoming-header" style="margin-bottom: 2rem;">
+    <div class="events-section-header" id="upcoming-header" style="margin-bottom: 2rem; display: none;">
       <h2 style="font-size: 1.75rem; margin: 0 0 0.5rem 0; font-weight: 700; color: var(--primary-color);">
         Upcoming Events
       </h2>
@@ -125,19 +196,21 @@ site_base_url }}{{ upcoming_events[0].image_url }}{% else %}{{ site_base_url }}/
       </p>
     </div>
 
-    <div id="upcoming-events-container" class="events-grid">
+    <div id="upcoming-events-container" class="events-grid" style="display: none;">
       <!-- Upcoming events will be loaded here by JavaScript -->
       {% if upcoming_events and upcoming_events|length > 0 %}
       <noscript>
         {% for event in upcoming_events %}
         <article class="event-card-seo"
           style="border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
-          <h3><a href="/events/{{ event.id }}">{{ event.title }}</a></h3>
+          <h3><a href="/events/{% if event.slug %}{{ event.slug }}{% else %}{{ event.id }}{% endif %}">{{ event.title
+              }}</a></h3>
           <p><strong>Date:</strong> {{ event.date_display or event.date }}</p>
           {% if event.time %}<p><strong>Time:</strong> {{ event.time }}</p>{% endif %}
           {% if event.location %}<p><strong>Location:</strong> {{ event.location }}</p>{% endif %}
           <p>{{ event.short_description }}</p>
-          <a href="/events/{{ event.id }}">View Event Details →</a>
+          <a href="/events/{% if event.slug %}{{ event.slug }}{% else %}{{ event.id }}{% endif %}">View Event Details
+            →</a>
         </article>
         {% endfor %}
       </noscript>
@@ -145,8 +218,7 @@ site_base_url }}{{ upcoming_events[0].image_url }}{% else %}{{ site_base_url }}/
     </div>
 
     <!-- No Upcoming Events Message -->
-    <div id="no-upcoming-message" class="no-events-message"
-      style="{% if upcoming_count > 0 %}display: none;{% endif %}">
+    <div id="no-upcoming-message" class="no-events-message" style="display: none;">
       <div style="text-align: center; padding: 3rem 1.5rem; background: var(--secondary-bg); border-radius: 12px;">
         <p style="color: var(--text-secondary); font-size: 1.05rem; line-height: 1.6; margin: 0;">
           We're planning more exciting events! Follow us on
@@ -162,7 +234,7 @@ site_base_url }}{{ upcoming_events[0].image_url }}{% else %}{{ site_base_url }}/
 </section>
 
 <!-- Separator -->
-<div class="container" style="padding: 2rem 0;">
+<div class="container events-separator" id="events-separator" style="padding: 2rem 0; display: none;">
   <div
     style="max-width: 100px; margin: 0 auto; height: 4px; background: linear-gradient(90deg, transparent, var(--border-color), transparent); border-radius: 2px;">
   </div>
@@ -171,7 +243,7 @@ site_base_url }}{{ upcoming_events[0].image_url }}{% else %}{{ site_base_url }}/
 <!-- Past Events Section -->
 <section class="section" style="padding-top: 0;" id="past-section">
   <div class="container">
-    <div class="events-section-header" id="past-header" style="margin-bottom: 2rem;">
+    <div class="events-section-header" id="past-header" style="margin-bottom: 2rem; display: none;">
       <h2 style="font-size: 1.75rem; margin: 0 0 0.5rem 0; font-weight: 700; color: var(--primary-color);">
         Past Events
       </h2>
@@ -181,19 +253,21 @@ site_base_url }}{{ upcoming_events[0].image_url }}{% else %}{{ site_base_url }}/
       </p>
     </div>
 
-    <div id="past-events-container" class="events-grid">
+    <div id="past-events-container" class="events-grid" style="display: none;">
       <!-- Past events will be loaded here by JavaScript -->
       {% if past_events and past_events|length > 0 %}
       <noscript>
         {% for event in past_events %}
         <article class="event-card-seo"
           style="border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; opacity: 0.8;">
-          <h3><a href="/events/{{ event.id }}">{{ event.title }}</a></h3>
+          <h3><a href="/events/{% if event.slug %}{{ event.slug }}{% else %}{{ event.id }}{% endif %}">{{ event.title
+              }}</a></h3>
           <p><strong>Date:</strong> {{ event.date_display or event.date }}</p>
           {% if event.time %}<p><strong>Time:</strong> {{ event.time }}</p>{% endif %}
           {% if event.location %}<p><strong>Location:</strong> {{ event.location }}</p>{% endif %}
           <p>{{ event.short_description }}</p>
-          <a href="/events/{{ event.id }}">View Event Details →</a>
+          <a href="/events/{% if event.slug %}{{ event.slug }}{% else %}{{ event.id }}{% endif %}">View Event Details
+            →</a>
         </article>
         {% endfor %}
       </noscript>
@@ -201,7 +275,7 @@ site_base_url }}{{ upcoming_events[0].image_url }}{% else %}{{ site_base_url }}/
     </div>
 
     <!-- No Past Events Message -->
-    <div id="no-past-message" class="no-events-message" style="{% if past_count > 0 %}display: none;{% endif %}">
+    <div id="no-past-message" class="no-events-message" style="display: none;">
       <div style="text-align: center; padding: 3rem 1.5rem; background: var(--secondary-bg); border-radius: 12px;">
         <p style="color: var(--text-secondary); font-size: 1.05rem; margin: 0;">
           No past events to display yet.

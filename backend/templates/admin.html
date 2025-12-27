@@ -7,15 +7,15 @@
 {% block robots %}noindex, nofollow{% endblock %}
 
 {% block extra_js %}
-<script src="/scripts/api-client.js"></script>
+<script src="/scripts/api-client.js?v={{ asset_version }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="/scripts/admin-dashboard.js"></script>
-<script src="/scripts/admin-events.js"></script>
-<script src="/scripts/admin-users.js"></script>
-<script src="/scripts/admin-content.js"></script>
-<script src="/scripts/admin-sponsors.js"></script>
-<script src="/scripts/admin-help.js"></script>
-<script src="/scripts/admin-page.js"></script>
+<script src="/scripts/admin-dashboard.js?v={{ asset_version }}"></script>
+<script src="/scripts/admin-events.js?v={{ asset_version }}"></script>
+<script src="/scripts/admin-users.js?v={{ asset_version }}"></script>
+<script src="/scripts/admin-content.js?v={{ asset_version }}"></script>
+<script src="/scripts/admin-sponsors.js?v={{ asset_version }}"></script>
+<script src="/scripts/admin-help.js?v={{ asset_version }}"></script>
+<script src="/scripts/admin-page.js?v={{ asset_version }}"></script>
 
 <!-- Toggle Switch CSS and Admin Styles -->
 <style>

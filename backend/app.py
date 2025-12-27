@@ -13,6 +13,8 @@ from flask_cors import CORS
 import os
 import logging
 from datetime import datetime
+import hashlib
+import glob
 from markupsafe import Markup
 import bleach
 from urllib.parse import urlparse
@@ -35,6 +37,44 @@ app = Flask(__name__)
 # Configuration
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 PORT = int(os.environ.get('PORT', 5000))
+
+
+# ========================================
+# Cache Busting for Static Assets
+# ========================================
+def _generate_asset_version():
+    """
+    Generate a version hash based on the modification times of all static files.
+    This ensures browsers fetch fresh copies when any CSS/JS file changes.
+    """
+    backend_dir = os.path.dirname(__file__)
+    styles_dir = os.path.join(backend_dir, '..', 'styles')
+    scripts_dir = os.path.join(backend_dir, '..', 'scripts')
+    assets_dir = os.path.join(backend_dir, '..', 'assets')
+    
+    # Collect modification times from all static files
+    mtimes = []
+    for directory in [styles_dir, scripts_dir, assets_dir]:
+        if os.path.exists(directory):
+            for pattern in ['*.css', '*.js', '*.webp', '*.png', '*.jpg', '*.svg']:
+                for filepath in glob.glob(os.path.join(directory, pattern)):
+                    try:
+                        mtimes.append(str(os.path.getmtime(filepath)))
+                    except OSError:
+                        pass
+    
+    # Create a hash from all modification times
+    if mtimes:
+        hash_input = ''.join(sorted(mtimes))
+        return hashlib.md5(hash_input.encode()).hexdigest()[:8]
+    
+    # Fallback to current timestamp if no files found
+    return str(int(datetime.now().timestamp()))[:8]
+
+
+# Generate the asset version at startup (cached for the lifetime of the worker)
+ASSET_VERSION = _generate_asset_version()
+logger.info(f"Asset version (cache busting): {ASSET_VERSION}")
 
 
 def _normalize_url(value):
@@ -319,7 +359,8 @@ def inject_app_config():
             'environment': os.environ.get('ENVIRONMENT', 'development' if DEBUG else 'production'),
             'google_maps_api_key': os.environ.get('GOOGLE_MAPS_API_KEY', '')
         },
-        'site_base_url': SITE_BASE_URL
+        'site_base_url': SITE_BASE_URL,
+        'asset_version': ASSET_VERSION
     }
 
 
@@ -575,10 +616,13 @@ def sitemap():
                     
                     priority = '0.7' if is_upcoming else '0.5'
                     
+                    # Use SEO-friendly slug URL if available, otherwise fall back to ID
+                    event_url = f"{base_url}/events/{event.slug}" if event.slug else f"{base_url}/events/{event.id}"
+                    
                     xml_parts.append('  <url>')
-                    xml_parts.append(f'    <loc>{base_url}/events/{event.id}</loc>')
+                    xml_parts.append(f'    <loc>{event_url}</loc>')
                     xml_parts.append(f'    <lastmod>{lastmod_str}</lastmod>')
-                    xml_parts.append(f'    <changefreq>weekly</changefreq>')
+                    xml_parts.append(f'    <changefreq>daily</changefreq>')
                     xml_parts.append(f'    <priority>{priority}</priority>')
                     xml_parts.append('  </url>')
                 except Exception as event_error:

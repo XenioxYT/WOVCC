@@ -13,6 +13,7 @@ from openai import OpenAI
 from database import get_db, Event, EventInterest
 from auth import require_admin, get_current_user
 from image_utils import process_and_save_image, delete_image, allowed_file
+from slug_utils import generate_event_slug
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import or_
 
@@ -67,6 +68,14 @@ def generate_recurring_events(base_event, db):
         count += 1
     
     return generated
+
+
+def find_event_by_identifier(db, identifier):
+    """Find an event by ID (if numeric) or slug (if string)."""
+    if str(identifier).isdigit():
+        return db.query(Event).filter(Event.id == int(identifier)).first()
+    else:
+        return db.query(Event).filter(Event.slug == identifier).first()
 
 # ----- Events API -----
 
@@ -138,13 +147,17 @@ def get_events():
         }), 500
 
 
-@events_api_bp.route('/<int:event_id>', methods=['GET'])
-def get_event(event_id):
-    """Get a single event by ID"""
+@events_api_bp.route('/<event_identifier>', methods=['GET'])
+def get_event(event_identifier):
+    """Get a single event by ID or slug"""
     try:
         db = next(get_db())
         try:
-            event = db.query(Event).filter(Event.id == event_id).first()
+            # Check if identifier is numeric (ID) or string (slug)
+            if event_identifier.isdigit():
+                event = db.query(Event).filter(Event.id == int(event_identifier)).first()
+            else:
+                event = db.query(Event).filter(Event.slug == event_identifier).first()
             
             if not event:
                 return jsonify({
@@ -154,7 +167,6 @@ def get_event(event_id):
             
             # Check if event is published (unless admin)
             current_user = get_current_user()
-            # Check if event is published (unless admin)
             if not event.is_published:
                 if not current_user or not current_user.is_admin:
                     return jsonify({
@@ -166,7 +178,7 @@ def get_event(event_id):
             user_interested = False
             if current_user:
                 interest = db.query(EventInterest).filter(
-                    EventInterest.event_id == event_id,
+                    EventInterest.event_id == event.id,
                     EventInterest.user_id == current_user.id
                 ).first()
                 user_interested = interest is not None
@@ -185,7 +197,7 @@ def get_event(event_id):
             db.close()
             
     except Exception as e:
-        logger.error(f"Error fetching event {event_id}: {e}")
+        logger.error(f"Error fetching event {event_identifier}: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -251,8 +263,12 @@ def create_event(user):
                 except (ValueError, TypeError):
                     return jsonify({'success': False, 'error': 'Invalid recurrence_end_date format'}), 400
             
+            # Generate SEO-friendly slug from title and date
+            event_slug = generate_event_slug(data['title'], event_date, db)
+            
             # Create event
             new_event = Event(
+                slug=event_slug,
                 title=data['title'],
                 short_description=data['short_description'],
                 long_description=data['long_description'],
@@ -276,6 +292,8 @@ def create_event(user):
             if is_recurring and recurrence_pattern and recurrence_end_date:
                 recurring_instances = generate_recurring_events(new_event, db)
                 for instance in recurring_instances:
+                    # Generate unique slug for each recurring instance
+                    instance.slug = generate_event_slug(instance.title, instance.date, db)
                     db.add(instance)
                 db.commit()
             
@@ -383,6 +401,12 @@ def update_event(user, event_id):
                         # Extract main URL if dict returned (responsive images), otherwise use string directly
                         event.image_url = image_result['main'] if isinstance(image_result, dict) else image_result
             
+            # Regenerate slug if title or date changed (for SEO-friendly URLs)
+            if 'title' in data or 'date' in data:
+                new_slug = generate_event_slug(event.title, event.date, db, exclude_id=event.id)
+                if new_slug:
+                    event.slug = new_slug
+            
             event.updated_at = datetime.now(timezone.utc)
             db.commit()
             db.refresh(event)
@@ -451,15 +475,15 @@ def delete_event(user, event_id):
         }), 500
 
 
-@events_api_bp.route('/<int:event_id>/interest', methods=['POST'])
-def toggle_event_interest(event_id):
-    """Toggle user interest in an event"""
+@events_api_bp.route('/<event_identifier>/interest', methods=['POST'])
+def toggle_event_interest(event_identifier):
+    """Toggle user interest in an event (accepts ID or slug)"""
     try:
         db = next(get_db())
         try:
-            event = db.query(Event).filter(Event.id == event_id, Event.is_published == True).first()
+            event = find_event_by_identifier(db, event_identifier)
             
-            if not event:
+            if not event or not event.is_published:
                 return jsonify({
                     'success': False,
                     'error': 'Event not found'
@@ -470,7 +494,7 @@ def toggle_event_interest(event_id):
             if current_user:
                 # Check if already interested
                 existing = db.query(EventInterest).filter(
-                    EventInterest.event_id == event_id,
+                    EventInterest.event_id == event.id,
                     EventInterest.user_id == current_user.id
                 ).first()
                 
@@ -482,7 +506,7 @@ def toggle_event_interest(event_id):
                 else:
                     # Add interest
                     interest = EventInterest(
-                        event_id=event_id,
+                        event_id=event.id,
                         user_id=current_user.id
                     )
                     db.add(interest)
@@ -502,7 +526,7 @@ def toggle_event_interest(event_id):
                 
                 # Check if already interested by email
                 existing = db.query(EventInterest).filter(
-                    EventInterest.event_id == event_id,
+                    EventInterest.event_id == event.id,
                     EventInterest.user_email == email
                 ).first()
                 
@@ -514,7 +538,7 @@ def toggle_event_interest(event_id):
                 else:
                     # Add interest
                     interest = EventInterest(
-                        event_id=event_id,
+                        event_id=event.id,
                         user_id=None,
                         user_email=email,
                         user_name=name
@@ -536,7 +560,7 @@ def toggle_event_interest(event_id):
             db.close()
             
     except Exception as e:
-        logger.error(f"Error toggling interest for event {event_id}: {e}")
+        logger.error(f"Error toggling interest for event {event_identifier}: {e}")
         return jsonify({
             'success': False,
             'error': str(e)

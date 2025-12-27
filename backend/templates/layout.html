@@ -59,7 +59,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
   <!-- Preload critical scripts -->
-  <link rel="preload" href="/scripts/page-transitions.js" as="script">
+  <link rel="preload" href="/scripts/page-transitions.js?v={{ asset_version }}" as="script">
 
   <!-- Organization Schema.org Structured Data -->
   <script type="application/ld+json">
@@ -196,9 +196,9 @@
   </script>
   {% endblock %}
 
-  <!-- Stylesheets -->
-  <link rel="stylesheet" href="/styles/main.css">
-  <link rel="stylesheet" href="/styles/pages.css">
+  <!-- Stylesheets (versioned for cache busting) -->
+  <link rel="stylesheet" href="/styles/main.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/styles/pages.css?v={{ asset_version }}">
   {% block extra_css %}{% endblock %}
 </head>
 
@@ -410,14 +410,14 @@
       "environment": "{{ app_config.environment }}"
     }
   </script>
-  <script src="/scripts/config-loader.js"></script>
-  <script src="/scripts/sanitizer.js"></script>
-  <script src="/scripts/modal-utils.js"></script>
-  <script src="/scripts/page-transitions.js"></script>
-  <script src="/scripts/footer-animations.js"></script>
-  <script src="/scripts/sponsor-carousel.js"></script>
-  <script src="/scripts/auth.js"></script>
-  <script src="/scripts/main.js"></script>
+  <script src="/scripts/config-loader.js?v={{ asset_version }}"></script>
+  <script src="/scripts/sanitizer.js?v={{ asset_version }}"></script>
+  <script src="/scripts/modal-utils.js?v={{ asset_version }}"></script>
+  <script src="/scripts/page-transitions.js?v={{ asset_version }}"></script>
+  <script src="/scripts/footer-animations.js?v={{ asset_version }}"></script>
+  <script src="/scripts/sponsor-carousel.js?v={{ asset_version }}"></script>
+  <script src="/scripts/auth.js?v={{ asset_version }}"></script>
+  <script src="/scripts/main.js?v={{ asset_version }}"></script>
   {% block extra_js %}{% endblock %}
 </body>
 

@@ -48,11 +48,14 @@ site_base_url }}/assets/logo.webp{% endif %}{% endblock %}
 "name": "{{ event.title | e }}",
 "item": {
 "@type": "WebPage",
-"@id": "{{ site_base_url }}/events/{{ event.id }}"
+"@id": "{{ site_base_url }}/events/{% if event.slug %}{{ event.slug }}{% else %}{{ event.id }}{% endif %}"
 }
 }
 {% endif %}
 {% endblock %}
+
+{% block canonical %}{% if event and event.slug %}{{ site_base_url }}/events/{{ event.slug }}{% elif event %}{{
+site_base_url }}/events/{{ event.id }}{% else %}{{ site_base_url }}/events{% endif %}{% endblock %}
 
 {% block extra_css %}
 {% if event %}
@@ -63,6 +66,7 @@ site_base_url }}/assets/logo.webp{% endif %}{% endblock %}
   "@type": "Event",
   "name": "{{ event.title | e }}",
   "description": "{{ event.short_description | e }}",
+  "url": "{{ site_base_url }}/events/{% if event.slug %}{{ event.slug }}{% else %}{{ event.id }}{% endif %}",
   {% if event.date %}"startDate": "{{ event.date }}{% if event.time %}T{{ event.time }}{% endif %}",{% endif %}
   {% if event.image_url %}"image": "{{ site_base_url }}{{ event.image_url }}",{% endif %}
   "location": {
@@ -89,23 +93,23 @@ site_base_url }}/assets/logo.webp{% endif %}{% endblock %}
 {% endblock %}
 
 {% block extra_js %}
-<script src="/scripts/api-client.js"></script>
+<script src="/scripts/api-client.js?v={{ asset_version }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="/scripts/events.js"></script>
-<script src="/scripts/pages.js"></script>
+<script src="/scripts/events.js?v={{ asset_version }}"></script>
+<script src="/scripts/pages.js?v={{ asset_version }}"></script>
 {% endblock %}
 
 {% block content %}
 <!-- Loading Skeleton -->
 <div id="event-skeleton" class="event-skeleton-container">
-  <div class="event-skeleton-banner"></div>
+  <div class="event-skeleton-banner skeleton-shimmer"></div>
   <div class="container section">
     <div class="event-skeleton-content">
-      <div class="skeleton-line short"></div>
-      <div class="skeleton-line title"></div>
-      <div class="skeleton-line long"></div>
-      <div class="skeleton-line medium"></div>
-      <div class="skeleton-line long"></div>
+      <div class="skeleton-line short skeleton-shimmer"></div>
+      <div class="skeleton-line title skeleton-shimmer"></div>
+      <div class="skeleton-line long skeleton-shimmer"></div>
+      <div class="skeleton-line medium skeleton-shimmer"></div>
+      <div class="skeleton-line long skeleton-shimmer"></div>
     </div>
   </div>
 </div>

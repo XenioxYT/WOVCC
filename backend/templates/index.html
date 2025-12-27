@@ -20,8 +20,8 @@ for just £15/year. Located at 59 Northfield Lane, Wickersley S66 2HL.{% endbloc
 {% endblock %}
 
 {% block extra_js %}
-<script src="/scripts/api-client.js"></script>
-<script src="/scripts/match-controller.js"></script>
+<script src="/scripts/api-client.js?v={{ asset_version }}"></script>
+<script src="/scripts/match-controller.js?v={{ asset_version }}"></script>
 {% endblock %}
 
 {% block content %}
@@ -86,7 +86,7 @@ for just £15/year. Located at 59 Northfield Lane, Wickersley S66 2HL.{% endbloc
         <div class="fixtures-section" style="margin-bottom: 40px;">
           <h3 style="color: var(--primary-color); margin-bottom: 20px;">Upcoming Fixtures</h3>
           <div id="upcoming-fixtures-container">
-            <!-- Skeleton loader will be shown here -->
+            <!-- Content loaded by JavaScript -->
           </div>
         </div>
 
@@ -94,7 +94,7 @@ for just £15/year. Located at 59 Northfield Lane, Wickersley S66 2HL.{% endbloc
         <div class="results-section" style="margin-bottom: 40px;">
           <h3 style="color: var(--primary-color); margin-bottom: 20px;">Recent Results</h3>
           <div id="recent-results-container">
-            <!-- Skeleton loader will be shown here -->
+            <!-- Content loaded by JavaScript -->
           </div>
         </div>
 

@@ -9,11 +9,11 @@ class PageTransitions {
         this.isTransitioning = false;
         this.currentPage = window.location.pathname;
         this.cache = new Map();
-        
+
         // Store bound handlers for cleanup
         this._clickHandler = this._handleClick.bind(this);
         this._popstateHandler = this._handlePopstate.bind(this);
-        
+
         this.init();
     }
 
@@ -24,16 +24,16 @@ class PageTransitions {
 
         // Add page transition CSS
         this.injectStyles();
-        
+
         // Add transition wrapper to content
         this.wrapContent();
-        
+
         // Setup navigation interceptors
         this.setupNavigationInterceptors();
-        
+
         // Handle browser back/forward
         this.setupHistoryNavigation();
-        
+
         // Mark initial page as loaded
         document.body.classList.add('page-loaded');
     }
@@ -46,16 +46,16 @@ class PageTransitions {
         // Remove event listeners
         document.removeEventListener('click', this._clickHandler);
         window.removeEventListener('popstate', this._popstateHandler);
-        
+
         // Clear page cache
         this.cache.clear();
-        
+
         // Remove injected styles
         const style = document.getElementById('page-transition-styles');
         if (style) {
             style.remove();
         }
-        
+
         // Reset state
         this.isTransitioning = false;
         this.currentPage = null;
@@ -66,7 +66,7 @@ class PageTransitions {
         if (document.getElementById('page-transition-styles')) {
             return;
         }
-        
+
         const style = document.createElement('style');
         style.id = 'page-transition-styles';
         style.textContent = `
@@ -181,16 +181,16 @@ class PageTransitions {
         if (document.querySelector('#page-transition-wrapper')) {
             return; // Already wrapped, don't wrap again
         }
-        
+
         // Find the main content block (everything except navbar)
         const navbar = document.querySelector('.navbar');
         const newsletter = document.querySelector('.newsletter-section');
         const footer = document.querySelector('.footer');
-        
+
         // Get all content between navbar and newsletter
         const contentElements = [];
         let currentElement = navbar ? navbar.nextElementSibling : document.body.firstElementChild;
-        
+
         while (currentElement && currentElement !== newsletter) {
             if (currentElement.tagName !== 'SCRIPT' && currentElement !== navbar) {
                 contentElements.push(currentElement);
@@ -201,18 +201,18 @@ class PageTransitions {
         // Create wrapper
         const wrapper = document.createElement('div');
         wrapper.id = 'page-transition-wrapper';
-        
+
         const contentWrapper = document.createElement('div');
         contentWrapper.className = 'page-content-wrapper';
         contentWrapper.id = 'page-content-wrapper';
-        
+
         // Move content into wrapper
         contentElements.forEach(el => {
             contentWrapper.appendChild(el);
         });
-        
+
         wrapper.appendChild(contentWrapper);
-        
+
         // Add newsletter and footer to wrapper
         if (newsletter) {
             wrapper.appendChild(newsletter);
@@ -220,7 +220,7 @@ class PageTransitions {
         if (footer) {
             wrapper.appendChild(footer);
         }
-        
+
         // Insert wrapper AFTER navbar (keeping navbar as direct child of body)
         if (navbar) {
             navbar.parentNode.insertBefore(wrapper, navbar.nextSibling);
@@ -234,12 +234,12 @@ class PageTransitions {
      */
     _handleClick(e) {
         const link = e.target.closest('a');
-        
+
         if (!link) return;
-        
+
         const href = link.getAttribute('href');
         console.log('[PageTransitions] Link clicked:', href);
-        
+
         // Skip if:
         // - External link
         // - Hash link
@@ -247,9 +247,9 @@ class PageTransitions {
         // - Download link
         // - Has target attribute
         // - URL has query parameters (like success=true from Stripe or token= for activation)
-        if (!href || 
-            href.startsWith('http') || 
-            href.startsWith('#') || 
+        if (!href ||
+            href.startsWith('http') ||
+            href.startsWith('#') ||
             href.startsWith('mailto:') ||
             href.startsWith('tel:') ||
             href.includes('?') || // Skip ALL URLs with query parameters to preserve them
@@ -259,21 +259,21 @@ class PageTransitions {
             console.log('[PageTransitions] Skipping navigation (external/special):', href);
             return;
         }
-        
+
         // Check if it's a navigation link in the navbar
-        const isNavLink = link.classList.contains('nav-link') || 
-                        link.closest('.navbar') ||
-                        link.closest('.btn');
-        
+        const isNavLink = link.classList.contains('nav-link') ||
+            link.closest('.navbar') ||
+            link.closest('.btn');
+
         // Check if it's an event card or other internal navigation
-        const isEventCard = link.closest('.event-card') || 
-                          href.startsWith('/events/') ||
-                          href.startsWith('/matches') ||
-                          href.startsWith('/members') ||
-                          href.startsWith('/join') ||
-                          href.startsWith('/admin') ||
-                          href === '/';
-        
+        const isEventCard = link.closest('.event-card') ||
+            href.startsWith('/events/') ||
+            href.startsWith('/matches') ||
+            href.startsWith('/members') ||
+            href.startsWith('/join') ||
+            href.startsWith('/admin') ||
+            href === '/';
+
         if (isNavLink || isEventCard) {
             console.log('[PageTransitions] Intercepting navigation to:', href);
             e.preventDefault();
@@ -301,7 +301,7 @@ class PageTransitions {
     setupHistoryNavigation() {
         // Use bound handler for cleanup
         window.addEventListener('popstate', this._popstateHandler);
-        
+
         // Store initial state (preserve query parameters!)
         const fullPath = window.location.pathname + window.location.search;
         history.replaceState({ path: fullPath }, '', fullPath);
@@ -310,7 +310,7 @@ class PageTransitions {
 
     async navigateToPage(path, pushState = true) {
         console.log('[PageTransitions] navigateToPage called with path:', path, 'pushState:', pushState);
-        
+
         if (this.isTransitioning || path === this.currentPage) {
             console.log('[PageTransitions] Skipping navigation (already transitioning or same page)');
             return;
@@ -318,6 +318,9 @@ class PageTransitions {
 
         console.log('[PageTransitions] Starting navigation transition to:', path);
         this.isTransitioning = true;
+        // Set global flag so other scripts know SPA navigation is in progress
+        window._spaNavigating = true;
+
         document.body.classList.add('page-transitioning');
         // Remove auth-checked class so new page can re-check auth without flash
         document.body.classList.remove('auth-checked');
@@ -331,10 +334,10 @@ class PageTransitions {
         try {
             // Fetch new page content
             const html = await this.fetchPage(path);
-            
+
             // Wait for fade-out transition to complete
             await this.sleep(300);
-            
+
             // --- REMOVED SCROLL FROM HERE ---
 
             // Update content
@@ -346,18 +349,18 @@ class PageTransitions {
             document.documentElement.scrollTop = 0; // The <html> element
             document.body.scrollTop = 0; // For Safari/older browsers
             window.scrollTo(0, 0); // Fallback
-            
+
             // Update browser history
             if (pushState) {
                 history.pushState({ path }, '', path);
             }
-            
+
             // Update current page
             this.currentPage = path;
-            
+
             // Update active nav link
             this.updateActiveNavLink(path);
-            
+
         } catch (error) {
             console.error('Navigation error:', error);
             // Fallback to traditional navigation
@@ -367,7 +370,9 @@ class PageTransitions {
             await this.sleep(100);
             document.body.classList.remove('page-transitioning');
             this.isTransitioning = false;
-            
+            // Reset global flag
+            window._spaNavigating = false;
+
             // Force a final reflow to ensure navbar sticky positioning is correct
             // This fixes issues where navbar gets "stuck" mid-scroll
             const navbar = document.querySelector('.navbar');
@@ -399,11 +404,12 @@ class PageTransitions {
 
         const response = await fetch(path, fetchOptions);
 
-        if (!response.ok) {            throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const html = await response.text();
-        
+
         // Cache the response only for cacheable paths
         if (!isUncacheable) {
             if (this.cache.size > 10) {
@@ -420,32 +426,32 @@ class PageTransitions {
         // Parse the HTML
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
-        
+
         // Extract the content from body (everything between navbar and newsletter/footer)
         const newBodyContent = doc.body;
-        
+
         // Get current content wrapper
         const currentContent = document.querySelector('#page-content-wrapper');
-        
+
         if (newBodyContent && currentContent) {
             // Find all content sections (everything except navbar, scripts, newsletter, footer)
             const contentSections = [];
             const scriptsToLoad = [];
             const inlineScripts = [];
-            
+
             Array.from(newBodyContent.children).forEach(child => {
                 const tagName = child.tagName.toLowerCase();
                 const className = child.className || '';
-                
+
                 // Skip navbar, newsletter, footer, and initial scripts
-                if (tagName === 'nav' || 
+                if (tagName === 'nav' ||
                     className.includes('navbar') ||
                     className.includes('newsletter-section') ||
                     className.includes('footer') ||
                     child.id === 'page-transition-wrapper') {
                     return;
                 }
-                
+
                 // Collect scripts to execute later
                 if (tagName === 'script') {
                     if (child.src) {
@@ -464,19 +470,19 @@ class PageTransitions {
                     contentSections.push(child);
                 }
             });
-            
+
             // Clear current content
             currentContent.innerHTML = '';
-            
+
             // Add new content sections
             contentSections.forEach(section => {
                 currentContent.appendChild(section.cloneNode(true));
             });
-            
+
             // Force reflow to ensure sticky navbar positioning is recalculated
             // This prevents the navbar from getting "stuck" during dynamic content updates
             void currentContent.offsetHeight;
-            
+
             // Load external scripts first (in order)
             this.loadScriptsSequentially(scriptsToLoad).then(() => {
                 // Wait a moment for external scripts to initialize
@@ -511,7 +517,7 @@ class PageTransitions {
                         }
                     });
                     */
-                    
+
                     // After all scripts are loaded and executed, dispatch the event
                     setTimeout(() => {
                         this.initializePageScripts(path);
@@ -520,13 +526,13 @@ class PageTransitions {
             }).catch(error => {
                 console.error('Error loading external scripts:', error);
             });
-            
+
             // Update title
             const newTitle = doc.querySelector('title');
             if (newTitle) {
                 document.title = newTitle.textContent;
             }
-            
+
             // Update meta description
             const newDescription = doc.querySelector('meta[name="description"]');
             const currentDescription = document.querySelector('meta[name="description"]');
@@ -557,18 +563,18 @@ class PageTransitions {
     loadScript(oldScript) {
         return new Promise((resolve, reject) => {
             const newScript = document.createElement('script');
-            
+
             // Copy attributes
             Array.from(oldScript.attributes).forEach(attr => {
                 newScript.setAttribute(attr.name, attr.value);
             });
-            
+
             newScript.onload = () => resolve();
             newScript.onerror = () => {
                 console.error('Failed to load script:', oldScript.src);
                 resolve(); // Continue even if script fails
             };
-            
+
             // Add to page
             document.body.appendChild(newScript);
         });
@@ -579,7 +585,7 @@ class PageTransitions {
         document.querySelectorAll('.nav-link').forEach(link => {
             link.classList.remove('active');
         });
-        
+
         // Add active class to current page
         document.querySelectorAll('.nav-link').forEach(link => {
             const href = link.getAttribute('href');
@@ -595,7 +601,7 @@ class PageTransitions {
             detail: { path }
         });
         document.dispatchEvent(event);
-        
+
         // Re-initialize common scripts
         if (typeof highlightActivePage === 'function') {
             highlightActivePage();
