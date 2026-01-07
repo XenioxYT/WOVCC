@@ -28,8 +28,49 @@ pages_bp = Blueprint('pages', __name__)
 # Page routes
 @pages_bp.route('/')
 def index():
-    """Home page"""
-    return render_template('index.html')
+    """Home page with upcoming events for dynamic content"""
+    from database import get_db, Event
+    from datetime import datetime, timedelta
+    
+    upcoming_events = []
+    today_events = []
+    
+    try:
+        db = next(get_db())
+        try:
+            now = datetime.utcnow()
+            # Start of today (midnight UTC)
+            today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            # End of today
+            today_end = today_start + timedelta(days=1)
+            
+            # Get events happening today (ongoing events)
+            today = db.query(Event).filter(
+                Event.is_published == True,
+                Event.date >= today_start,
+                Event.date < today_end
+            ).order_by(Event.date.asc()).all()
+            today_events = [e.to_dict() for e in today]
+            
+            # Get next 3 upcoming events (from now, not including past portion of today)
+            upcoming = db.query(Event).filter(
+                Event.is_published == True,
+                Event.date >= now
+            ).order_by(Event.date.asc()).limit(3).all()
+            upcoming_events = [e.to_dict() for e in upcoming]
+            
+        finally:
+            db.close()
+    except Exception as e:
+        logger.error(f"Error fetching events for homepage: {e}")
+    
+    return render_template(
+        'index.html',
+        upcoming_events=upcoming_events,
+        today_events=today_events,
+        has_upcoming_events=len(upcoming_events) > 0,
+        has_today_events=len(today_events) > 0
+    )
 
 
 @pages_bp.route('/members')

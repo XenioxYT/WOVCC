@@ -162,8 +162,9 @@ wovcc10@gmail.com, or visit us at 59 Northfield Lane, Wickersley, Rotherham S66 
             <!-- Two-column layout for phone and subject -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
               <div class="form-group">
-                <label class="form-label" for="contact-phone">Phone Number (Optional)</label>
-                <input type="tel" id="contact-phone" class="form-input" name="phone" placeholder="01709 700536">
+                <label class="form-label" for="contact-phone">Phone Number *</label>
+                <input type="tel" id="contact-phone" class="form-input" name="phone" placeholder="01709 700536"
+                  required>
               </div>
 
               <div class="form-group">
@@ -173,11 +174,22 @@ wovcc10@gmail.com, or visit us at 59 Northfield Lane, Wickersley, Rotherham S66 
               </div>
             </div>
 
+            <!-- Function Enquiry Info Box -->
+            <div
+              style="background: var(--secondary-bg); border-radius: 8px; padding: 16px 20px; border-left: 4px solid var(--accent-color);">
+              <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+                <strong style="color: var(--text-dark);">📋 Enquiring about a private function?</strong><br>
+                Please include in your message: <strong>number of guests</strong>, <strong>type of event</strong> (e.g.
+                birthday, wake), and your <strong>preferred date</strong>.
+              </p>
+            </div>
+
             <!-- Message field -->
             <div class="form-group">
               <label class="form-label" for="contact-message">Message *</label>
               <textarea id="contact-message" class="form-input" name="message" rows="6"
-                placeholder="Tell us how we can help you..." required></textarea>
+                placeholder="Tell us how we can help you. For function enquiries, please include number of guests, type of event, and preferred date..."
+                required></textarea>
             </div>
 
             <!-- Submit button -->

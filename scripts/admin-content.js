@@ -1,4 +1,4 @@
-(function() {
+(function () {
   'use strict';
 
   // Admin Content Management Module
@@ -117,7 +117,7 @@
   function attachContentEventListeners() {
     // Edit snippet buttons
     document.querySelectorAll('[data-admin-content-action="edit-snippet"]').forEach(btn => {
-      btn.addEventListener('click', function() {
+      btn.addEventListener('click', function () {
         const key = this.getAttribute('data-snippet-key');
         openEditModal(key);
       });
@@ -186,7 +186,8 @@
     const key = document.getElementById('content-key').value;
     const content = document.getElementById('content-text').value.trim();
 
-    if (!content) {
+    // Allow empty content for seasonal snippets (festive hours can be left blank to hide)
+    if (!content && !isSeasonalSnippet(key)) {
       showError('Content cannot be empty');
       return;
     }

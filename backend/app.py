@@ -211,6 +211,16 @@ def init_cms_content_if_needed():
             'key': 'footer_new_year_hours',
             'content': '',
             'description': 'Footer - New Year opening hours (leave blank to hide)'
+        },
+        {
+            'key': 'homepage_functions_title',
+            'content': 'Host Your Event at the Clubhouse',
+            'description': 'Homepage - Private functions section title'
+        },
+        {
+            'key': 'homepage_functions_text',
+            'content': 'Looking for a venue for your next celebration? A section of our clubhouse can be reserved for private functions. With a licensed bar, ample parking, DJ facilities available, and a welcoming atmosphere, WOVCC is the perfect venue for birthday parties, wakes and special occasions. <a href="/contact" style="color: white; text-decoration: underline;">Contact us for details.</a>',
+            'description': 'Homepage - Private functions section text (supports HTML). Mention venue features, pricing, etc.'
         }
     ]
     

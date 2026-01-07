@@ -3,8 +3,10 @@
 {% block title %}Wickersley Old Village Cricket Club | WOVCC{% endblock %}
 
 {% block description %}Wickersley Old Village Cricket Club (WOVCC) - Community cricket club in Rotherham, South
-Yorkshire. Offering ECB Premier League Cricket, Women's Cricket (The Vixens), Junior Cricket, All Stars & Dynamos. Join
-for just £15/year. Located at 59 Northfield Lane, Wickersley S66 2HL.{% endblock %}
+Yorkshire. Offering ECB Premier League Cricket, Women's Cricket (The Vixens), Junior Cricket, All Stars & Dynamos.
+Clubhouse available for private functions and celebrations. Join for just £15/year. Located at 59 Northfield Lane,
+Wickersley S66 2HL.{% endblock
+%}
 
 {% block og_image %}{{ site_base_url }}/assets/banner.webp{% endblock %}
 {% block og_image_width %}1200{% endblock %}
@@ -17,6 +19,78 @@ for just £15/year. Located at 59 Northfield Lane, Wickersley S66 2HL.{% endbloc
 
 {% block breadcrumb_schema %}
 <!-- Homepage is the root, no breadcrumb needed -->
+{% endblock %}
+
+{% block extra_css %}
+<!-- Schema.org structured data for homepage events and venue hire -->
+{% if has_upcoming_events or has_today_events %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "Upcoming Events at Wickersley Old Village Cricket Club",
+  "numberOfItems": {{ (today_events + upcoming_events)|length }},
+  "itemListElement": [
+    {% for event in (today_events if has_today_events else upcoming_events)[:3] %}
+    {
+      "@type": "ListItem",
+      "position": {{ loop.index }},
+      "item": {
+        "@type": "Event",
+        "name": "{{ event.title | e }}",
+        "description": "{{ event.short_description | e }}",
+        {% if event.date %}"startDate": "{{ event.date }}",{% endif %}
+        {% if event.image_url %}"image": "{{ site_base_url }}{{ event.image_url }}",{% endif %}
+        "url": "{{ site_base_url }}/events/{% if event.slug %}{{ event.slug }}{% else %}{{ event.id }}{% endif %}",
+        "location": {
+          "@type": "Place",
+          "name": "{% if event.location %}{{ event.location | e }}{% else %}Wickersley Old Village Cricket Club{% endif %}",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "59 Northfield Lane",
+            "addressLocality": "Wickersley, Rotherham",
+            "postalCode": "S66 2HL",
+            "addressCountry": "GB"
+          }
+        }
+      }
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>
+{% endif %}
+
+<!-- Clubhouse Private Functions Schema -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "EventVenue",
+  "name": "WOVCC Clubhouse - Private Functions",
+  "description": "Section of clubhouse available for private functions and celebrations at Wickersley Old Village Cricket Club. Perfect for parties, wakes, and special occasions.",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "59 Northfield Lane",
+    "addressLocality": "Wickersley, Rotherham",
+    "postalCode": "S66 2HL",
+    "addressCountry": "GB"
+  },
+  "containedInPlace": {
+    "@type": "SportsClub",
+    "name": "Wickersley Old Village Cricket Club",
+    "url": "{{ site_base_url }}"
+  },
+  "amenityFeature": [
+    {"@type": "LocationFeatureSpecification", "name": "Licensed Bar", "value": true},
+    {"@type": "LocationFeatureSpecification", "name": "Parking", "value": true},
+    {"@type": "LocationFeatureSpecification", "name": "Catering Available", "value": true}
+  ],
+  "potentialAction": {
+    "@type": "ReserveAction",
+    "target": "{{ site_base_url }}/contact"
+  }
+}
+</script>
 {% endblock %}
 
 {% block extra_js %}
@@ -113,6 +187,137 @@ for just £15/year. Located at 59 Northfield Lane, Wickersley S66 2HL.{% endbloc
             Show All Matches
           </a>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Events Showcase Section -->
+<section class="section" style="background: linear-gradient(180deg, var(--surface-color) 0%, white 100%);">
+  <div class="container">
+    <h2 class="section-title">What's On at the Club</h2>
+
+    {% if has_today_events %}
+    <!-- Happening Today -->
+    <div style="text-align: center; margin-bottom: 1.5rem;">
+      <span
+        style="display: inline-block; background: linear-gradient(135deg, #dc3545, #c82333); color: white; padding: 6px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+        🎉 Happening Today
+      </span>
+    </div>
+    <div
+      style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+      {% for event in today_events[:3] %}
+      <a href="/events/{% if event.slug %}{{ event.slug }}{% else %}{{ event.id }}{% endif %}"
+        style="display: block; text-decoration: none; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 2px solid var(--accent-color); transition: transform 0.3s ease, box-shadow 0.3s ease;">
+        {% if event.image_url %}
+        <div style="height: 160px; overflow: hidden;">
+          <img src="{{ event.image_url }}" alt="{{ event.title }}"
+            style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+        {% endif %}
+        <div style="padding: 1.25rem;">
+          <h3 style="margin: 0 0 0.5rem 0; font-size: 1.15rem; color: var(--text-dark); font-weight: 700;">{{
+            event.title }}</h3>
+          <p style="margin: 0 0 0.75rem 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">{{
+            event.short_description[:100] }}{% if event.short_description|length > 100 %}...{% endif %}</p>
+          <div style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-light); font-size: 0.85rem;">
+            <span>📍 {{ event.location or 'WOVCC Clubhouse' }}</span>
+            {% if event.time %}<span>⏰ {{ event.time }}</span>{% endif %}
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+
+    {% elif has_upcoming_events %}
+    <!-- Upcoming Events -->
+    <div style="text-align: center; margin-bottom: 1.5rem;">
+      <span
+        style="display: inline-block; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white; padding: 6px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+        Upcoming Events
+      </span>
+    </div>
+    <div
+      style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+      {% for event in upcoming_events %}
+      <a href="/events/{% if event.slug %}{{ event.slug }}{% else %}{{ event.id }}{% endif %}"
+        style="display: block; text-decoration: none; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease;">
+        {% if event.image_url %}
+        <div style="height: 160px; overflow: hidden;">
+          <img src="{{ event.image_url }}" alt="{{ event.title }}"
+            style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+        {% endif %}
+        <div style="padding: 1.25rem;">
+          <p
+            style="margin: 0 0 0.5rem 0; color: var(--accent-color); font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">
+            {{ event.date_display }}</p>
+          <h3 style="margin: 0 0 0.5rem 0; font-size: 1.15rem; color: var(--text-dark); font-weight: 700;">{{
+            event.title }}</h3>
+          <p style="margin: 0 0 0.75rem 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">{{
+            event.short_description[:100] }}{% if event.short_description|length > 100 %}...{% endif %}</p>
+          <div style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-light); font-size: 0.85rem;">
+            <span>📍 {{ event.location or 'WOVCC Clubhouse' }}</span>
+            {% if event.time %}<span>⏰ {{ event.time }}</span>{% endif %}
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <!-- No Events - Generic Message -->
+    <div
+      style="text-align: center; padding: 2rem; background: var(--secondary-bg); border-radius: 12px; margin-bottom: 2rem;">
+      <p style="margin: 0; color: var(--text-secondary); font-size: 1.05rem; line-height: 1.7;">
+        We regularly host exciting events at the club including quiz nights, live entertainment, cricket festivals, and
+        family fun days.
+        Check our <a href="/events" style="color: var(--accent-color); font-weight: 600;">events page</a> or follow us
+        on social media to stay updated!
+      </p>
+    </div>
+    {% endif %}
+
+    <!-- View All Events Button -->
+    <div style="text-align: center;">
+      <a href="/events" class="btn btn-secondary" style="padding: 12px 28px; font-size: 1rem;">
+        <svg style="width: 18px; height: 18px; margin-right: 8px; vertical-align: middle;" fill="currentColor"
+          viewBox="0 0 20 20">
+          <path fill-rule="evenodd"
+            d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+            clip-rule="evenodd" />
+        </svg>
+        View All Events
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Clubhouse for Private Functions Section -->
+<section class="section" style="background-color: var(--primary-color);">
+  <div class="container">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 2rem;">
+      <div style="flex: 1; min-width: 280px;">
+        <h2 style="color: white; font-size: 1.75rem; margin: 0 0 0.75rem 0; font-weight: 700;">{{
+          snippets.get('homepage_functions_title', 'Host Your Event at the Clubhouse') }}</h2>
+        <p style="color: rgba(255,255,255,0.9); font-size: 1.05rem; line-height: 1.7; margin: 0;">
+          {{ snippets.get('homepage_functions_text', 'Looking for a venue for your next celebration? A section of our
+          clubhouse can be reserved for private functions. With a licensed bar, ample parking, DJ facilities available, and a welcoming atmosphere, WOVCC is
+          the perfect venue for birthday parties, wakes, and special occasions. <a href="/contact"
+            style="color: white; text-decoration: underline;">Contact us for details.</a>')|safe }}
+        </p>
+      </div>
+      <div style="flex-shrink: 0;">
+        <a href="/contact" class="btn"
+          style="background: white; color: var(--primary-color); padding: 14px 32px; font-size: 1.05rem; font-weight: 600; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: transform 0.2s ease, box-shadow 0.2s ease;">
+          <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+            </path>
+          </svg>
+          Enquire Now
+        </a>
       </div>
     </div>
   </div>
