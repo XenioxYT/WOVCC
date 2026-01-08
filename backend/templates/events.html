@@ -230,6 +230,18 @@ site_base_url }}{{ upcoming_events[0].image_url }}{% else %}{{ site_base_url }}/
         </p>
       </div>
     </div>
+
+    <!-- Show More Button for Upcoming Events -->
+    <div style="text-align: center; margin-top: 2rem;">
+      <button id="show-more-upcoming" class="btn-show-more" style="display: none;">
+        <span class="show-more-count">Show More</span>
+        <svg class="show-more-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd"
+            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+            clip-rule="evenodd" />
+        </svg>
+      </button>
+    </div>
   </div>
 </section>
 
@@ -281,6 +293,18 @@ site_base_url }}{{ upcoming_events[0].image_url }}{% else %}{{ site_base_url }}/
           No past events to display yet.
         </p>
       </div>
+    </div>
+
+    <!-- Show More Button for Past Events -->
+    <div style="text-align: center; margin-top: 2rem;">
+      <button id="show-more-past" class="btn-show-more" style="display: none;">
+        <span class="show-more-count">Show More</span>
+        <svg class="show-more-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd"
+            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+            clip-rule="evenodd" />
+        </svg>
+      </button>
     </div>
   </div>
 </section>

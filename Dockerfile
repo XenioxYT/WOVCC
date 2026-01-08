@@ -9,12 +9,14 @@ WORKDIR /app
 # Copy the requirements file into the container at /app
 COPY requirements.txt .
 
-# Install system dependencies needed for building some Python packages (like psycopg2)
-# and for the PostgreSQL client (for pg_dump, etc.)
+# Install system dependencies needed for building some Python packages (like psycopg2),
+# for the PostgreSQL client (for pg_dump, etc.), and fonts for image generation
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
     postgresql-client \
+    fontconfig \
+    fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 # Install the Python dependencies

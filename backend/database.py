@@ -126,6 +126,12 @@ class Event(Base):
     location = Column(String(255), nullable=True)
     category = Column(String(100), nullable=True, index=True)
     
+    # Football match fields (for TNT Sports-style auto-generated images)
+    is_football_match = Column(Boolean, default=False, index=True)
+    home_team = Column(String(100), nullable=True)
+    away_team = Column(String(100), nullable=True)
+    football_competition = Column(String(100), nullable=True)  # e.g., "FA Cup", "Champions League"
+    
     # Recurring event fields
     is_recurring = Column(Boolean, default=False)
     recurrence_pattern = Column(String(50), nullable=True)  # 'daily', 'weekly', 'monthly'
@@ -162,6 +168,10 @@ class Event(Base):
             'image_url': self.image_url,
             'location': self.location,
             'category': self.category,
+            'is_football_match': self.is_football_match,
+            'home_team': self.home_team,
+            'away_team': self.away_team,
+            'football_competition': self.football_competition,
             'is_recurring': self.is_recurring,
             'recurrence_pattern': self.recurrence_pattern,
             'recurrence_end_date': self.recurrence_end_date.isoformat() if self.recurrence_end_date else None,

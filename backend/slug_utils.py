@@ -49,8 +49,8 @@ def generate_slug(title: str, date: datetime = None, suffix: str = None) -> str:
     
     # Append date if provided (for uniqueness)
     if date:
-        # Format: event-title-jan-2025
-        date_suffix = date.strftime('%b-%Y').lower()
+        # Format: event-title-2025-01-07 (full date for recurring event uniqueness)
+        date_suffix = date.strftime('%Y-%m-%d')
         slug = f"{slug}-{date_suffix}"
     
     # Append custom suffix if provided

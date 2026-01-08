@@ -34,6 +34,11 @@
   let listenersInitialized = false;
   let listingPageInitialized = false;
 
+  // Pagination settings
+  const EVENTS_PER_PAGE = 6;
+  let upcomingEventsShown = EVENTS_PER_PAGE;
+  let pastEventsShown = EVENTS_PER_PAGE;
+
   // Helper to check if a date is today
   function isToday(dateString) {
     const eventDate = new Date(dateString);
@@ -224,14 +229,21 @@
 
     if (upcomingContainer) {
       if (upcomingEvents.length > 0) {
-        upcomingContainer.innerHTML = upcomingEvents.map(event => createEventCard(event, false)).join('');
+        // Reset shown count on fresh render (e.g., after search)
+        upcomingEventsShown = EVENTS_PER_PAGE;
+        const eventsToShow = upcomingEvents.slice(0, upcomingEventsShown);
+        upcomingContainer.innerHTML = eventsToShow.map(event => createEventCard(event, false)).join('');
         upcomingContainer.style.display = 'grid';
         if (noUpcomingMessage) noUpcomingMessage.style.display = 'none';
         attachImageFallbacks(upcomingContainer);
+
+        // Update "Show More" button visibility
+        updateShowMoreButton('upcoming', upcomingEvents.length, upcomingEventsShown);
       } else {
         upcomingContainer.innerHTML = '';
         upcomingContainer.style.display = 'none';
         if (noUpcomingMessage) noUpcomingMessage.style.display = 'block';
+        updateShowMoreButton('upcoming', 0, 0);
       }
 
       if (upcomingCountText) {
@@ -251,14 +263,21 @@
 
     if (pastContainer) {
       if (pastEvents.length > 0) {
-        pastContainer.innerHTML = pastEvents.map(event => createEventCard(event, true)).join('');
+        // Reset shown count on fresh render (e.g., after search)
+        pastEventsShown = EVENTS_PER_PAGE;
+        const eventsToShow = pastEvents.slice(0, pastEventsShown);
+        pastContainer.innerHTML = eventsToShow.map(event => createEventCard(event, true)).join('');
         pastContainer.style.display = 'grid';
         if (noPastMessage) noPastMessage.style.display = 'none';
         attachImageFallbacks(pastContainer);
+
+        // Update "Show More" button visibility
+        updateShowMoreButton('past', pastEvents.length, pastEventsShown);
       } else {
         pastContainer.innerHTML = '';
         pastContainer.style.display = 'none';
         if (noPastMessage) noPastMessage.style.display = 'block';
+        updateShowMoreButton('past', 0, 0);
       }
 
       if (pastCountText) {
@@ -277,6 +296,78 @@
         }
       });
     });
+  }
+
+  function updateShowMoreButton(section, totalCount, shownCount) {
+    const buttonId = section === 'upcoming' ? 'show-more-upcoming' : 'show-more-past';
+    const button = document.getElementById(buttonId);
+
+    if (!button) return;
+
+    const remaining = totalCount - shownCount;
+
+    if (remaining > 0) {
+      button.style.display = 'inline-flex';
+      // Update button text to show how many more events
+      const countText = remaining > EVENTS_PER_PAGE ? EVENTS_PER_PAGE : remaining;
+      button.querySelector('.show-more-count').textContent =
+        `Show ${countText} More${remaining > 1 ? '' : ''} (${remaining} remaining)`;
+    } else {
+      button.style.display = 'none';
+    }
+  }
+
+  function showMoreEvents(section) {
+    const isPast = section === 'past';
+    const events = isPast ? pastEvents : upcomingEvents;
+    const currentlyShown = isPast ? pastEventsShown : upcomingEventsShown;
+    const containerId = isPast ? 'past-events-container' : 'upcoming-events-container';
+    const container = document.getElementById(containerId);
+
+    if (!container) return;
+
+    // Calculate the new events to show
+    const newEventsStart = currentlyShown;
+    const newEventsEnd = Math.min(currentlyShown + EVENTS_PER_PAGE, events.length);
+    const newEvents = events.slice(newEventsStart, newEventsEnd);
+
+    // Update the shown count
+    if (isPast) {
+      pastEventsShown = newEventsEnd;
+    } else {
+      upcomingEventsShown = newEventsEnd;
+    }
+
+    // Append new event cards with animation
+    appendEventCards(container, newEvents, isPast);
+
+    // Update button visibility
+    updateShowMoreButton(section, events.length, isPast ? pastEventsShown : upcomingEventsShown);
+  }
+
+  function appendEventCards(container, events, isPast) {
+    events.forEach((event, index) => {
+      const cardHtml = createEventCard(event, isPast);
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = cardHtml.trim();
+      const cardElement = tempDiv.firstChild;
+
+      // Add initial hidden state for animation
+      cardElement.style.opacity = '0';
+      cardElement.style.transform = 'translateY(20px)';
+      cardElement.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+
+      container.appendChild(cardElement);
+
+      // Trigger animation with staggered delay
+      setTimeout(() => {
+        cardElement.style.opacity = isPast ? '0.85' : '1';
+        cardElement.style.transform = 'translateY(0)';
+      }, index * 80);
+    });
+
+    // Attach fallback handlers for new images
+    attachImageFallbacks(container);
   }
 
   function createEventCard(event, isPast = false, isToday = false) {
@@ -363,6 +454,21 @@
           searchTerm = this.value.trim();
           loadAllEvents();
         }, 300);
+      });
+    }
+
+    // Show More buttons
+    const showMoreUpcoming = document.getElementById('show-more-upcoming');
+    if (showMoreUpcoming) {
+      showMoreUpcoming.addEventListener('click', function () {
+        showMoreEvents('upcoming');
+      });
+    }
+
+    const showMorePast = document.getElementById('show-more-past');
+    if (showMorePast) {
+      showMorePast.addEventListener('click', function () {
+        showMoreEvents('past');
       });
     }
   }

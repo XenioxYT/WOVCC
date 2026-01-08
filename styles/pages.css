@@ -842,6 +842,64 @@
   }
 }
 
+/* Show More Button */
+.btn-show-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark, #145454) 100%);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(26, 95, 95, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-show-more::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.1) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.btn-show-more:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(26, 95, 95, 0.4);
+}
+
+.btn-show-more:hover::before {
+  opacity: 1;
+}
+
+.btn-show-more:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(26, 95, 95, 0.3);
+}
+
+.btn-show-more .show-more-icon {
+  transition: transform 0.3s ease;
+}
+
+.btn-show-more:hover .show-more-icon {
+  transform: translateY(3px);
+}
+
+.btn-show-more .show-more-count {
+  position: relative;
+  z-index: 1;
+}
+
 /* Event Cards */
 .event-card {
   background: white;

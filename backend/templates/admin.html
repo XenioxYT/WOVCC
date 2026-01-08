@@ -1022,12 +1022,61 @@
             placeholder="e.g., Training, Social, Match Day, Fundraiser">
         </div>
 
+        <!-- Football Match Section -->
+        <div class="form-group">
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="checkbox" id="event-is-football-match" data-admin-events-action="toggle-football">
+            <span class="form-label" style="margin: 0;">⚽ Football Match (auto-generate TNT Sports graphic)</span>
+          </label>
+        </div>
+
+        <div id="football-match-options"
+          style="display: none; padding: 20px; background: linear-gradient(135deg, #141d28 0%, #822a92 100%); border-radius: 8px; margin-bottom: 20px; color: white;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+            <img src="/assets/TNT_sports.png" alt="TNT Sports" style="height: 24px;">
+            <span style="font-size: 0.9rem; opacity: 0.9;">Fixture Graphic will be auto-generated</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="event-home-team" style="color: white;">Home Team *</label>
+              <input type="text" id="event-home-team" class="form-input" placeholder="e.g., Newcastle United"
+                style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); color: white;">
+              <div id="home-team-status" style="font-size: 0.8rem; margin-top: 4px; opacity: 0.8;"></div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="event-away-team" style="color: white;">Away Team *</label>
+              <input type="text" id="event-away-team" class="form-input" placeholder="e.g., Arsenal"
+                style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); color: white;">
+              <div id="away-team-status" style="font-size: 0.8rem; margin-top: 4px; opacity: 0.8;"></div>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="event-football-competition" style="color: white;">Competition</label>
+            <input type="text" id="event-football-competition" class="form-input"
+              placeholder="e.g., FA Cup, Champions League, Premier League"
+              style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); color: white;">
+          </div>
+
+          <p
+            style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 6px; font-size: 0.85rem; border-left: 3px solid #ff007f;">
+            <strong>ℹ️ Note:</strong> Team names will be validated when saving. A professional fixture graphic will be
+            auto-generated using the date/time above. You can still upload a custom image to override.
+          </p>
+        </div>
+
         <div class="form-group">
           <label class="form-label" for="event-image">Event Image</label>
           <input type="file" id="event-image" class="form-input" accept="image/png,image/jpeg,image/jpg,image/webp"
             data-admin-events-file-input="image">
           <p style="margin-top: 8px; font-size: 0.85rem; color: var(--text-light);">
             Accepted formats: PNG, JPG, WebP. Max size: 5MB. Image will be auto-resized and optimized.
+          </p>
+          <p id="football-image-note"
+            style="margin-top: 4px; font-size: 0.85rem; color: var(--primary-color); display: none;">
+            ⚽ Leave empty to auto-generate a TNT Sports-style fixture graphic
           </p>
           <div id="image-preview-container" style="margin-top: 15px; position: relative; display: none;">
             <img id="image-preview" src="" alt="Preview"
@@ -1071,7 +1120,7 @@
           <p
             style="margin-top: 15px; padding: 10px; background: #e7f3ff; border-radius: 6px; font-size: 0.85rem; color: #0c5460; border-left: 3px solid var(--primary-color);">
             <strong>ℹ️ Note:</strong> The event date above will be used as the starting point. The system will generate
-            up to 12 occurrences following the selected pattern until the end date.
+            all occurrences following the selected pattern until the end date.
           </p>
         </div>
 
