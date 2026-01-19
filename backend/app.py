@@ -497,8 +497,8 @@ def serve_scripts(filename):
     """Serve JavaScript files from scripts directory with caching"""
     scripts_dir = os.path.join(os.path.dirname(__file__), '..', 'scripts')
     response = send_from_directory(scripts_dir, filename)
-    # Cache for 1 hour (safer caching for JS to allow updates)
-    response.cache_control.max_age = 3600
+    # Cache for 1 year (aggressive caching safe because we use versioned URLs ?v=...)
+    response.cache_control.max_age = 31536000
     response.cache_control.public = True
     return response
 

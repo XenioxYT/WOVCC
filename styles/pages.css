@@ -119,6 +119,117 @@
   background-color: var(--secondary-bg);
 }
 
+/* --- Homepage Sections Mobile Reordering --- */
+.homepage-sections {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Mobile: Events first, Matches second */
+@media screen and (max-width: 768px) {
+  .homepage-sections {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Reorder: Events (2) comes before Matches (1) */
+  #homepage-matches {
+    order: 2;
+  }
+
+  #homepage-events {
+    order: 1;
+  }
+
+  /* Simplify Matches Section on Mobile */
+  .matchday-hub .section-title {
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+  }
+
+  /* Compact fixture/result cards on mobile */
+  .matchday-hub .fixture-card,
+  .matchday-hub .result-card {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 0;
+    padding: 16px 0;
+    margin-bottom: 0;
+    box-shadow: none;
+  }
+
+  .matchday-hub .fixture-card:last-child,
+  .matchday-hub .result-card:last-child {
+    border-bottom: none;
+  }
+
+  .matchday-hub .fixture-card:hover,
+  .matchday-hub .result-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* Simplify fixture card content layout */
+  .matchday-hub .fixture-card-content {
+    gap: 12px;
+  }
+
+  /* Hide desktop date, show mobile date more prominently */
+  .matchday-hub .fixture-date-desktop {
+    display: none !important;
+  }
+
+  .matchday-hub .fixture-date-mobile {
+    display: block !important;
+    font-size: 0.85rem !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* Reduce section padding on mobile */
+  .matchday-hub.section {
+    padding: 30px 0;
+  }
+
+  /* Homepage Event Cards - Compact List View on Mobile */
+  #homepage-events .section-title {
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+  }
+}
+
+/* Extra small screens - even more compact */
+@media screen and (max-width: 480px) {
+
+  /* Hide event images on very small screens */
+  #homepage-events [style*="height: 160px"] {
+    display: none !important;
+  }
+
+  /* Compact event cards */
+  #homepage-events a[style*="border-radius: 12px"] {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Reduce padding in event cards */
+  #homepage-events [style*="padding: 1.25rem"] {
+    padding: 12px 0 !important;
+  }
+
+  /* Make grid a single column with no gap */
+  #homepage-events [style*="grid-template-columns"] {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+  }
+}
+
 .matchday-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -748,7 +859,7 @@
 
 .events-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 30px;
 }
 
@@ -2076,7 +2187,66 @@
     padding: 8px 16px;
     font-size: 0.9rem;
   }
+
+  /* ========================================
+     Contact Page - Mobile List View
+     ======================================== */
+
+  /* Contact info grid - convert to single column */
+  #contact-info-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+  }
+
+  /* Contact info cards - simple list items */
+  .contact-info-card {
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    text-align: left !important;
+  }
+
+  .contact-info-card:last-child {
+    border-bottom: none !important;
+  }
+
+  .contact-info-card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Card body - horizontal layout */
+  .contact-info-card .card-body {
+    padding: 16px 0 !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+  }
+
+  /* Icon - left aligned, no auto margin */
+  .contact-info-card .card-body>div:first-child {
+    margin: 0 !important;
+    flex-shrink: 0;
+  }
+
+  /* Text content wrapper */
+  .contact-info-card .card-body>div:first-child~* {
+    flex: 1;
+    text-align: left !important;
+  }
+
+  .contact-info-card h3,
+  .contact-info-card p,
+  .contact-info-card a {
+    text-align: left !important;
+    margin-left: 0 !important;
+  }
 }
+
+
 
 /* Extra small devices (phones in portrait, less than 576px) */
 @media screen and (max-width: 575px) {
@@ -2348,5 +2518,804 @@ body>*:not(.navbar):not(.newsletter-section):not(.footer) {
 
   to {
     opacity: 1;
+  }
+}
+
+/* =========================================
+   NEW MODERN CONTACT PAGE STYLES (v2.0)
+   ========================================= */
+
+.contact-section {
+  background-color: var(--secondary-bg);
+  /* Use light grey bg to make form pop */
+  min-height: 80vh;
+  /* Ensure it takes up screen space */
+}
+
+.contact-layout {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 40px;
+  align-items: start;
+}
+
+/* --- Sidebar (Left Column) --- */
+.contact-sidebar {
+  position: sticky;
+  top: 100px;
+  /* Sticky on desktop */
+}
+
+.contact-sidebar-header {
+  margin-bottom: 25px;
+}
+
+.contact-sidebar-header h2 {
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+  color: var(--text-dark);
+}
+
+.contact-sidebar-header p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Clean Method List */
+.contact-methods-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.contact-method-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.contact-method-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: var(--accent-color-light, #ffd1bf);
+  /* Subtle accent tint */
+}
+
+.method-icon {
+  width: 44px;
+  height: 44px;
+  background: var(--surface-bg, #f3f4f6);
+  color: var(--primary-color);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.method-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.method-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.method-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-light);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.method-value {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.method-sub {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* Social Pills */
+.sidebar-socials h3 {
+  font-size: 1rem;
+  margin-bottom: 12px;
+  color: var(--text-dark);
+}
+
+.social-links-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.social-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.social-pill svg {
+  width: 18px;
+  height: 18px;
+}
+
+.social-pill.fb {
+  background: #1877F2;
+  color: white;
+}
+
+.social-pill.insta {
+  background: #E4405F;
+  color: white;
+}
+
+.social-pill:hover {
+  opacity: 0.9;
+}
+
+
+/* --- Main Form Area (Right Column) --- */
+.contact-form-area .form-card {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.form-header {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.form-header h2 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.clean-form .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.clean-form .form-group {
+  margin-bottom: 20px;
+}
+
+.clean-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--text-dark);
+  font-size: 0.95rem;
+}
+
+.clean-form .form-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border-color);
+  /* #e0e0e0 */
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+  background: var(--input-bg, #fff);
+  color: var(--text-dark);
+}
+
+.clean-form .form-input:focus {
+  border-color: var(--accent-color);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.1);
+  /* Subtle accent glow */
+}
+
+/* Function Info Box (Integrated) */
+.function-info-box {
+  background: var(--secondary-bg, #f8f9fa);
+  border-left: 4px solid var(--accent-color);
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 25px;
+}
+
+.function-info-header {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.function-info-header .info-icon {
+  font-size: 1.5rem;
+}
+
+.function-info-header p {
+  margin: 4px 0 0 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.function-actions {
+  margin-bottom: 12px;
+}
+
+.buffet-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent-color);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.buffet-link svg {
+  width: 16px;
+  height: 16px;
+}
+
+.terms-details summary {
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--text-dark);
+  padding: 4px 0;
+}
+
+.terms-list {
+  margin-top: 10px;
+  padding-left: 20px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.terms-list li {
+  margin-bottom: 6px;
+}
+
+.form-footer .btn-block {
+  width: 100%;
+  padding: 16px;
+  font-size: 1.1rem;
+}
+
+
+/* --- Mobile Responsiveness (The Critical Part) --- */
+@media screen and (max-width: 900px) {
+  .contact-layout {
+    grid-template-columns: 1fr;
+    /* Stack vertically */
+    gap: 30px;
+  }
+
+  .contact-sidebar {
+    position: static;
+    /* Unstick on mobile */
+    text-align: center;
+    /* Center header text */
+  }
+
+  .contact-sidebar-header h2,
+  .contact-sidebar-header p {
+    text-align: center;
+  }
+
+  .sidebar-socials h3 {
+    text-align: center;
+  }
+
+  .social-links-row {
+    justify-content: center;
+  }
+
+  /* On mobile, we might want to ensure the list items are compact */
+  .contact-method-item {
+    padding: 12px 16px;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .clean-form .form-row {
+    grid-template-columns: 1fr;
+    /* Stack inputs */
+    gap: 0;
+  }
+
+  .contact-form-area .form-card {
+    padding: 25px 20px;
+    /* Reduces padding on small screens */
+  }
+
+  .form-header h2 {
+    font-size: 1.6rem;
+  }
+
+  /* CENTERED Mobile Contact List */
+  .contact-method-item {
+    flex-direction: column;
+    /* Stack icon on top of text */
+    align-items: center;
+    /* Center align items */
+    text-align: center;
+    /* Center text */
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 0;
+    padding: 20px 0;
+    box-shadow: none;
+    background: transparent;
+    gap: 8px;
+  }
+
+  .contact-method-item:last-child {
+    border-bottom: none;
+  }
+
+  .contact-method-item:hover {
+    transform: none;
+  }
+
+  .method-icon {
+    background: var(--surface-bg, #f3f4f6);
+    /* Keep bg for round icon look */
+    justify-content: center;
+    padding: 0;
+    width: 48px;
+    /* Slightly larger touch target */
+    height: 48px;
+    margin-bottom: 4px;
+    border-radius: 50%;
+    /* Circle icon */
+  }
+
+  .method-details {
+    padding-left: 0;
+    align-items: center;
+    /* Center children */
+  }
+
+  .method-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  .method-value {
+    font-size: 1.1rem;
+    color: var(--accent-color);
+    /* Pop color for value */
+  }
+}
+
+/* =========================================
+   NEW MODERN JOIN PAGE STYLES
+   ========================================= */
+
+.join-section {
+  background-color: var(--secondary-bg);
+  min-height: 80vh;
+}
+
+.join-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 40px;
+  align-items: start;
+}
+
+/* --- Sidebar (Benefits) --- */
+.join-sidebar {
+  position: sticky;
+  top: 100px;
+}
+
+.membership-card {
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  text-align: center;
+}
+
+.price-header {
+  color: var(--primary-color);
+  margin-bottom: 5px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.price-header .currency {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.price-header .amount {
+  font-size: 4rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.price-header .duration {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: var(--text-light);
+  margin-top: 25px;
+}
+
+.price-note {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0 0 20px 0;
+}
+
+.membership-card .divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 20px 0;
+}
+
+.perks-title {
+  text-align: left;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-bottom: 15px;
+  letter-spacing: 0.5px;
+}
+
+.benefits-list {
+  list-style: none;
+  padding: 0;
+  text-align: left;
+}
+
+.benefits-list li {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+}
+
+.benefit-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.sidebar-login-prompt {
+  text-align: center;
+  margin-top: 20px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.sidebar-login-prompt p {
+  margin-bottom: 8px;
+}
+
+/* --- Form Area --- */
+.join-form-area .form-card {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.form-section-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  color: var(--primary-color);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin: 30px 0 15px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.form-section-label::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
+
+.form-section-label:first-child {
+  margin-top: 0;
+}
+
+/* Custom Checkboxes */
+.checkbox-group-styled {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 30px;
+}
+
+.custom-checkbox-container {
+  display: flex;
+  align-items: flex-start;
+  /* Top align for multiline text */
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  background: white;
+}
+
+.custom-checkbox-container:hover {
+  border-color: var(--primary-light);
+  background: var(--surface-bg, #f8f9fa);
+}
+
+.custom-checkbox-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkmark {
+  height: 24px;
+  width: 24px;
+  background-color: white;
+  border: 2px solid var(--border-color);
+  border-radius: 6px;
+  flex-shrink: 0;
+  margin-right: 16px;
+  position: relative;
+  transition: all 0.2s;
+  margin-top: 2px;
+  /* Visual alignment with title */
+}
+
+.custom-checkbox-container input:checked~.checkmark {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 8px;
+  top: 4px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.custom-checkbox-container input:checked~.checkmark:after {
+  display: block;
+}
+
+.checkbox-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.cb-title {
+  font-weight: 600;
+  color: var(--text-dark);
+  font-size: 1rem;
+}
+
+.cb-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* Highlight style for upsell */
+.custom-checkbox-container.highlight-checkbox input:checked~.checkmark {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.price-tag {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: var(--surface-bg, #f3f4f6);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.custom-checkbox-container.highlight-checkbox input:checked~.price-tag {
+  background: var(--accent-color);
+  color: white;
+}
+
+/* Footer / Total */
+.checkout-footer {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.total-amount {
+  font-size: 2rem;
+  color: var(--primary-color);
+  font-weight: 800;
+}
+
+.terms-text {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  margin-bottom: 20px;
+}
+
+.btn-lg {
+  padding: 16px 24px;
+  font-size: 1.1rem;
+}
+
+.mobile-login-prompt {
+  display: none;
+  text-align: center;
+  margin-top: 20px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.mobile-login-prompt a {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+/* --- Mobile Responsiveness --- */
+@media screen and (max-width: 900px) {
+  .join-layout {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  .join-sidebar {
+    position: static;
+    order: -1;
+    /* Keep benefits on top to sell the value before the form */
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .join-form-area .form-card {
+    padding: 24px 20px;
+  }
+
+  .form-section-label {
+    margin: 25px 0 10px 0;
+  }
+
+  /* Simplify sidebar on mobile */
+  .membership-card {
+    padding: 20px;
+  }
+
+  .price-header .amount {
+    font-size: 3rem;
+  }
+
+  .sidebar-login-prompt {
+    display: none;
+  }
+
+  .mobile-login-prompt {
+    display: block;
+  }
+}
+
+/* =========================================
+   NEW MODERN LOGIN PAGE STYLES
+   ========================================= */
+
+.login-page-section {
+  background-color: var(--secondary-bg);
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+}
+
+.login-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.login-card {
+  background: white;
+  width: 100%;
+  max-width: 450px;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  /* slightly stronger shadow for focus */
+  border: 1px solid rgba(0, 0, 0, 0.02);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.login-header h2 {
+  font-size: 2rem;
+  color: var(--primary-color);
+  margin-bottom: 10px;
+}
+
+.login-header p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.login-footer {
+  margin-top: 25px;
+  padding-top: 25px;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.login-footer p {
+  color: var(--text-light);
+  margin-bottom: 10px;
+}
+
+/* Mobile Adjustments for Login */
+@media screen and (max-width: 500px) {
+  .login-card {
+    padding: 30px 20px;
+    box-shadow: none;
+    border: 1px solid var(--border-color);
+    /* clearer border on mobile if shadow removed */
+  }
+
+  .login-header h2 {
+    font-size: 1.75rem;
   }
 }

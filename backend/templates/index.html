@@ -4,7 +4,7 @@
 
 {% block description %}Wickersley Old Village Cricket Club (WOVCC) - Community cricket club in Rotherham, South
 Yorkshire. Offering ECB Premier League Cricket, Women's Cricket (The Vixens), Junior Cricket, All Stars & Dynamos.
-Clubhouse available for private functions and celebrations. Join for just £15/year. Located at 59 Northfield Lane,
+Clubhouse available for private functions and celebrations. Join for just £15/year. Located at Northfield Lane,
 Wickersley S66 2HL.{% endblock
 %}
 
@@ -47,7 +47,7 @@ Wickersley S66 2HL.{% endblock
           "name": "{% if event.location %}{{ event.location | e }}{% else %}Wickersley Old Village Cricket Club{% endif %}",
           "address": {
             "@type": "PostalAddress",
-            "streetAddress": "59 Northfield Lane",
+            "streetAddress": "Northfield Lane",
             "addressLocality": "Wickersley, Rotherham",
             "postalCode": "S66 2HL",
             "addressCountry": "GB"
@@ -70,7 +70,7 @@ Wickersley S66 2HL.{% endblock
   "description": "Section of clubhouse available for private functions and celebrations at Wickersley Old Village Cricket Club. Perfect for parties, wakes, and special occasions.",
   "address": {
     "@type": "PostalAddress",
-    "streetAddress": "59 Northfield Lane",
+    "streetAddress": "Northfield Lane",
     "addressLocality": "Wickersley, Rotherham",
     "postalCode": "S66 2HL",
     "addressCountry": "GB"
@@ -112,187 +112,196 @@ Wickersley S66 2HL.{% endblock
   </div>
 </section>
 
-<!-- Match Day Hub -->
-<section class="matchday-hub section">
-  <div class="container">
-    <h2 class="section-title">Match Information</h2>
+<!-- Homepage Sections Container (allows reordering on mobile) -->
+<div class="homepage-sections">
 
-    <!-- Live Match Section (shown during match days) -->
-    <div id="live-match-section" style="display: none;">
-      <div class="matchday-content">
+  <!-- Match Day Hub -->
+  <section class="matchday-hub section" id="homepage-matches">
+    <div class="container">
+      <h2 class="section-title">Match Information</h2>
 
-        <!-- Optional External Livestream Player (Primary Match) -->
-        <div class="livestream-container" id="external-livestream-container" style="display: none;">
-          <h3 id="livestream-match-title">Live Stream</h3>
-          <iframe class="livestream-player" id="external-livestream-player" src="" frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen>
-          </iframe>
-        </div>
+      <!-- Live Match Section (shown during match days) -->
+      <div id="live-match-section" style="display: none;">
+        <div class="matchday-content">
 
-        <!-- Live Scores Widgets (Multiple - All Today's Matches) -->
-        <div class="scores-container">
-          <h3 style="margin-bottom: 25px;">Live Scores</h3>
-          <div id="live-scores-widgets-container">
-            <!-- Multiple Play-Cricket Live Scores Widgets will be injected here dynamically -->
+          <!-- Optional External Livestream Player (Primary Match) -->
+          <div class="livestream-container" id="external-livestream-container" style="display: none;">
+            <h3 id="livestream-match-title">Live Stream</h3>
+            <iframe class="livestream-player" id="external-livestream-player" src="" frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen>
+            </iframe>
           </div>
+
+          <!-- Live Scores Widgets (Multiple - All Today's Matches) -->
+          <div class="scores-container">
+            <h3 style="margin-bottom: 25px;">Live Scores</h3>
+            <div id="live-scores-widgets-container">
+              <!-- Multiple Play-Cricket Live Scores Widgets will be injected here dynamically -->
+            </div>
+          </div>
+
         </div>
-
-      </div>
-    </div>
-
-    <!-- No Match Section (shown when no matches) -->
-    <div id="no-match-section">
-      <!-- Team Selector -->
-      <div style="text-align: center; margin-bottom: 30px;">
-        <label for="team-selector" style="font-weight: 600; margin-right: 10px; color: var(--text-dark);">Select
-          Team:</label>
-        <select id="team-selector"
-          style="padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border-color); background: white; font-family: var(--font-family); font-size: 1rem; cursor: pointer;">
-          <option value="all">All Teams</option>
-          <!-- Options will be populated by JavaScript -->
-        </select>
       </div>
 
-      <!-- Fixtures and Results Vertical Stack -->
-      <div style="max-width: 900px; margin: 0 auto;">
-        <!-- Upcoming Fixtures -->
-        <div class="fixtures-section" style="margin-bottom: 40px;">
-          <h3 style="color: var(--primary-color); margin-bottom: 20px;">Upcoming Fixtures</h3>
-          <div id="upcoming-fixtures-container">
-            <!-- Content loaded by JavaScript -->
-          </div>
+      <!-- No Match Section (shown when no matches) -->
+      <div id="no-match-section">
+        <!-- Team Selector -->
+        <div style="text-align: center; margin-bottom: 30px;">
+          <label for="team-selector" style="font-weight: 600; margin-right: 10px; color: var(--text-dark);">Select
+            Team:</label>
+          <select id="team-selector"
+            style="padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border-color); background: white; font-family: var(--font-family); font-size: 1rem; cursor: pointer;">
+            <option value="all">All Teams</option>
+            <!-- Options will be populated by JavaScript -->
+          </select>
         </div>
 
-        <!-- Recent Results -->
-        <div class="results-section" style="margin-bottom: 40px;">
-          <h3 style="color: var(--primary-color); margin-bottom: 20px;">Recent Results</h3>
-          <div id="recent-results-container">
-            <!-- Content loaded by JavaScript -->
+        <!-- Fixtures and Results Vertical Stack -->
+        <div style="max-width: 900px; margin: 0 auto;">
+          <!-- Upcoming Fixtures -->
+          <div class="fixtures-section" style="margin-bottom: 40px;">
+            <h3 style="color: var(--primary-color); margin-bottom: 20px;">Upcoming Fixtures</h3>
+            <div id="upcoming-fixtures-container">
+              <!-- Content loaded by JavaScript -->
+            </div>
           </div>
-        </div>
 
-        <!-- Last Updated Timestamp -->
-        <div id="last-updated-container"></div>
+          <!-- Recent Results -->
+          <div class="results-section" style="margin-bottom: 40px;">
+            <h3 style="color: var(--primary-color); margin-bottom: 20px;">Recent Results</h3>
+            <div id="recent-results-container">
+              <!-- Content loaded by JavaScript -->
+            </div>
+          </div>
 
-        <!-- Show All Matches Button -->
-        <div style="text-align: center; margin-top: 30px;">
-          <a href="/matches" class="btn btn-primary" style="padding: 14px 32px; font-size: 1.05rem;">
-            <svg style="width: 18px; height: 18px; margin-right: 8px; vertical-align: middle;" fill="currentColor"
-              viewBox="0 0 20 20">
-              <path fill-rule="evenodd"
-                d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
-                clip-rule="evenodd" />
-            </svg>
-            Show All Matches
-          </a>
+          <!-- Last Updated Timestamp -->
+          <div id="last-updated-container"></div>
+
+          <!-- Show All Matches Button -->
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="/matches" class="btn btn-primary" style="padding: 14px 32px; font-size: 1.05rem;">
+              <svg style="width: 18px; height: 18px; margin-right: 8px; vertical-align: middle;" fill="currentColor"
+                viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                  d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                  clip-rule="evenodd" />
+              </svg>
+              Show All Matches
+            </a>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- Events Showcase Section -->
-<section class="section" style="background: linear-gradient(180deg, var(--surface-color) 0%, white 100%);">
-  <div class="container">
-    <h2 class="section-title">What's On at the Club</h2>
+  <!-- Events Showcase Section -->
+  <section class="section" id="homepage-events"
+    style="background: linear-gradient(180deg, var(--surface-color) 0%, white 100%);">
+    <div class="container">
+      <h2 class="section-title">What's On at the Club</h2>
 
-    {% if has_today_events %}
-    <!-- Happening Today -->
-    <div style="text-align: center; margin-bottom: 1.5rem;">
-      <span
-        style="display: inline-block; background: linear-gradient(135deg, #dc3545, #c82333); color: white; padding: 6px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-        🎉 Happening Today
-      </span>
-    </div>
-    <div
-      style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-      {% for event in today_events[:3] %}
-      <a href="/events/{% if event.slug %}{{ event.slug }}{% else %}{{ event.id }}{% endif %}"
-        style="display: block; text-decoration: none; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 2px solid var(--accent-color); transition: transform 0.3s ease, box-shadow 0.3s ease;">
-        {% if event.image_url %}
-        <div style="height: 160px; overflow: hidden;">
-          <img src="{{ event.image_url }}" alt="{{ event.title }}"
-            style="width: 100%; height: 100%; object-fit: cover;">
-        </div>
-        {% endif %}
-        <div style="padding: 1.25rem;">
-          <h3 style="margin: 0 0 0.5rem 0; font-size: 1.15rem; color: var(--text-dark); font-weight: 700;">{{
-            event.title }}</h3>
-          <p style="margin: 0 0 0.75rem 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">{{
-            event.short_description[:100] }}{% if event.short_description|length > 100 %}...{% endif %}</p>
-          <div style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-light); font-size: 0.85rem;">
-            <span>📍 {{ event.location or 'WOVCC Clubhouse' }}</span>
-            {% if event.time %}<span>⏰ {{ event.time }}</span>{% endif %}
+      {% if has_today_events %}
+      <!-- Happening Today -->
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <span
+          style="display: inline-block; background: linear-gradient(135deg, #dc3545, #c82333); color: white; padding: 6px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+          🎉 Happening Today
+        </span>
+      </div>
+      <div
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        {% for event in today_events[:3] %}
+        <a href="/events/{% if event.slug %}{{ event.slug }}{% else %}{{ event.id }}{% endif %}"
+          style="display: block; text-decoration: none; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 2px solid var(--accent-color); transition: transform 0.3s ease, box-shadow 0.3s ease;">
+          {% if event.image_url %}
+          <div style="height: 160px; overflow: hidden;">
+            <img src="{{ event.image_url }}" alt="{{ event.title }}"
+              style="width: 100%; height: 100%; object-fit: cover;">
           </div>
-        </div>
-      </a>
-      {% endfor %}
-    </div>
-
-    {% elif has_upcoming_events %}
-    <!-- Upcoming Events -->
-    <div style="text-align: center; margin-bottom: 1.5rem;">
-      <span
-        style="display: inline-block; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white; padding: 6px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-        Upcoming Events
-      </span>
-    </div>
-    <div
-      style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-      {% for event in upcoming_events %}
-      <a href="/events/{% if event.slug %}{{ event.slug }}{% else %}{{ event.id }}{% endif %}"
-        style="display: block; text-decoration: none; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease;">
-        {% if event.image_url %}
-        <div style="height: 160px; overflow: hidden;">
-          <img src="{{ event.image_url }}" alt="{{ event.title }}"
-            style="width: 100%; height: 100%; object-fit: cover;">
-        </div>
-        {% endif %}
-        <div style="padding: 1.25rem;">
-          <p
-            style="margin: 0 0 0.5rem 0; color: var(--accent-color); font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">
-            {{ event.date_display }}</p>
-          <h3 style="margin: 0 0 0.5rem 0; font-size: 1.15rem; color: var(--text-dark); font-weight: 700;">{{
-            event.title }}</h3>
-          <p style="margin: 0 0 0.75rem 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">{{
-            event.short_description[:100] }}{% if event.short_description|length > 100 %}...{% endif %}</p>
-          <div style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-light); font-size: 0.85rem;">
-            <span>📍 {{ event.location or 'WOVCC Clubhouse' }}</span>
-            {% if event.time %}<span>⏰ {{ event.time }}</span>{% endif %}
+          {% endif %}
+          <div style="padding: 1.25rem;">
+            <h3 style="margin: 0 0 0.5rem 0; font-size: 1.15rem; color: var(--text-dark); font-weight: 700;">{{
+              event.title }}</h3>
+            <p style="margin: 0 0 0.75rem 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">{{
+              event.short_description[:100] }}{% if event.short_description|length > 100 %}...{% endif %}</p>
+            <div
+              style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-light); font-size: 0.85rem;">
+              <span>📍 {{ event.location or 'WOVCC Clubhouse' }}</span>
+              {% if event.time %}<span>⏰ {{ event.time }}</span>{% endif %}
+            </div>
           </div>
-        </div>
-      </a>
-      {% endfor %}
-    </div>
+        </a>
+        {% endfor %}
+      </div>
 
-    {% else %}
-    <!-- No Events - Generic Message -->
-    <div
-      style="text-align: center; padding: 2rem; background: var(--secondary-bg); border-radius: 12px; margin-bottom: 2rem;">
-      <p style="margin: 0; color: var(--text-secondary); font-size: 1.05rem; line-height: 1.7;">
-        We regularly host exciting events at the club including quiz nights, live entertainment, cricket festivals, and
-        family fun days.
-        Check our <a href="/events" style="color: var(--accent-color); font-weight: 600;">events page</a> or follow us
-        on social media to stay updated!
-      </p>
-    </div>
-    {% endif %}
+      {% elif has_upcoming_events %}
+      <!-- Upcoming Events -->
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <span
+          style="display: inline-block; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white; padding: 6px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+          Upcoming Events
+        </span>
+      </div>
+      <div
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        {% for event in upcoming_events %}
+        <a href="/events/{% if event.slug %}{{ event.slug }}{% else %}{{ event.id }}{% endif %}"
+          style="display: block; text-decoration: none; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease;">
+          {% if event.image_url %}
+          <div style="height: 160px; overflow: hidden;">
+            <img src="{{ event.image_url }}" alt="{{ event.title }}"
+              style="width: 100%; height: 100%; object-fit: cover;">
+          </div>
+          {% endif %}
+          <div style="padding: 1.25rem;">
+            <p
+              style="margin: 0 0 0.5rem 0; color: var(--accent-color); font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">
+              {{ event.date_display }}</p>
+            <h3 style="margin: 0 0 0.5rem 0; font-size: 1.15rem; color: var(--text-dark); font-weight: 700;">{{
+              event.title }}</h3>
+            <p style="margin: 0 0 0.75rem 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">{{
+              event.short_description[:100] }}{% if event.short_description|length > 100 %}...{% endif %}</p>
+            <div
+              style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-light); font-size: 0.85rem;">
+              <span>📍 {{ event.location or 'WOVCC Clubhouse' }}</span>
+              {% if event.time %}<span>⏰ {{ event.time }}</span>{% endif %}
+            </div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
 
-    <!-- View All Events Button -->
-    <div style="text-align: center;">
-      <a href="/events" class="btn btn-secondary" style="padding: 12px 28px; font-size: 1rem;">
-        <svg style="width: 18px; height: 18px; margin-right: 8px; vertical-align: middle;" fill="currentColor"
-          viewBox="0 0 20 20">
-          <path fill-rule="evenodd"
-            d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
-            clip-rule="evenodd" />
-        </svg>
-        View All Events
-      </a>
+      {% else %}
+      <!-- No Events - Generic Message -->
+      <div
+        style="text-align: center; padding: 2rem; background: var(--secondary-bg); border-radius: 12px; margin-bottom: 2rem;">
+        <p style="margin: 0; color: var(--text-secondary); font-size: 1.05rem; line-height: 1.7;">
+          We regularly host exciting events at the club including quiz nights, live entertainment, cricket festivals,
+          and
+          family fun days.
+          Check our <a href="/events" style="color: var(--accent-color); font-weight: 600;">events page</a> or follow us
+          on social media to stay updated!
+        </p>
+      </div>
+      {% endif %}
+
+      <!-- View All Events Button -->
+      <div style="text-align: center;">
+        <a href="/events" class="btn btn-secondary" style="padding: 12px 28px; font-size: 1rem;">
+          <svg style="width: 18px; height: 18px; margin-right: 8px; vertical-align: middle;" fill="currentColor"
+            viewBox="0 0 20 20">
+            <path fill-rule="evenodd"
+              d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+              clip-rule="evenodd" />
+          </svg>
+          View All Events
+        </a>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
+
+</div><!-- End homepage-sections -->
 
 <!-- Clubhouse for Private Functions Section -->
 <section class="section" style="background-color: var(--primary-color);">
@@ -303,7 +312,8 @@ Wickersley S66 2HL.{% endblock
           snippets.get('homepage_functions_title', 'Host Your Event at the Clubhouse') }}</h2>
         <p style="color: rgba(255,255,255,0.9); font-size: 1.05rem; line-height: 1.7; margin: 0;">
           {{ snippets.get('homepage_functions_text', 'Looking for a venue for your next celebration? A section of our
-          clubhouse can be reserved for private functions. With a licensed bar, ample parking, DJ facilities available, and a welcoming atmosphere, WOVCC is
+          clubhouse can be reserved for private functions. With a licensed bar, ample parking, DJ facilities
+          available, and a welcoming atmosphere, WOVCC is
           the perfect venue for birthday parties, wakes, and special occasions. <a href="/contact"
             style="color: white; text-decoration: underline;">Contact us for details.</a>')|safe }}
         </p>
@@ -330,13 +340,16 @@ Wickersley S66 2HL.{% endblock
 
     <div class="about-text-content">
       <p>{{ snippets.get('homepage_about_p1', "We're a Village cricket club offering a variety of cricket from ECB
-        Premier League Cricket, Women's Cricket & Junior Cricket including Dynamos and All Stars. We have 3 senior teams
-        playing in the Yorkshire Cricket Southern Premier League in the Championship, Division 1 & Division 5.") }}</p>
+        Premier League Cricket, Women's Cricket & Junior Cricket including Dynamos and All Stars. We have 3 senior
+        teams
+        playing in the Yorkshire Cricket Southern Premier League in the Championship, Division 1 & Division 5.") }}
+      </p>
 
       <p>{{ snippets.get('homepage_about_p2', "Our Women's section - The Vixens, have 3 teams in the Yorkshire Cricket
         Premier League competing in Division 1 for Hardball and Softball, and also in Division 3 Softball.") }}</p>
 
-      <p>{{ snippets.get('homepage_about_p3', "We have junior teams in the Ben Jessop Junior Cricket League: U9s, U11s,
+      <p>{{ snippets.get('homepage_about_p3', "We have junior teams in the Ben Jessop Junior Cricket League: U9s,
+        U11s,
         U13s, U15s, U18s plus our Junior Vixens. Our successful All Stars programme will be back again this year along
         with Dynamos cricket.") }}</p>
 
