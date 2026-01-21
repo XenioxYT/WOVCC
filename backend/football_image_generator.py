@@ -144,7 +144,7 @@ def fetch_team_badge(team_name: str, sport: str = "Soccer") -> Image.Image | Non
 
 def create_gradient_background(width: int, height: int) -> Image.Image:
     """
-    Create linear gradient background:
+    Create TNT Sports linear gradient background:
     - Pink (130, 42, 146) concentrated in bottom-right corner only
     - Dark navy (20, 29, 40) everywhere else
     """
@@ -175,16 +175,45 @@ def create_gradient_background(width: int, height: int) -> Image.Image:
     return img
 
 
+def create_sky_sports_background(width: int, height: int) -> Image.Image:
+    """
+    Create Sky Sports style background:
+    - Clean white/light gray with subtle blue tint
+    """
+    # Light background with very subtle blue gradient
+    LIGHT = (255, 255, 255)
+    LIGHT_BLUE = (240, 244, 248)
+    
+    img = Image.new('RGB', (width, height), LIGHT)
+    
+    # Create a very subtle gradient from white to light blue
+    for y in range(height):
+        for x in range(width):
+            t = (y / height) * 0.3  # Very subtle gradient
+            
+            r = int(LIGHT[0] + (LIGHT_BLUE[0] - LIGHT[0]) * t)
+            g = int(LIGHT[1] + (LIGHT_BLUE[1] - LIGHT[1]) * t)
+            b = int(LIGHT[2] + (LIGHT_BLUE[2] - LIGHT[2]) * t)
+            
+            img.putpixel((x, y), (r, g, b))
+    
+    return img
+
+
 def generate_match_graphic(
     home_team: str,
     away_team: str,
     competition: str,
     match_date: str,
     match_time: str,
-    output_path: str = None
+    output_path: str = None,
+    broadcaster: str = 'tnt'
 ) -> str:
     """
-    Generate a TNT Sports-style match fixture graphic.
+    Generate a match fixture graphic in either TNT Sports or Sky Sports style.
+    
+    Args:
+        broadcaster: 'tnt' for TNT Sports style, 'sky_sports' for Sky Sports style
     
     Layout:
     - Competition name at top
@@ -197,16 +226,41 @@ def generate_match_graphic(
     # Image dimensions - 2:1 Aspect Ratio (Wider)
     WIDTH = 1920
     HEIGHT = 960
-    BORDER_WIDTH = 20  # Pink border width
     
-    # Colors
-    WHITE = (255, 255, 255)
-    LIGHT_GRAY = (180, 180, 195)
-    PINK = (255, 0, 127)  # Vibrant Pink #FF007F for border/accents (TNT Style)
-    GRADIENT_PINK = (130, 42, 146) # Underlying deep pink for gradient
+    # Determine style based on broadcaster
+    is_sky_sports = broadcaster.lower() == 'sky_sports'
     
-    # Create gradient background
-    img = create_gradient_background(WIDTH, HEIGHT)
+    if is_sky_sports:
+        # Sky Sports colors: White background, blue text, red accents
+        PRIMARY_TEXT = (12, 61, 122)  # Sky Sports Blue #0c3d7a
+        SECONDARY_TEXT = (100, 115, 140)  # Muted blue-gray
+        ACCENT_COLOR = (196, 30, 58)  # Sky Sports Red #c41e3a
+        TIME_COLOR = ACCENT_COLOR
+        TEAM_TEXT = PRIMARY_TEXT
+        VS_COLOR = SECONDARY_TEXT
+        COMP_COLOR = SECONDARY_TEXT
+        PLACEHOLDER_FILL = (220, 225, 230)
+        PLACEHOLDER_OUTLINE = SECONDARY_TEXT
+        
+        # Create Sky Sports background
+        img = create_sky_sports_background(WIDTH, HEIGHT)
+        logo_filename = 'sky_sports_logo.png'
+    else:
+        # TNT Sports colors: Purple gradient, white text, pink accents
+        PRIMARY_TEXT = (255, 255, 255)  # White
+        SECONDARY_TEXT = (180, 180, 195)  # Light gray
+        ACCENT_COLOR = (255, 0, 127)  # Vibrant Pink
+        TIME_COLOR = (220, 100, 255)  # Bright purple/pink
+        TEAM_TEXT = PRIMARY_TEXT
+        VS_COLOR = SECONDARY_TEXT
+        COMP_COLOR = SECONDARY_TEXT
+        PLACEHOLDER_FILL = (60, 60, 80)
+        PLACEHOLDER_OUTLINE = SECONDARY_TEXT
+        
+        # Create TNT Sports gradient background
+        img = create_gradient_background(WIDTH, HEIGHT)
+        logo_filename = 'TNT_sports.png'
+    
     draw = ImageDraw.Draw(img)
     
     # Load fonts - sizes optimized for 1920x960
@@ -224,7 +278,7 @@ def generate_match_graphic(
     comp_text = competition.upper()
     comp_bbox = draw.textbbox((0, 0), comp_text, font=font_competition)
     comp_width = comp_bbox[2] - comp_bbox[0]
-    draw.text(((WIDTH - comp_width) // 2, comp_y), comp_text, fill=LIGHT_GRAY, font=font_competition)
+    draw.text(((WIDTH - comp_width) // 2, comp_y), comp_text, fill=COMP_COLOR, font=font_competition)
     
     # === TEAM BADGES (side by side) ===
     home_badge = fetch_team_badge(home_team)
@@ -244,35 +298,35 @@ def generate_match_graphic(
         img.paste(home_badge_resized, (home_badge_x, badge_y), home_badge_resized)
     else:
         draw.ellipse([home_badge_x, badge_y, home_badge_x + badge_size, badge_y + badge_size], 
-                     fill=(60, 60, 80), outline=LIGHT_GRAY, width=2)
+                     fill=PLACEHOLDER_FILL, outline=PLACEHOLDER_OUTLINE, width=2)
     
     if away_badge:
         away_badge_resized = away_badge.resize((badge_size, badge_size), Image.Resampling.LANCZOS)
         img.paste(away_badge_resized, (away_badge_x, badge_y), away_badge_resized)
     else:
         draw.ellipse([away_badge_x, badge_y, away_badge_x + badge_size, badge_y + badge_size],
-                     fill=(60, 60, 80), outline=LIGHT_GRAY, width=2)
+                     fill=PLACEHOLDER_FILL, outline=PLACEHOLDER_OUTLINE, width=2)
     
     # === HOME TEAM NAME (big, centered) ===
     home_y = badge_y + badge_size + 60
     home_text = home_team.upper()
     home_bbox = draw.textbbox((0, 0), home_text, font=font_team)
     home_width = home_bbox[2] - home_bbox[0]
-    draw.text(((WIDTH - home_width) // 2, home_y), home_text, fill=WHITE, font=font_team)
+    draw.text(((WIDTH - home_width) // 2, home_y), home_text, fill=TEAM_TEXT, font=font_team)
     
     # === "v" ===
     vs_y = home_y + 100
     vs_text = "v"
     vs_bbox = draw.textbbox((0, 0), vs_text, font=font_vs)
     vs_width = vs_bbox[2] - vs_bbox[0]
-    draw.text(((WIDTH - vs_width) // 2, vs_y), vs_text, fill=LIGHT_GRAY, font=font_vs)
+    draw.text(((WIDTH - vs_width) // 2, vs_y), vs_text, fill=VS_COLOR, font=font_vs)
     
     # === AWAY TEAM NAME (big, centered) ===
     away_y = vs_y + 70
     away_text = away_team.upper()
     away_bbox = draw.textbbox((0, 0), away_text, font=font_team)
     away_width = away_bbox[2] - away_bbox[0]
-    draw.text(((WIDTH - away_width) // 2, away_y), away_text, fill=WHITE, font=font_team)
+    draw.text(((WIDTH - away_width) // 2, away_y), away_text, fill=TEAM_TEXT, font=font_team)
     
     # === DATE AND TIME (bottom) ===
     datetime_y = away_y + 130
@@ -294,34 +348,32 @@ def generate_match_graphic(
     date_x = (WIDTH - total_width) // 2
     time_x = date_x + date_width + spacing
     
-    # Brighter purple/pink
-    BRIGHT_PURPLE = (220, 100, 255) 
+    draw.text((date_x, datetime_y), date_text, fill=SECONDARY_TEXT, font=font_date)
+    draw.text((time_x, datetime_y), time_text, fill=TIME_COLOR, font=font_time)
     
-    draw.text((date_x, datetime_y), date_text, fill=LIGHT_GRAY, font=font_date)
-    draw.text((time_x, datetime_y), time_text, fill=BRIGHT_PURPLE, font=font_time)
-    
-    # === TNT SPORTS LOGO (bottom center) ===
-    tnt_logo_path = os.path.join(ASSETS_DIR, 'TNT_sports.png')
-    if os.path.exists(tnt_logo_path):
-        tnt_logo = Image.open(tnt_logo_path).convert("RGBA")
+    # === BROADCASTER LOGO (bottom center) ===
+    logo_path = os.path.join(ASSETS_DIR, logo_filename)
+    if os.path.exists(logo_path):
+        logo = Image.open(logo_path).convert("RGBA")
         logo_height = 60
-        aspect = tnt_logo.width / tnt_logo.height
+        aspect = logo.width / logo.height
         logo_width = int(logo_height * aspect)
-        tnt_logo = tnt_logo.resize((logo_width, logo_height), Image.Resampling.LANCZOS)
+        logo = logo.resize((logo_width, logo_height), Image.Resampling.LANCZOS)
         
         logo_x = (WIDTH - logo_width) // 2
         logo_y = HEIGHT - logo_height - 50
-        img.paste(tnt_logo, (logo_x, logo_y), tnt_logo)
+        img.paste(logo, (logo_x, logo_y), logo)
     
     # === SAVE IMAGE ===
     if not output_path:
         home_clean = sanitize_filename(home_team)
         away_clean = sanitize_filename(away_team)
-        output_path = os.path.join(UPLOADS_DIR, f"football_{home_clean}_vs_{away_clean}.webp")
+        broadcaster_suffix = '_sky' if is_sky_sports else ''
+        output_path = os.path.join(UPLOADS_DIR, f"football_{home_clean}_vs_{away_clean}{broadcaster_suffix}.webp")
     
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     img.save(output_path, "WEBP", quality=92)
-    logger.info(f"Generated match graphic: {output_path}")
+    logger.info(f"Generated {broadcaster} match graphic: {output_path}")
     
     return output_path
 

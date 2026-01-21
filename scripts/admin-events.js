@@ -659,6 +659,9 @@
             formData.append('home_team', document.getElementById('event-home-team').value);
             formData.append('away_team', document.getElementById('event-away-team').value);
             formData.append('football_competition', document.getElementById('event-football-competition').value);
+            // Broadcaster selection: sky_sports or tnt (default)
+            const broadcasterToggle = document.getElementById('event-broadcaster-toggle');
+            formData.append('broadcaster', broadcasterToggle && broadcasterToggle.checked ? 'sky_sports' : 'tnt');
         }
 
         formData.append('is_recurring', isRecurring);
@@ -855,6 +858,86 @@
         // Reset status messages
         document.getElementById('home-team-status').textContent = '';
         document.getElementById('away-team-status').textContent = '';
+
+        // Reset broadcaster to TNT Sports when enabling football
+        if (isFootball) {
+            const broadcasterToggle = document.getElementById('event-broadcaster-toggle');
+            if (broadcasterToggle) {
+                broadcasterToggle.checked = false;
+                updateBroadcasterUI(false);
+            }
+        }
+    }
+
+    function toggleBroadcaster() {
+        const isSkySelected = document.getElementById('event-broadcaster-toggle').checked;
+        updateBroadcasterUI(isSkySelected);
+    }
+
+    function updateBroadcasterUI(isSkySelected) {
+        const footballOptions = document.getElementById('football-match-options');
+        const broadcasterLogo = document.getElementById('broadcaster-logo');
+        const tntLabel = document.getElementById('broadcaster-label-tnt');
+        const skyLabel = document.getElementById('broadcaster-label-sky');
+        const footballNote = document.getElementById('football-note');
+        const footballInputs = document.querySelectorAll('.football-input');
+        const footballLabels = document.querySelectorAll('.football-label');
+
+        if (isSkySelected) {
+            // Sky Sports style: White background, blue text, red accents
+            footballOptions.style.background = 'linear-gradient(135deg, #ffffff 0%, #f0f4f8 100%)';
+            footballOptions.style.color = '#0c3d7a';
+            broadcasterLogo.src = '/assets/sky_sports_logo.png';
+            broadcasterLogo.alt = 'Sky Sports';
+            tntLabel.style.opacity = '0.5';
+            skyLabel.style.opacity = '1';
+
+            // Update inputs for Sky Sports style
+            footballInputs.forEach(input => {
+                input.style.background = 'rgba(12, 61, 122, 0.05)';
+                input.style.borderColor = '#0c3d7a';
+                input.style.color = '#0c3d7a';
+            });
+
+            // Update labels
+            footballLabels.forEach(label => {
+                label.style.color = '#0c3d7a';
+            });
+
+            // Update note styling
+            if (footballNote) {
+                footballNote.style.background = 'rgba(12, 61, 122, 0.1)';
+                footballNote.style.borderLeftColor = '#c41e3a';
+                footballNote.style.color = '#0c3d7a';
+            }
+        } else {
+            // TNT Sports style: Purple gradient, white text, pink accents
+            footballOptions.style.background = 'linear-gradient(135deg, #141d28 0%, #822a92 100%)';
+            footballOptions.style.color = 'white';
+            broadcasterLogo.src = '/assets/TNT_sports.png';
+            broadcasterLogo.alt = 'TNT Sports';
+            tntLabel.style.opacity = '1';
+            skyLabel.style.opacity = '0.5';
+
+            // Update inputs for TNT style
+            footballInputs.forEach(input => {
+                input.style.background = 'rgba(255, 255, 255, 0.1)';
+                input.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                input.style.color = 'white';
+            });
+
+            // Update labels
+            footballLabels.forEach(label => {
+                label.style.color = 'white';
+            });
+
+            // Update note styling
+            if (footballNote) {
+                footballNote.style.background = 'rgba(255, 255, 255, 0.1)';
+                footballNote.style.borderLeftColor = '#ff007f';
+                footballNote.style.color = 'white';
+            }
+        }
     }
 
     function toggleMarkdownPreview() {
@@ -1022,6 +1105,7 @@
         removeImage,
         toggleRecurringOptions,
         toggleFootballOptions,
+        toggleBroadcaster,
         toggleMarkdownPreview,
         handleRecurrencePatternChange,
         generateEventDescriptions
@@ -1070,6 +1154,10 @@
 
         if (target.matches('[data-admin-events-action="toggle-football"]')) {
             toggleFootballOptions();
+        }
+
+        if (target.matches('[data-admin-events-action="toggle-broadcaster"]')) {
+            toggleBroadcaster();
         }
 
         if (target.matches('[data-admin-events-action="recurrence-pattern"]')) {

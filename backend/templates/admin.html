@@ -1074,35 +1074,53 @@
 
         <div id="football-match-options"
           style="display: none; padding: 20px; background: linear-gradient(135deg, #141d28 0%, #822a92 100%); border-radius: 8px; margin-bottom: 20px; color: white;">
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
-            <img src="/assets/TNT_sports.png" alt="TNT Sports" style="height: 24px;">
+
+          <!-- Broadcaster Toggle -->
+          <div
+            style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+            <span id="broadcaster-label-tnt" style="font-weight: 600; font-size: 0.9rem; opacity: 1;">TNT Sports</span>
+            <label class="broadcaster-toggle"
+              style="position: relative; display: inline-block; width: 50px; height: 26px; cursor: pointer;">
+              <input type="checkbox" id="event-broadcaster-toggle" style="opacity: 0; width: 0; height: 0;"
+                data-admin-events-action="toggle-broadcaster">
+              <span class="broadcaster-slider"
+                style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #822a92; transition: 0.3s; border-radius: 26px;"></span>
+            </label>
+            <span id="broadcaster-label-sky" style="font-weight: 600; font-size: 0.9rem; opacity: 0.5;">Sky
+              Sports</span>
+          </div>
+
+          <div id="broadcaster-header" style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+            <img id="broadcaster-logo" src="/assets/TNT_sports.png" alt="TNT Sports" style="height: 24px;">
             <span style="font-size: 0.9rem; opacity: 0.9;">Fixture Graphic will be auto-generated</span>
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
             <div class="form-group" style="margin-bottom: 0;">
-              <label class="form-label" for="event-home-team" style="color: white;">Home Team *</label>
-              <input type="text" id="event-home-team" class="form-input" placeholder="e.g., Newcastle United"
+              <label class="form-label football-label" for="event-home-team" style="color: white;">Home Team *</label>
+              <input type="text" id="event-home-team" class="form-input football-input"
+                placeholder="e.g., Newcastle United"
                 style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); color: white;">
               <div id="home-team-status" style="font-size: 0.8rem; margin-top: 4px; opacity: 0.8;"></div>
             </div>
 
             <div class="form-group" style="margin-bottom: 0;">
-              <label class="form-label" for="event-away-team" style="color: white;">Away Team *</label>
-              <input type="text" id="event-away-team" class="form-input" placeholder="e.g., Arsenal"
+              <label class="form-label football-label" for="event-away-team" style="color: white;">Away Team *</label>
+              <input type="text" id="event-away-team" class="form-input football-input" placeholder="e.g., Arsenal"
                 style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); color: white;">
               <div id="away-team-status" style="font-size: 0.8rem; margin-top: 4px; opacity: 0.8;"></div>
             </div>
           </div>
 
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" for="event-football-competition" style="color: white;">Competition</label>
-            <input type="text" id="event-football-competition" class="form-input"
+            <label class="form-label football-label" for="event-football-competition"
+              style="color: white;">Competition</label>
+            <input type="text" id="event-football-competition" class="form-input football-input"
               placeholder="e.g., FA Cup, Champions League, Premier League"
               style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); color: white;">
           </div>
 
-          <p
+          <p id="football-note"
             style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 6px; font-size: 0.85rem; border-left: 3px solid #ff007f;">
             <strong>ℹ️ Note:</strong> Team names will be validated when saving. A professional fixture graphic will be
             auto-generated using the date/time above. You can still upload a custom image to override.
@@ -1455,6 +1473,27 @@
 </div>
 
 <style>
+  /* Broadcaster Toggle Slider */
+  .broadcaster-toggle input:checked+.broadcaster-slider {
+    background-color: #0c3d7a;
+  }
+
+  .broadcaster-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+  }
+
+  .broadcaster-toggle input:checked+.broadcaster-slider:before {
+    transform: translateX(24px);
+  }
+
   /* Stats Grid */
   .stats-grid {
     display: grid;
