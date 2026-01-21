@@ -318,13 +318,15 @@ def create_event(user):
                         match_time_display = data.get('time', '').upper() or 'TBC'
                         
                         upload_folder = os.path.join(os.path.dirname(__file__), 'uploads', 'events')
+                        broadcaster = data.get('broadcaster', 'tnt').strip().lower()
                         generated_image_path = generate_match_graphic(
                             home_team=home_team,
                             away_team=away_team,
                             competition=football_competition or 'Football',
                             match_date=match_date_display,
                             match_time=match_time_display,
-                            output_path=os.path.join(upload_folder, f"football_{sanitize_filename(home_team)}_vs_{sanitize_filename(away_team)}_{event_date.strftime('%Y%m%d')}.webp")
+                            output_path=os.path.join(upload_folder, f"football_{sanitize_filename(home_team)}_vs_{sanitize_filename(away_team)}_{event_date.strftime('%Y%m%d')}.webp"),
+                            broadcaster=broadcaster
                         )
                         # Convert absolute path to relative URL
                         if generated_image_path:
@@ -517,13 +519,15 @@ def update_event(user, event_id):
                             match_time_display = (event.time or '').upper() or 'TBC'
                             
                             upload_folder = os.path.join(os.path.dirname(__file__), 'uploads', 'events')
+                            broadcaster = data.get('broadcaster', 'tnt').strip().lower()
                             generated_image_path = generate_match_graphic(
                                 home_team=home_team,
                                 away_team=away_team,
                                 competition=football_competition or 'Football',
                                 match_date=match_date_display,
                                 match_time=match_time_display,
-                                output_path=os.path.join(upload_folder, f"football_{sanitize_filename(home_team)}_vs_{sanitize_filename(away_team)}_{event.date.strftime('%Y%m%d')}.webp")
+                                output_path=os.path.join(upload_folder, f"football_{sanitize_filename(home_team)}_vs_{sanitize_filename(away_team)}_{event.date.strftime('%Y%m%d')}.webp"),
+                                broadcaster=broadcaster
                             )
                             if generated_image_path:
                                 event.image_url = '/uploads/events/' + os.path.basename(generated_image_path)
