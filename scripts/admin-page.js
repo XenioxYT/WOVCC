@@ -1,9 +1,9 @@
-(function() {
+(function () {
   'use strict';
 
   // Ensure global showNotification is available as a fallback-safe wrapper
   if (!window.showNotification) {
-    window.showNotification = function(message, type = 'info') {
+    window.showNotification = function (message, type = 'info') {
       console.log('[' + String(type).toUpperCase() + '] ' + message);
       var mainNotifier = typeof window.showNotification === 'function' && window.showNotification !== arguments.callee;
       if (mainNotifier) {
@@ -45,9 +45,9 @@
     container.appendChild(notification);
 
     // Auto-dismiss with a simple fade effect (CSS-driven)
-    setTimeout(function() {
+    setTimeout(function () {
       notification.classList.add('notification-hide');
-      setTimeout(function() {
+      setTimeout(function () {
         if (notification.parentNode) {
           notification.parentNode.removeChild(notification);
         }
@@ -62,7 +62,7 @@
   function waitForDependencies(callback, maxAttempts) {
     maxAttempts = typeof maxAttempts === 'number' ? maxAttempts : 50;
     var attempts = 0;
-    var interval = setInterval(function() {
+    var interval = setInterval(function () {
       attempts++;
       if (window.WOVCCAuth && window.wovccApi) {
         clearInterval(interval);
@@ -76,7 +76,7 @@
   }
 
   function initAdminPage() {
-    waitForDependencies(function() {
+    waitForDependencies(function () {
       checkAdminAccess();
       setupTabs();
     });
@@ -89,7 +89,7 @@
       // Apply a lightweight fade-in; CSS can refine this using the class.
       adminContent.classList.add('admin-content-transition');
       // Remove the class after animation completes to avoid stacking
-      setTimeout(function() {
+      setTimeout(function () {
         adminContent.classList.remove('admin-content-transition');
       }, 300);
     }
@@ -104,7 +104,7 @@
   }
 
   // SPA transitions: re-run init (with animation) when navigating to /admin
-  document.addEventListener('pageTransitionComplete', function(e) {
+  document.addEventListener('pageTransitionComplete', function (e) {
     if (e && e.detail && e.detail.path === '/admin') {
       runAdminInitWithAnimation();
     }
@@ -153,20 +153,20 @@
     // Prevent duplicate event listeners on SPA transitions
     if (tabsInitialized) return;
     tabsInitialized = true;
-    
+
     var tabs = document.querySelectorAll('.admin-tab');
     if (!tabs || !tabs.length) return;
 
-    tabs.forEach(function(tab) {
-      tab.addEventListener('click', function() {
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
         // Active tab state
-        document.querySelectorAll('.admin-tab').forEach(function(t) {
+        document.querySelectorAll('.admin-tab').forEach(function (t) {
           t.classList.remove('active');
         });
         this.classList.add('active');
 
         // Hide all tab contents
-        document.querySelectorAll('.tab-content').forEach(function(content) {
+        document.querySelectorAll('.tab-content').forEach(function (content) {
           content.style.display = 'none';
         });
 
@@ -190,6 +190,9 @@
         if (tabName === 'sponsors' && window.AdminSponsors && typeof window.AdminSponsors.loadSponsors === 'function') {
           window.AdminSponsors.loadSponsors();
         }
+        if (tabName === 'beer-images' && window.AdminBeerImages && typeof window.AdminBeerImages.loadBeerImages === 'function') {
+          window.AdminBeerImages.loadBeerImages();
+        }
         if (tabName === 'content' && window.AdminContent && typeof window.AdminContent.loadContentSnippets === 'function') {
           window.AdminContent.loadContentSnippets();
         }
@@ -204,7 +207,7 @@
     await loadCurrentConfig();
     await loadFixtures();
     setupEventListeners();
-    
+
     // Initialize dashboard since it's the default tab
     if (window.AdminDashboard && typeof window.AdminDashboard.init === 'function') {
       window.AdminDashboard.init();
@@ -270,7 +273,7 @@
 
       selector.innerHTML = '<option value="">No match selected</option>';
 
-      allFixtures.forEach(function(fixture, index) {
+      allFixtures.forEach(function (fixture, index) {
         var option = document.createElement('option');
         option.value = String(index);
         option.textContent = (
@@ -287,7 +290,7 @@
       });
 
       if (currentConfig.selected_match && allFixtures.length) {
-        var matchIndex = allFixtures.findIndex(function(f) {
+        var matchIndex = allFixtures.findIndex(function (f) {
           return (
             f.home_team === currentConfig.selected_match.home_team &&
             f.away_team === currentConfig.selected_match.away_team &&
@@ -316,13 +319,13 @@
     var clearBtn = document.getElementById('clear-config-btn');
 
     if (liveToggle) {
-      liveToggle.addEventListener('change', function(e) {
+      liveToggle.addEventListener('change', function (e) {
         updateLiveStatusIndicator(e.target.checked);
       });
     }
 
     if (matchSelector) {
-      matchSelector.addEventListener('change', function(e) {
+      matchSelector.addEventListener('change', function (e) {
         var index = e.target.value;
         var preview = document.getElementById('selected-match-preview');
         if (index !== '') {
@@ -469,7 +472,7 @@
     const confirmed = await window.WOVCCModal.confirmClear(
       'Are you sure you want to clear all configuration? This will turn off the live section.'
     );
-    
+
     if (!confirmed) {
       return;
     }

@@ -392,6 +392,24 @@ def inject_sponsors():
         return {'sponsors': []}
 
 
+@app.context_processor
+def inject_beer_images():
+    """Inject active beer images into all templates"""
+    from database import get_db, BeerImage
+    try:
+        db = next(get_db())
+        try:
+            beer_images = db.query(BeerImage).filter(
+                BeerImage.is_active == True
+            ).order_by(BeerImage.display_order.asc(), BeerImage.name.asc()).all()
+            return {'beer_images': [img.to_dict() for img in beer_images]}
+        finally:
+            db.close()
+    except Exception as e:
+        logger.error(f"Error loading beer images: {e}")
+        return {'beer_images': []}
+
+
 # Register custom Jinja2 filter for explicit sanitization if needed
 @app.template_filter('safe_html')
 def safe_html_filter(content):
@@ -410,6 +428,7 @@ from routes_api_events import events_api_bp
 from routes_api_webhooks import webhooks_api_bp
 from routes_api_contact import contact_bp
 from routes_api_sponsors import sponsors_api_bp
+from routes_api_beer_images import beer_images_api_bp
 
 app.register_blueprint(pages_bp)
 app.register_blueprint(cricket_api_bp)
@@ -419,6 +438,7 @@ app.register_blueprint(events_api_bp)
 app.register_blueprint(webhooks_api_bp)
 app.register_blueprint(contact_bp)
 app.register_blueprint(sponsors_api_bp)
+app.register_blueprint(beer_images_api_bp)
 
 
 # ========================================

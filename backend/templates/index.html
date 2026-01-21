@@ -96,6 +96,7 @@ Wickersley S66 2HL.{% endblock
 {% block extra_js %}
 <script src="/scripts/api-client.js?v={{ asset_version }}"></script>
 <script src="/scripts/match-controller.js?v={{ asset_version }}"></script>
+<script src="/scripts/beer-carousel.js?v={{ asset_version }}"></script>
 {% endblock %}
 
 {% block content %}
@@ -114,6 +115,29 @@ Wickersley S66 2HL.{% endblock
 
 <!-- Homepage Sections Container (allows reordering on mobile) -->
 <div class="homepage-sections">
+
+  <!-- Beer Image Band (scrolling ticker like sponsors) -->
+  {% if beer_images and beer_images|length > 0 %}
+  <section class="beer-band-container" id="homepage-beer-carousel">
+    <h3 class="beer-band-title">At the Bar</h3>
+    <p class="beer-band-subtitle">Current drinks available at the club</p>
+    <div class="beer-band-wrapper">
+      <div class="beer-band">
+        {% for image in beer_images %}
+        <span class="beer-image-link" title="{{ image.name }}">
+          <img src="{{ image.image_url }}" alt="{{ image.name }}" class="beer-image" loading="lazy">
+        </span>
+        {% endfor %}
+        <!-- Duplicate for seamless loop -->
+        {% for image in beer_images %}
+        <span class="beer-image-link" title="{{ image.name }}">
+          <img src="{{ image.image_url }}" alt="{{ image.name }}" class="beer-image" loading="lazy">
+        </span>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
 
   <!-- Match Day Hub -->
   <section class="matchday-hub section" id="homepage-matches">

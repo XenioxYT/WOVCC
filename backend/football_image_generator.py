@@ -52,6 +52,32 @@ FONT_PATHS = {
 }
 
 
+def sanitize_filename(name: str) -> str:
+    """
+    Sanitize a string for use in filenames.
+    Replaces problematic characters (slashes, colons, etc.) with underscores.
+    """
+    # Characters that are problematic in filenames
+    # Forward slash, backslash, colon, asterisk, question mark, quotes, etc.
+    problematic_chars = ['/', '\\', ':', '*', '?', '"', "'", '<', '>', '|']
+    
+    result = name.lower()
+    for char in problematic_chars:
+        result = result.replace(char, '_')
+    
+    # Replace spaces with underscores
+    result = result.replace(' ', '_')
+    
+    # Remove any double underscores that may have been created
+    while '__' in result:
+        result = result.replace('__', '_')
+    
+    # Strip leading/trailing underscores
+    result = result.strip('_')
+    
+    return result
+
+
 def get_font(style: str, size: int) -> ImageFont.FreeTypeFont:
     """Get a font with fallback to default."""
     paths = FONT_PATHS.get(style, FONT_PATHS['bold'])
@@ -70,7 +96,7 @@ def get_font(style: str, size: int) -> ImageFont.FreeTypeFont:
 
 def fetch_team_badge(team_name: str, sport: str = "Soccer") -> Image.Image | None:
     """Fetch team badge from TheSportsDB API with caching."""
-    cache_filename = team_name.lower().replace(" ", "_") + ".png"
+    cache_filename = sanitize_filename(team_name) + ".png"
     cache_path = os.path.join(CACHE_DIR, cache_filename)
     
     if os.path.exists(cache_path):
@@ -289,8 +315,8 @@ def generate_match_graphic(
     
     # === SAVE IMAGE ===
     if not output_path:
-        home_clean = home_team.lower().replace(" ", "_")
-        away_clean = away_team.lower().replace(" ", "_")
+        home_clean = sanitize_filename(home_team)
+        away_clean = sanitize_filename(away_team)
         output_path = os.path.join(UPLOADS_DIR, f"football_{home_clean}_vs_{away_clean}.webp")
     
     os.makedirs(os.path.dirname(output_path), exist_ok=True)

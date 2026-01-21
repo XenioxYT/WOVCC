@@ -15,7 +15,7 @@ from database import get_db, Event, EventInterest
 from auth import require_admin, get_current_user
 from image_utils import process_and_save_image, delete_image, allowed_file
 from slug_utils import generate_event_slug
-from football_image_generator import generate_match_graphic, fetch_team_badge, SPORTSDB_API_BASE
+from football_image_generator import generate_match_graphic, fetch_team_badge, SPORTSDB_API_BASE, sanitize_filename
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import or_
 
@@ -324,7 +324,7 @@ def create_event(user):
                             competition=football_competition or 'Football',
                             match_date=match_date_display,
                             match_time=match_time_display,
-                            output_path=os.path.join(upload_folder, f"football_{home_team.lower().replace(' ', '_')}_vs_{away_team.lower().replace(' ', '_')}_{event_date.strftime('%Y%m%d')}.webp")
+                            output_path=os.path.join(upload_folder, f"football_{sanitize_filename(home_team)}_vs_{sanitize_filename(away_team)}_{event_date.strftime('%Y%m%d')}.webp")
                         )
                         # Convert absolute path to relative URL
                         if generated_image_path:
@@ -523,7 +523,7 @@ def update_event(user, event_id):
                                 competition=football_competition or 'Football',
                                 match_date=match_date_display,
                                 match_time=match_time_display,
-                                output_path=os.path.join(upload_folder, f"football_{home_team.lower().replace(' ', '_')}_vs_{away_team.lower().replace(' ', '_')}_{event.date.strftime('%Y%m%d')}.webp")
+                                output_path=os.path.join(upload_folder, f"football_{sanitize_filename(home_team)}_vs_{sanitize_filename(away_team)}_{event.date.strftime('%Y%m%d')}.webp")
                             )
                             if generated_image_path:
                                 event.image_url = '/uploads/events/' + os.path.basename(generated_image_path)

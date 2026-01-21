@@ -261,6 +261,31 @@ class Sponsor(Base):
         }
 
 
+class BeerImage(Base):
+    """Beer image model for homepage carousel"""
+    __tablename__ = 'beer_images'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)  # Description/name of the beer image
+    image_url = Column(String(500), nullable=False)  # WebP image path
+    display_order = Column(Integer, default=0, index=True)  # Manual ordering (lower = first)
+    is_active = Column(Boolean, default=True, index=True)  # Show/hide toggle
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        """Convert beer image to dictionary"""
+        return {
+            'id': self.id,
+            'name': self.name,
+            'image_url': self.image_url,
+            'display_order': self.display_order,
+            'is_active': self.is_active,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+
 class LiveConfig(Base):
     """Live match streaming configuration - stored in database for persistence across container restarts"""
     __tablename__ = 'live_config'
