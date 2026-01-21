@@ -10,6 +10,11 @@
   // Store original sponsor HTML for proper duplication
   let originalSponsorsHTML = null;
 
+  // Track current state to avoid unnecessary resets
+  let currentSetsCount = 0;
+  let isInitialized = false;
+  let resizeListenerAdded = false;
+
   /**
    * Initialize the sponsor carousel
    * Handles cases where there are too few sponsors to fill the screen
@@ -43,8 +48,8 @@
     let loadedCount = 0;
     const totalImages = images.length;
 
-    function checkAndAdjust() {
-      adjustCarousel(wrapper, band, sponsorCount);
+    function checkAndAdjust(forceReset = false) {
+      adjustCarousel(wrapper, band, sponsorCount, forceReset);
     }
 
     // Check if all images are already loaded
@@ -55,13 +60,13 @@
         img.addEventListener('load', () => {
           loadedCount++;
           if (loadedCount >= totalImages) {
-            checkAndAdjust();
+            checkAndAdjust(true); // Force reset on initial load
           }
         }, { once: true });
         img.addEventListener('error', () => {
           loadedCount++;
           if (loadedCount >= totalImages) {
-            checkAndAdjust();
+            checkAndAdjust(true); // Force reset on initial load
           }
         }, { once: true });
       }
@@ -69,21 +74,36 @@
 
     if (allLoaded) {
       // Small delay to ensure layout is complete
-      setTimeout(checkAndAdjust, 100);
+      setTimeout(() => checkAndAdjust(!isInitialized), 100);
     }
 
-    // Also adjust on window resize (debounced)
-    let resizeTimeout;
-    window.addEventListener('resize', () => {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(checkAndAdjust, 200);
-    });
+    // Only add resize listener once to prevent duplicate handlers
+    if (!resizeListenerAdded) {
+      let resizeTimeout;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          const currentWrapper = document.querySelector('.sponsors-band-wrapper');
+          const currentBand = document.querySelector('.sponsors-band');
+          if (currentWrapper && currentBand) {
+            const allLinks = currentBand.querySelectorAll('.sponsor-logo-link');
+            const sponsorCount = Math.floor(allLinks.length / 2) || allLinks.length;
+            // Don't force reset on resize - only reconfigure if structure needs to change
+            adjustCarousel(currentWrapper, currentBand, sponsorCount, false);
+          }
+        }, 200);
+      });
+      resizeListenerAdded = true;
+    }
+
+    isInitialized = true;
   }
 
   /**
    * Adjust the carousel based on content width vs viewport width
+   * @param {boolean} forceReset - If true, always reset the animation. If false, only reset if structure changes.
    */
-  function adjustCarousel(wrapper, band, sponsorCount) {
+  function adjustCarousel(wrapper, band, sponsorCount, forceReset = false) {
     // Get the wrapper width (viewport-like width)
     const wrapperWidth = wrapper.offsetWidth;
 
@@ -110,11 +130,6 @@
       return;
     }
 
-    // Reset animation to apply fresh calculation
-    band.style.animation = 'none';
-    // Force reflow to apply the reset
-    void band.offsetWidth;
-
     // If sponsors don't fill the screen width, we need to handle this
     if (singleSetWidth < wrapperWidth) {
       // Calculate how many complete sets we need to fill at least 2x screen width
@@ -122,21 +137,21 @@
       const minimumWidth = wrapperWidth * 2.5;
       const setsNeeded = Math.ceil(minimumWidth / (singleSetWidth + gap));
 
-      // Rebuild the band with enough duplicates
-      if (originalSponsorsHTML && setsNeeded > 2) {
+      // Only rebuild if the number of sets needed has changed
+      const needsRebuild = originalSponsorsHTML && setsNeeded > 2 && setsNeeded !== currentSetsCount;
+
+      if (needsRebuild) {
+        // Stop animation before rebuilding
+        band.style.animation = 'none';
+        void band.offsetWidth;
+
         band.innerHTML = '';
         for (let i = 0; i < setsNeeded; i++) {
           band.insertAdjacentHTML('beforeend', originalSponsorsHTML);
         }
+        currentSetsCount = setsNeeded;
+        forceReset = true; // Must reset animation after rebuild
       }
-
-      // Recalculate after rebuild
-      const newLinks = band.querySelectorAll('.sponsor-logo-link');
-      let totalWidth = 0;
-      for (let i = 0; i < newLinks.length; i++) {
-        totalWidth += newLinks[i].offsetWidth + gap;
-      }
-      totalWidth -= gap;
 
       // For very few sponsors (1-2), center them with no animation
       if (sponsorCount <= 2) {
@@ -147,34 +162,60 @@
         band.style.justifyContent = 'flex-start';
         band.style.width = 'max-content';
 
-        // Calculate animation duration based on content width
-        // Slower for less content to prevent fast/snappy feel
-        const pixelsPerSecond = 40; // Consistent scroll speed
-        const halfWidth = totalWidth / 2;
-        const duration = Math.max(15, halfWidth / pixelsPerSecond);
+        // Only recalculate and apply animation if forced or not already running
+        if (forceReset || !band.style.animation || band.style.animation === 'none') {
+          // Recalculate after rebuild
+          const newLinks = band.querySelectorAll('.sponsor-logo-link');
+          let totalWidth = 0;
+          for (let i = 0; i < newLinks.length; i++) {
+            totalWidth += newLinks[i].offsetWidth + gap;
+          }
+          totalWidth -= gap;
 
-        // Apply animation after proper reflow
-        band.style.animation = `scroll-sponsors ${duration}s linear infinite`;
+          // Calculate animation duration based on content width
+          // Slower for less content to prevent fast/snappy feel
+          const pixelsPerSecond = 40; // Consistent scroll speed
+          const halfWidth = totalWidth / 2;
+          const duration = Math.max(15, halfWidth / pixelsPerSecond);
+
+          // Reset animation only if we need to
+          if (forceReset) {
+            band.style.animation = 'none';
+            void band.offsetWidth;
+          }
+
+          // Apply animation
+          band.style.animation = `scroll-sponsors ${duration}s linear infinite`;
+        }
       }
     } else {
       // Normal case - enough sponsors
       band.style.justifyContent = 'flex-start';
       band.style.width = 'max-content';
 
-      // Get total width with current duplication
-      let totalWidth = 0;
-      for (let i = 0; i < currentLinks.length; i++) {
-        totalWidth += currentLinks[i].offsetWidth + gap;
+      // Only recalculate and apply animation if forced or not already running
+      if (forceReset || !band.style.animation || band.style.animation === 'none') {
+        // Get total width with current duplication
+        let totalWidth = 0;
+        for (let i = 0; i < currentLinks.length; i++) {
+          totalWidth += currentLinks[i].offsetWidth + gap;
+        }
+        totalWidth -= gap;
+
+        // Calculate duration for consistent scroll speed
+        const pixelsPerSecond = 50;
+        const halfWidth = totalWidth / 2;
+        const duration = Math.max(20, halfWidth / pixelsPerSecond);
+
+        // Reset animation only if we need to
+        if (forceReset) {
+          band.style.animation = 'none';
+          void band.offsetWidth;
+        }
+
+        // Apply animation
+        band.style.animation = `scroll-sponsors ${duration}s linear infinite`;
       }
-      totalWidth -= gap;
-
-      // Calculate duration for consistent scroll speed
-      const pixelsPerSecond = 50;
-      const halfWidth = totalWidth / 2;
-      const duration = Math.max(20, halfWidth / pixelsPerSecond);
-
-      // Apply animation immediately (reflow already happened above)
-      band.style.animation = `scroll-sponsors ${duration}s linear infinite`;
     }
   }
 
@@ -187,6 +228,8 @@
 
   // Re-initialize on SPA page transitions
   document.addEventListener('pageTransitionComplete', () => {
+    // Reset state for new page
+    currentSetsCount = 0;
     // Small delay to ensure DOM is updated
     setTimeout(initSponsorCarousel, 100);
   });
