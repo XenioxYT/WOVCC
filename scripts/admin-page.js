@@ -106,6 +106,9 @@
   // SPA transitions: re-run init (with animation) when navigating to /admin
   document.addEventListener('pageTransitionComplete', function (e) {
     if (e && e.detail && e.detail.path === '/admin') {
+      // Reset the tabsInitialized flag since DOM elements have been replaced
+      // This ensures event listeners are attached to the new tab buttons
+      tabsInitialized = false;
       runAdminInitWithAnimation();
     }
   });

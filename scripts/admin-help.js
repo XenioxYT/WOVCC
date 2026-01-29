@@ -1,4 +1,4 @@
-(function() {
+(function () {
   'use strict';
 
   // Admin Help Chat Module
@@ -6,23 +6,22 @@
 
   let conversationHistory = [];
   let isProcessing = false;
-  let chatInitialized = false; // Prevent duplicate initialization
 
   // Initialize chat
   function initChat() {
-    // Prevent duplicate listeners on SPA transitions
-    if (chatInitialized) return;
-    chatInitialized = true;
-    
     const form = document.getElementById('help-chat-form');
     const input = document.getElementById('help-chat-input');
-    
-    if (form) {
-      form.addEventListener('submit', handleChatSubmit);
-    }
-    
+
+    // Check if form exists and hasn't had listeners attached yet
+    // Use a data attribute to track if this specific DOM element has listeners
+    if (!form) return;
+    if (form.dataset.chatInitialized === 'true') return;
+    form.dataset.chatInitialized = 'true';
+
+    form.addEventListener('submit', handleChatSubmit);
+
     if (input) {
-      input.addEventListener('keydown', function(e) {
+      input.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
           form.dispatchEvent(new Event('submit'));
@@ -34,28 +33,28 @@
   // Handle chat form submission
   async function handleChatSubmit(e) {
     e.preventDefault();
-    
+
     if (isProcessing) return;
-    
+
     const input = document.getElementById('help-chat-input');
     const userMessage = input.value.trim();
-    
+
     if (!userMessage) return;
-    
+
     // Clear input
     input.value = '';
-    
+
     // Add user message to chat
     addMessage(userMessage, 'user');
-    
+
     // Show loading indicator
     showLoading();
-    
+
     // Update status
     updateStatus('Getting response...');
-    
+
     isProcessing = true;
-    
+
     try {
       // Send message to API
       const response = await window.WOVCCAuth.authenticatedFetch('/admin/help/chat', {
@@ -66,27 +65,27 @@
           history: conversationHistory
         })
       });
-      
+
       const data = await response.json();
-      
+
       // Remove loading indicator
       removeLoading();
-      
+
       if (data.success) {
         // Add assistant response to chat
         addMessage(data.message, 'assistant');
-        
+
         // Update conversation history
         conversationHistory.push(
           { role: 'user', content: userMessage },
           { role: 'assistant', content: data.message }
         );
-        
+
         // Keep only last 10 messages to manage token usage
         if (conversationHistory.length > 20) {
           conversationHistory = conversationHistory.slice(-20);
         }
-        
+
         updateStatus('');
       } else {
         removeLoading();
@@ -107,9 +106,9 @@
   function addMessage(content, type) {
     const messagesContainer = document.getElementById('help-chat-messages');
     if (!messagesContainer) return;
-    
+
     const messageDiv = document.createElement('div');
-    
+
     if (type === 'user') {
       messageDiv.className = 'chat-message user-message';
       messageDiv.innerHTML = `
@@ -149,9 +148,9 @@
         </div>
       `;
     }
-    
+
     messagesContainer.appendChild(messageDiv);
-    
+
     // Scroll to bottom
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }
@@ -167,10 +166,10 @@
         headerIds: false, // Don't add IDs to headers
         mangle: false // Don't escape email addresses
       });
-      
+
       return marked.parse(content);
     }
-    
+
     // Fallback if marked is not available
     return escapeHtml(content).replace(/\n/g, '<br>');
   }
@@ -179,7 +178,7 @@
   function showLoading() {
     const messagesContainer = document.getElementById('help-chat-messages');
     if (!messagesContainer) return;
-    
+
     const loadingDiv = document.createElement('div');
     loadingDiv.className = 'chat-message assistant-message';
     loadingDiv.id = 'chat-loading-indicator';
@@ -198,7 +197,7 @@
         </div>
       </div>
     `;
-    
+
     messagesContainer.appendChild(loadingDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }
@@ -230,14 +229,14 @@
   function clearChat() {
     const messagesContainer = document.getElementById('help-chat-messages');
     if (!messagesContainer) return;
-    
+
     // Keep only the welcome message
     const welcomeMessage = messagesContainer.querySelector('.assistant-message');
     messagesContainer.innerHTML = '';
     if (welcomeMessage) {
       messagesContainer.appendChild(welcomeMessage.cloneNode(true));
     }
-    
+
     conversationHistory = [];
     updateStatus('');
   }
